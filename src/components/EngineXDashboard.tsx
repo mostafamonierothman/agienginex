@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
@@ -13,6 +12,7 @@ import LoopsPerformance from './engine/LoopsPerformance';
 import LoopEngine from './loops/LoopEngine';
 import APIChain from './engine/APIChain';
 import EnhancedAGIEngine from './engine/EnhancedAGIEngine';
+import OpenAIIntegration from './engine/OpenAIIntegration';
 
 interface EngineState {
   timestamp: string;
@@ -208,14 +208,18 @@ const EngineXDashboard = () => {
         />
 
         <Tabs defaultValue="enhanced-agi" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 bg-slate-800 h-auto gap-1 p-1">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 bg-slate-800 h-auto gap-1 p-1">
             <TabsTrigger value="enhanced-agi" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
               <span className="hidden sm:inline">🧠 Enhanced AGI</span>
               <span className="sm:hidden">🧠 AGI</span>
             </TabsTrigger>
+            <TabsTrigger value="openai" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
+              <span className="hidden sm:inline">🤖 OpenAI</span>
+              <span className="sm:hidden">🤖 AI</span>
+            </TabsTrigger>
             <TabsTrigger value="engine" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
-              <span className="hidden sm:inline">🤖 Engine Control</span>
-              <span className="sm:hidden">🤖 Engine</span>
+              <span className="hidden sm:inline">⚙️ Engine Control</span>
+              <span className="sm:hidden">⚙️ Engine</span>
             </TabsTrigger>
             <TabsTrigger value="api-chain" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
               <span className="hidden sm:inline">🚀 API Chain</span>
@@ -237,6 +241,10 @@ const EngineXDashboard = () => {
 
           <TabsContent value="enhanced-agi">
             <EnhancedAGIEngine />
+          </TabsContent>
+
+          <TabsContent value="openai">
+            <OpenAIIntegration />
           </TabsContent>
 
           <TabsContent value="engine" className="space-y-6">
