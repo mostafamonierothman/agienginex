@@ -11,6 +11,7 @@ import LoopsStatus from './engine/LoopsStatus';
 import LoopsPerformance from './engine/LoopsPerformance';
 import LoopEngine from './loops/LoopEngine';
 import APIChain from './engine/APIChain';
+import EnhancedAGIEngine from './engine/EnhancedAGIEngine';
 
 interface EngineState {
   timestamp: string;
@@ -205,14 +206,19 @@ const EngineXDashboard = () => {
           lastUpdate={lastUpdate}
         />
 
-        <Tabs defaultValue="engine" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 bg-slate-800">
+        <Tabs defaultValue="enhanced-agi" className="w-full">
+          <TabsList className="grid w-full grid-cols-6 bg-slate-800">
+            <TabsTrigger value="enhanced-agi" className="text-white">🧠 Enhanced AGI</TabsTrigger>
             <TabsTrigger value="engine" className="text-white">🤖 Engine Control</TabsTrigger>
             <TabsTrigger value="api-chain" className="text-white">🚀 API Chain</TabsTrigger>
             <TabsTrigger value="loops" className="text-white">🔄 Core Loops</TabsTrigger>
             <TabsTrigger value="loop-engine" className="text-white">⚡ Loop Engine</TabsTrigger>
             <TabsTrigger value="business" className="text-white">💰 Business Paths</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="enhanced-agi">
+            <EnhancedAGIEngine />
+          </TabsContent>
 
           <TabsContent value="engine" className="space-y-6">
             <EngineConnection 
