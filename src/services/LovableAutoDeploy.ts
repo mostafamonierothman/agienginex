@@ -1,15 +1,16 @@
+
 import { toast } from '@/hooks/use-toast';
 
-interface BusinessFlow {
+export interface DeploymentTemplate {
+  id: string;
   name: string;
-  target: string;
-  content: string;
-  cta: string;
-  revenue_goal: number;
-  probability: number;
+  type: 'landing_page' | 'funnel' | 'dashboard' | 'waitlist' | 'geo_expansion';
+  description: string;
+  components: string[];
+  businessLogic: string;
 }
 
-interface AutoDeployment {
+export interface AutoDeployment {
   id: string;
   templateId: string;
   url: string;
@@ -23,6 +24,15 @@ interface AutoDeployment {
   };
   createdAt: Date;
   deployedAt?: Date;
+}
+
+export interface BusinessFlow {
+  name: string;
+  target: string;
+  content: string;
+  cta: string;
+  revenue_goal: number;
+  probability: number;
 }
 
 class LovableAutoDeployService {
