@@ -1,5 +1,5 @@
-
 import { vectorMemoryService } from './VectorMemoryService';
+import { fastAPIService } from './FastAPIService';
 import { toast } from '@/hooks/use-toast';
 
 export interface Agent {
@@ -11,6 +11,7 @@ export interface Agent {
   performance: number;
   lastAction?: string;
   autonomyLevel: number;
+  useBackend?: boolean;
 }
 
 export interface TaskAllocation {
@@ -26,8 +27,19 @@ class MultiAgentSupervisorService {
   private taskQueue: TaskAllocation[] = [];
   private isRunning = false;
   private supervisionInterval: NodeJS.Timeout | null = null;
+  private backendConnected = false;
+  private dynamicLoopInterval = 3000;
 
-  initialize(): void {
+  async initialize(): Promise<void> {
+    // Check FastAPI backend connection
+    this.backendConnected = await fastAPIService.checkStatus();
+    
+    if (this.backendConnected) {
+      // Get dynamic loop interval from backend
+      this.dynamicLoopInterval = (await fastAPIService.getLoopInterval()) * 1000;
+      console.log(`🔗 FASTAPI BACKEND CONNECTED → Loop interval: ${this.dynamicLoopInterval}ms`);
+    }
+
     // Initialize core agents
     const coreAgents: Agent[] = [
       {
@@ -36,7 +48,8 @@ class MultiAgentSupervisorService {
         role: 'Strategic Decision Making',
         status: 'idle',
         performance: 85,
-        autonomyLevel: 75
+        autonomyLevel: 75,
+        useBackend: this.backendConnected
       },
       {
         id: 'opportunity-detector',
@@ -44,7 +57,8 @@ class MultiAgentSupervisorService {
         role: 'Market Analysis & Discovery',
         status: 'idle',
         performance: 92,
-        autonomyLevel: 80
+        autonomyLevel: 80,
+        useBackend: this.backendConnected
       },
       {
         id: 'deployment-optimizer',
@@ -52,7 +66,8 @@ class MultiAgentSupervisorService {
         role: 'System Optimization & Scaling',
         status: 'idle',
         performance: 78,
-        autonomyLevel: 70
+        autonomyLevel: 70,
+        useBackend: false
       },
       {
         id: 'revenue-maximizer',
@@ -60,7 +75,8 @@ class MultiAgentSupervisorService {
         role: 'Business Growth & Monetization',
         status: 'idle',
         performance: 88,
-        autonomyLevel: 85
+        autonomyLevel: 85,
+        useBackend: false
       }
     ];
 
@@ -68,26 +84,26 @@ class MultiAgentSupervisorService {
       this.agents.set(agent.id, agent);
     });
 
-    console.log('🤖 MULTI-AGENT SUPERVISOR → INITIALIZED');
-    console.log(`👥 AGENTS DEPLOYED: ${this.agents.size}`);
+    console.log('🤖 MULTI-AGENT SUPERVISOR V2 → INITIALIZED');
+    console.log(`👥 AGENTS DEPLOYED: ${this.agents.size} (Backend: ${this.backendConnected ? 'CONNECTED' : 'LOCAL'})`);
   }
 
-  startSupervision(): void {
+  async startSupervision(): Promise<void> {
     if (this.isRunning) return;
     
     this.isRunning = true;
-    this.initialize();
+    await this.initialize();
     
     this.supervisionInterval = setInterval(() => {
       this.supervisionCycle();
-    }, 3000); // Every 3 seconds
+    }, this.dynamicLoopInterval);
 
     toast({
-      title: "🤖 Multi-Agent Supervisor Activated",
-      description: `${this.agents.size} autonomous agents now coordinating`,
+      title: "🤖 Multi-Agent Supervisor V2 Activated",
+      description: `${this.agents.size} autonomous agents coordinating ${this.backendConnected ? 'with FastAPI backend' : 'locally'}`,
     });
 
-    console.log('🎯 MULTI-AGENT SUPERVISION → STARTED');
+    console.log('🎯 MULTI-AGENT SUPERVISION V2 → STARTED');
   }
 
   stopSupervision(): void {
@@ -102,11 +118,24 @@ class MultiAgentSupervisorService {
       agent.status = 'idle';
     });
 
-    console.log('🛑 MULTI-AGENT SUPERVISION → STOPPED');
+    console.log('🛑 MULTI-AGENT SUPERVISION V2 → STOPPED');
   }
 
   private async supervisionCycle(): Promise<void> {
     if (!this.isRunning) return;
+
+    // Update dynamic loop interval from backend if connected
+    if (this.backendConnected) {
+      try {
+        const newInterval = (await fastAPIService.getLoopInterval()) * 1000;
+        if (Math.abs(newInterval - this.dynamicLoopInterval) > 100) {
+          this.dynamicLoopInterval = newInterval;
+          console.log(`🔄 DYNAMIC LOOP UPDATED → ${this.dynamicLoopInterval}ms`);
+        }
+      } catch (error) {
+        console.log('Backend loop interval update failed, continuing with current interval');
+      }
+    }
 
     // 1. Assess agent performance
     this.assessAgentPerformance();
@@ -170,8 +199,15 @@ class MultiAgentSupervisorService {
     // Simulate task execution time
     await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
 
-    // Generate result based on agent role
-    const results = this.generateAgentResult(agent);
+    let results;
+    
+    // Use backend for specific agents if connected
+    if (agent.useBackend && this.backendConnected) {
+      results = await this.executeBackendTask(agent);
+    } else {
+      results = this.generateLocalAgentResult(agent);
+    }
+
     agent.lastAction = results.action;
     agent.status = 'completed';
 
@@ -192,7 +228,31 @@ class MultiAgentSupervisorService {
     }, 2000);
   }
 
-  private generateAgentResult(agent: Agent): { action: string; importance: number } {
+  private async executeBackendTask(agent: Agent): Promise<{ action: string; importance: number }> {
+    try {
+      let action: string;
+      
+      if (agent.id === 'next-move-agent') {
+        action = await fastAPIService.getNextMove();
+      } else if (agent.id === 'opportunity-detector') {
+        action = await fastAPIService.getOpportunity();
+      } else {
+        action = 'Backend task completed successfully';
+      }
+
+      console.log(`🔗 BACKEND AGENT ${agent.name} → ${action}`);
+      
+      return {
+        action: `[BACKEND] ${action}`,
+        importance: 0.9 // Backend results have high importance
+      };
+    } catch (error) {
+      console.error(`Backend task failed for ${agent.name}:`, error);
+      return this.generateLocalAgentResult(agent);
+    }
+  }
+
+  private generateLocalAgentResult(agent: Agent): { action: string; importance: number } {
     const resultTemplates = {
       'next-move-agent': [
         'Identified optimal next strategic move: Scale MedJourney+ enterprise sales',
@@ -255,6 +315,18 @@ class MultiAgentSupervisorService {
       avgPerformance,
       avgAutonomy
     };
+  }
+
+  setBackendUrl(url: string): void {
+    fastAPIService.setBaseUrl(url);
+  }
+
+  getBackendStatus(): boolean {
+    return this.backendConnected;
+  }
+
+  getDynamicLoopInterval(): number {
+    return this.dynamicLoopInterval;
   }
 }
 

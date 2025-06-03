@@ -4,13 +4,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { multiAgentSupervisor, Agent } from '@/services/MultiAgentSupervisor';
+import { fastAPIService } from '@/services/FastAPIService';
 import { vectorMemoryService } from '@/services/VectorMemoryService';
 import { toast } from '@/hooks/use-toast';
 
 const MultiAgentDashboard = () => {
   const [isActive, setIsActive] = useState(false);
   const [agents, setAgents] = useState<Agent[]>([]);
+  const [backendUrl, setBackendUrl] = useState('http://localhost:8000');
+  const [backendConnected, setBackendConnected] = useState(false);
+  const [loopInterval, setLoopInterval] = useState(3000);
   const [stats, setStats] = useState({
     totalAgents: 0,
     activeAgents: 0,
@@ -23,23 +29,50 @@ const MultiAgentDashboard = () => {
       const interval = setInterval(() => {
         setAgents(multiAgentSupervisor.getAgents());
         setStats(multiAgentSupervisor.getAgentStats());
+        setBackendConnected(multiAgentSupervisor.getBackendStatus());
+        setLoopInterval(multiAgentSupervisor.getDynamicLoopInterval());
       }, 1000);
       return () => clearInterval(interval);
     }
   }, [isActive]);
 
-  const startSupervision = () => {
-    multiAgentSupervisor.startSupervision();
+  const startSupervision = async () => {
+    // Update backend URL if changed
+    if (backendUrl !== 'http://localhost:8000') {
+      fastAPIService.setBaseUrl(backendUrl);
+      multiAgentSupervisor.setBackendUrl(backendUrl);
+    }
+
+    await multiAgentSupervisor.startSupervision();
     setIsActive(true);
     toast({
-      title: "🤖 Multi-Agent System Activated",
-      description: "Autonomous agents are now coordinating and optimizing",
+      title: "🤖 Multi-Agent System V2 Activated",
+      description: "Autonomous agents coordinating with hybrid architecture",
     });
   };
 
   const stopSupervision = () => {
     multiAgentSupervisor.stopSupervision();
     setIsActive(false);
+  };
+
+  const testBackendConnection = async () => {
+    fastAPIService.setBaseUrl(backendUrl);
+    const connected = await fastAPIService.checkStatus();
+    setBackendConnected(connected);
+    
+    if (connected) {
+      toast({
+        title: "✅ Backend Connected",
+        description: "FastAPI backend is responding",
+      });
+    } else {
+      toast({
+        title: "❌ Backend Unavailable",
+        description: "Will use local agent intelligence",
+        variant: "destructive",
+      });
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -69,13 +102,16 @@ const MultiAgentDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-white flex items-center gap-2">
-                🤖 Multi-Agent Supervisor V2
+                🤖 Multi-Agent Supervisor V2 Hybrid
               </CardTitle>
               <p className="text-gray-400 text-sm mt-1">
-                Autonomous agent coordination with vector memory and cross-agent learning
+                Autonomous agents with FastAPI backend integration & vector memory
               </p>
             </div>
             <div className="flex items-center gap-2">
+              <Badge variant="outline" className={backendConnected ? 'text-green-400 border-green-400' : 'text-yellow-400 border-yellow-400'}>
+                {backendConnected ? '🔗 BACKEND' : '💻 LOCAL'}
+              </Badge>
               <Badge variant="outline" className={isActive ? 'text-green-400 border-green-400' : 'text-gray-400 border-gray-400'}>
                 {isActive ? '🟢 SUPERVISING' : '🔴 INACTIVE'}
               </Badge>
@@ -85,7 +121,7 @@ const MultiAgentDashboard = () => {
                 </Button>
               ) : (
                 <Button onClick={startSupervision} className="bg-purple-600 hover:bg-purple-700" size="sm">
-                  Start Supervision
+                  Start Supervision V2
                 </Button>
               )}
             </div>
@@ -93,7 +129,29 @@ const MultiAgentDashboard = () => {
         </CardHeader>
         
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* Backend Configuration */}
+          <div className="bg-slate-700/50 p-4 rounded border border-slate-600">
+            <h3 className="text-white font-medium mb-3">🔗 FastAPI Backend Configuration</h3>
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <Label htmlFor="backend-url" className="text-gray-400">Backend URL</Label>
+                <Input
+                  id="backend-url"
+                  placeholder="http://localhost:8000"
+                  value={backendUrl}
+                  onChange={(e) => setBackendUrl(e.target.value)}
+                  className="bg-slate-600 border-slate-500 text-white"
+                />
+              </div>
+              <div className="flex items-end">
+                <Button onClick={testBackendConnection} className="bg-blue-600 hover:bg-blue-700">
+                  Test Connection
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div className="bg-slate-700/50 p-3 rounded">
               <div className="text-gray-400 text-sm">Total Agents</div>
               <div className="text-white font-bold text-lg">{stats.totalAgents}</div>
@@ -110,6 +168,10 @@ const MultiAgentDashboard = () => {
               <div className="text-gray-400 text-sm">Avg Autonomy</div>
               <div className="text-purple-400 font-bold text-lg">{stats.avgAutonomy.toFixed(0)}%</div>
             </div>
+            <div className="bg-slate-700/50 p-3 rounded">
+              <div className="text-gray-400 text-sm">Loop Interval</div>
+              <div className="text-yellow-400 font-bold text-lg">{(loopInterval/1000).toFixed(1)}s</div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -117,7 +179,7 @@ const MultiAgentDashboard = () => {
       {isActive && agents.length > 0 && (
         <Card className="bg-slate-800/50 border-slate-700">
           <CardHeader>
-            <CardTitle className="text-white">🤖 Agent Status & Coordination</CardTitle>
+            <CardTitle className="text-white">🤖 Agent Status & Hybrid Coordination</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -127,6 +189,11 @@ const MultiAgentDashboard = () => {
                     <div>
                       <div className="text-white font-medium flex items-center gap-2">
                         {getStatusIcon(agent.status)} {agent.name}
+                        {agent.useBackend && (
+                          <Badge variant="outline" className="text-xs text-blue-400 border-blue-400">
+                            BACKEND
+                          </Badge>
+                        )}
                       </div>
                       <div className="text-gray-400 text-sm">{agent.role}</div>
                     </div>
