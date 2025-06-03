@@ -4,10 +4,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { multiAgentSupervisor, Agent } from '@/services/MultiAgentSupervisor';
 import { fastAPIService } from '@/services/FastAPIService';
 import { toast } from '@/hooks/use-toast';
+import { useBackendPolling } from '@/hooks/useBackendPolling';
 import MultiAgentHeader from './multi-agent/MultiAgentHeader';
 import BackendConfiguration from './multi-agent/BackendConfiguration';
 import AgentStatsGrid from './multi-agent/AgentStatsGrid';
 import AgentStatusList from './multi-agent/AgentStatusList';
+import LiveBackendData from './multi-agent/LiveBackendData';
 
 const MultiAgentDashboard = () => {
   const [isActive, setIsActive] = useState(false);
@@ -21,6 +23,9 @@ const MultiAgentDashboard = () => {
     avgPerformance: 0,
     avgAutonomy: 0
   });
+
+  // Use the new polling hook for live backend data
+  const { backendData, isConnected, isPolling, refreshData } = useBackendPolling(isActive && backendConnected);
 
   useEffect(() => {
     if (isActive) {
@@ -62,7 +67,7 @@ const MultiAgentDashboard = () => {
     if (connected) {
       toast({
         title: "✅ Backend Connected",
-        description: "FastAPI backend is responding",
+        description: "FastAPI backend is responding - Live data enabled!",
       });
     } else {
       toast({
@@ -93,6 +98,15 @@ const MultiAgentDashboard = () => {
           <AgentStatsGrid stats={stats} loopInterval={loopInterval} />
         </CardContent>
       </Card>
+
+      {isActive && backendData && (
+        <LiveBackendData
+          backendData={backendData}
+          isConnected={isConnected}
+          isPolling={isPolling}
+          onRefresh={refreshData}
+        />
+      )}
 
       {isActive && <AgentStatusList agents={agents} />}
     </div>
