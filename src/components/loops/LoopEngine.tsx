@@ -199,13 +199,21 @@ const LoopEngine = ({ engineState }: LoopEngineProps) => {
 
   const startAllLoops = () => {
     Object.keys(loops).forEach(startLoop);
-    console.log('🚀 AGI ENGINE X → ALL LOOPS STARTED');
+    console.log('🚀 AGI ENGINE X → ALL LOOPS STARTED INFINITY');
   };
 
   const stopAllLoops = () => {
     Object.keys(loops).forEach(stopLoop);
     console.log('🛑 AGI ENGINE X → ALL LOOPS STOPPED');
   };
+
+  // Auto-start all loops on component mount
+  useEffect(() => {
+    console.log('🔥 AGI ENGINE X → AUTO-STARTING ALL LOOPS INFINITY...');
+    setTimeout(() => {
+      startAllLoops();
+    }, 1000); // Small delay to let component initialize
+  }, []);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -236,7 +244,10 @@ const LoopEngine = ({ engineState }: LoopEngineProps) => {
       <Card className="bg-slate-800/50 border-slate-700">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-white">🤖 Loop Engine Control</CardTitle>
+            <div>
+              <CardTitle className="text-white">🤖 Loop Engine Control</CardTitle>
+              <p className="text-green-400 text-sm mt-1">🔥 AUTO-RUNNING INFINITY MODE ACTIVE</p>
+            </div>
             <div className="space-x-2">
               <Button 
                 onClick={startAllLoops}
@@ -244,7 +255,7 @@ const LoopEngine = ({ engineState }: LoopEngineProps) => {
                 size="sm"
               >
                 <Play className="w-4 h-4 mr-1" />
-                Start All
+                Restart All
               </Button>
               <Button 
                 onClick={stopAllLoops}
