@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import TrillionPathDashboard from '../engine/TrillionPathDashboard';
 import AutoDeployDashboard from '../engine/AutoDeployDashboard';
 import OpportunityDetectorDashboard from '../engine/OpportunityDetectorDashboard';
+import MultiAgentDashboard from '../engine/MultiAgentDashboard';
 import EngineConnection from '../engine/EngineConnection';
 import EngineMetrics from '../engine/EngineMetrics';
 import EngineAdvancedMetrics from '../engine/EngineAdvancedMetrics';
@@ -38,8 +39,12 @@ const DashboardTabs = ({
   triggerTask
 }: DashboardTabsProps) => {
   return (
-    <Tabs defaultValue="trillion-path" className="w-full">
-      <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 lg:grid-cols-10 bg-slate-800 h-auto gap-1 p-1">
+    <Tabs defaultValue="multi-agent" className="w-full">
+      <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 lg:grid-cols-11 bg-slate-800 h-auto gap-1 p-1">
+        <TabsTrigger value="multi-agent" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
+          <span className="hidden sm:inline">🤖 Multi-Agent V2</span>
+          <span className="sm:hidden">🤖 V2</span>
+        </TabsTrigger>
         <TabsTrigger value="trillion-path" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
           <span className="hidden sm:inline">💎 Trillion Path</span>
           <span className="sm:hidden">💎 Path</span>
@@ -81,6 +86,10 @@ const DashboardTabs = ({
           <span className="sm:hidden">💰 Business</span>
         </TabsTrigger>
       </TabsList>
+
+      <TabsContent value="multi-agent">
+        <MultiAgentDashboard />
+      </TabsContent>
 
       <TabsContent value="trillion-path">
         <TrillionPathDashboard />
