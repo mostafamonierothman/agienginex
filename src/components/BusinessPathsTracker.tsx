@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import BusinessPathCard from './business/BusinessPathCard';
+import BusinessPathMetrics from './business/BusinessPathMetrics';
+import PortfolioSummary from './business/PortfolioSummary';
 
 interface BusinessPathsTrackerProps {
   engineState: any;
@@ -76,28 +76,19 @@ const BusinessPathsTracker = ({ engineState }: BusinessPathsTrackerProps) => {
     }
   ];
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'SCALING': return 'text-green-400 border-green-400';
-      case 'BUILDING': return 'text-blue-400 border-blue-400';
-      case 'TESTING': return 'text-yellow-400 border-yellow-400';
-      case 'PLANNING': return 'text-gray-400 border-gray-400';
-      default: return 'text-gray-400 border-gray-400';
-    }
-  };
-
   const formatCurrency = (amount: number) => {
     if (amount >= 1000000) return `$${(amount / 1000000).toFixed(1)}M`;
     if (amount >= 1000) return `$${(amount / 1000).toFixed(0)}K`;
     return `$${amount}`;
   };
 
-  const calculateProgress = (current: number, target: number) => {
-    return Math.min((current / target) * 100, 100);
-  };
-
   const totalRevenue = businessPaths.reduce((sum, path) => sum + path.currentRevenue, 0);
   const totalTarget = businessPaths.reduce((sum, path) => sum + path.target, 0);
+
+  const handleOptimize = (pathId: string) => {
+    console.log(`Optimizing path: ${pathId}`);
+    // Add optimization logic here if needed
+  };
 
   return (
     <div className="space-y-6">
@@ -116,141 +107,28 @@ const BusinessPathsTracker = ({ engineState }: BusinessPathsTrackerProps) => {
 
         <TabsContent value="overview" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {businessPaths.map((path) => {
-              const progress = calculateProgress(path.currentRevenue, path.target);
-              return (
-                <Card key={path.id} className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-all">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-white text-lg">{path.name}</CardTitle>
-                      <Badge variant="outline" className={getStatusColor(path.status)}>
-                        {path.status}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <div className="flex justify-between text-sm mb-2">
-                        <span className="text-gray-400">Revenue Progress</span>
-                        <span className="text-white">{formatCurrency(path.currentRevenue)} / {formatCurrency(path.target)}</span>
-                      </div>
-                      <div className="w-full bg-slate-700 rounded-full h-3">
-                        <div 
-                          className="bg-gradient-to-r from-green-500 to-blue-500 h-3 rounded-full transition-all duration-1000"
-                          style={{ width: `${progress}%` }}
-                        ></div>
-                      </div>
-                      <span className="text-xs text-gray-500">{progress.toFixed(1)}% complete</span>
-                    </div>
-
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-semibold text-gray-300">Active Markets</h4>
-                      <div className="flex flex-wrap gap-1">
-                        {path.markets.map((market) => (
-                          <Badge key={market} variant="secondary" className="text-xs">
-                            {market}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-
-                    <p className="text-xs text-gray-400">{path.description}</p>
-                  </CardContent>
-                </Card>
-              );
-            })}
+            {businessPaths.map((path) => (
+              <BusinessPathCard 
+                key={path.id} 
+                path={path} 
+                onOptimize={handleOptimize}
+              />
+            ))}
           </div>
 
-          <Card className="bg-slate-800/50 border-slate-700">
-            <CardHeader>
-              <CardTitle className="text-white">Total Portfolio Performance</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-green-400">{formatCurrency(totalRevenue)}</div>
-                  <div className="text-sm text-gray-400">Total Revenue</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-blue-400">{engineState?.active_agents || 0}</div>
-                  <div className="text-sm text-gray-400">Active Agents</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-purple-400">{engineState?.estimated_days_to_10M_path || 'N/A'}</div>
-                  <div className="text-sm text-gray-400">Days to $10M</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-yellow-400">{engineState?.tasks_completed_last_sec || 0}</div>
-                  <div className="text-sm text-gray-400">Tasks/Second</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <PortfolioSummary 
+            totalRevenue={totalRevenue}
+            engineState={engineState}
+          />
         </TabsContent>
 
         <TabsContent value="detailed" className="space-y-4">
           {businessPaths.map((path) => (
-            <Card key={path.id} className="bg-slate-800/50 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center justify-between">
-                  {path.name}
-                  <Button size="sm" className="bg-gradient-to-r from-purple-500 to-pink-500">
-                    Optimize Path
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div>
-                    <h4 className="text-sm font-semibold text-gray-300 mb-2">Financial Metrics</h4>
-                    <div className="space-y-1">
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Current Revenue:</span>
-                        <span className="text-white">{formatCurrency(path.currentRevenue)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Target Revenue:</span>
-                        <span className="text-green-400">{formatCurrency(path.target)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Progress:</span>
-                        <span className="text-white">{calculateProgress(path.currentRevenue, path.target).toFixed(1)}%</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h4 className="text-sm font-semibold text-gray-300 mb-2">Status & Markets</h4>
-                    <div className="space-y-1">
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Status:</span>
-                        <Badge variant="outline" className={getStatusColor(path.status)}>
-                          {path.status}
-                        </Badge>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Markets:</span>
-                        <span className="text-white">{path.markets.length}</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h4 className="text-sm font-semibold text-gray-300 mb-2">Market Details</h4>
-                    <div className="space-y-1">
-                      {path.markets.map((market) => (
-                        <div key={market} className="flex justify-between">
-                          <span className="text-gray-400">{market}:</span>
-                          <Badge variant="outline" className={path.currentRevenue > 0 ? "text-green-400 border-green-400" : "text-gray-400 border-gray-400"}>
-                            {path.currentRevenue > 0 ? 'ACTIVE' : 'PLANNED'}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <BusinessPathMetrics 
+              key={path.id} 
+              path={path} 
+              onOptimize={handleOptimize}
+            />
           ))}
         </TabsContent>
       </Tabs>
