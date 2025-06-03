@@ -1,5 +1,7 @@
 
 import React from 'react';
+import { Progress } from '@/components/ui/progress';
+import { TrendingUp, Zap, Target, DollarSign } from 'lucide-react';
 import { AGIState } from '@/hooks/useAGIEngine';
 
 interface AGIMetricsProps {
@@ -8,41 +10,66 @@ interface AGIMetricsProps {
 
 const AGIMetrics = ({ agiState }: AGIMetricsProps) => {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-      <div className="bg-slate-700/50 p-3 md:p-4 rounded">
-        <div className="text-gray-400 text-xs md:text-sm">Intelligence</div>
-        <div className="text-white font-bold text-lg md:text-xl">{agiState.intelligence.toFixed(1)}%</div>
-        <div className="w-full bg-slate-600 rounded-full h-2 mt-2">
-          <div 
-            className="bg-purple-500 h-2 rounded-full transition-all duration-500"
-            style={{ width: `${agiState.intelligence}%` }}
-          />
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+      {/* Intelligence */}
+      <div className="bg-slate-700/30 border border-slate-600 rounded-lg p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <TrendingUp className="w-4 h-4 text-blue-400" />
+          <span className="text-blue-400 font-semibold text-sm">Intelligence</span>
+        </div>
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-300">{agiState.intelligence.toFixed(1)}%</span>
+            <span className="text-gray-400">Growing</span>
+          </div>
+          <Progress value={agiState.intelligence} className="h-2" />
         </div>
       </div>
-      <div className="bg-slate-700/50 p-3 md:p-4 rounded">
-        <div className="text-gray-400 text-xs md:text-sm">Efficiency</div>
-        <div className="text-white font-bold text-lg md:text-xl">{agiState.efficiency.toFixed(1)}%</div>
-        <div className="w-full bg-slate-600 rounded-full h-2 mt-2">
-          <div 
-            className="bg-green-500 h-2 rounded-full transition-all duration-500"
-            style={{ width: `${agiState.efficiency}%` }}
-          />
+
+      {/* Efficiency */}
+      <div className="bg-slate-700/30 border border-slate-600 rounded-lg p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Zap className="w-4 h-4 text-yellow-400" />
+          <span className="text-yellow-400 font-semibold text-sm">Efficiency</span>
+        </div>
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-300">{agiState.efficiency.toFixed(1)}%</span>
+            <span className="text-gray-400">Optimizing</span>
+          </div>
+          <Progress value={agiState.efficiency} className="h-2" />
         </div>
       </div>
-      <div className="bg-slate-700/50 p-3 md:p-4 rounded">
-        <div className="text-gray-400 text-xs md:text-sm">Autonomy</div>
-        <div className="text-white font-bold text-lg md:text-xl">{agiState.autonomyLevel.toFixed(1)}%</div>
-        <div className="w-full bg-slate-600 rounded-full h-2 mt-2">
-          <div 
-            className="bg-blue-500 h-2 rounded-full transition-all duration-500"
-            style={{ width: `${agiState.autonomyLevel}%` }}
-          />
+
+      {/* Autonomy */}
+      <div className="bg-slate-700/30 border border-slate-600 rounded-lg p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Target className="w-4 h-4 text-green-400" />
+          <span className="text-green-400 font-semibold text-sm">Autonomy</span>
+        </div>
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-300">{agiState.autonomyLevel.toFixed(1)}%</span>
+            <span className="text-gray-400">Evolving</span>
+          </div>
+          <Progress value={agiState.autonomyLevel} className="h-2" />
         </div>
       </div>
-      <div className="bg-slate-700/50 p-3 md:p-4 rounded">
-        <div className="text-gray-400 text-xs md:text-sm">Revenue</div>
-        <div className="text-white font-bold text-lg md:text-xl">${agiState.revenue.toFixed(0)}</div>
-        <div className="text-green-400 text-xs md:text-sm">+{(agiState.autonomyLevel * 50).toFixed(0)}/cycle</div>
+
+      {/* Revenue */}
+      <div className="bg-slate-700/30 border border-slate-600 rounded-lg p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <DollarSign className="w-4 h-4 text-purple-400" />
+          <span className="text-purple-400 font-semibold text-sm">Revenue Generated</span>
+        </div>
+        <div className="space-y-2">
+          <div className="text-lg font-bold text-white">
+            ${agiState.revenue.toLocaleString()}
+          </div>
+          <div className="text-xs text-gray-400">
+            Rate: ${(agiState.autonomyLevel * 10).toFixed(0)}/cycle
+          </div>
+        </div>
       </div>
     </div>
   );
