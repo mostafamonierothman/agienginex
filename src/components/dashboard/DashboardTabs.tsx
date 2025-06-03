@@ -12,6 +12,7 @@ import LoopEngine from '../loops/LoopEngine';
 import APIChain from '../engine/APIChain';
 import EnhancedAGIEngine from '../engine/EnhancedAGIEngine';
 import OpenAIIntegration from '../engine/OpenAIIntegration';
+import BusinessPathsTracker from '../BusinessPathsTracker';
 
 interface DashboardTabsProps {
   engineState: any;
