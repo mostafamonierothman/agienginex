@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
@@ -207,13 +208,31 @@ const EngineXDashboard = () => {
         />
 
         <Tabs defaultValue="enhanced-agi" className="w-full">
-          <TabsList className="grid w-full grid-cols-6 bg-slate-800">
-            <TabsTrigger value="enhanced-agi" className="text-white">🧠 Enhanced AGI</TabsTrigger>
-            <TabsTrigger value="engine" className="text-white">🤖 Engine Control</TabsTrigger>
-            <TabsTrigger value="api-chain" className="text-white">🚀 API Chain</TabsTrigger>
-            <TabsTrigger value="loops" className="text-white">🔄 Core Loops</TabsTrigger>
-            <TabsTrigger value="loop-engine" className="text-white">⚡ Loop Engine</TabsTrigger>
-            <TabsTrigger value="business" className="text-white">💰 Business Paths</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 bg-slate-800 h-auto gap-1 p-1">
+            <TabsTrigger value="enhanced-agi" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
+              <span className="hidden sm:inline">🧠 Enhanced AGI</span>
+              <span className="sm:hidden">🧠 AGI</span>
+            </TabsTrigger>
+            <TabsTrigger value="engine" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
+              <span className="hidden sm:inline">🤖 Engine Control</span>
+              <span className="sm:hidden">🤖 Engine</span>
+            </TabsTrigger>
+            <TabsTrigger value="api-chain" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
+              <span className="hidden sm:inline">🚀 API Chain</span>
+              <span className="sm:hidden">🚀 API</span>
+            </TabsTrigger>
+            <TabsTrigger value="loops" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
+              <span className="hidden sm:inline">🔄 Core Loops</span>
+              <span className="sm:hidden">🔄 Loops</span>
+            </TabsTrigger>
+            <TabsTrigger value="loop-engine" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
+              <span className="hidden sm:inline">⚡ Loop Engine</span>
+              <span className="sm:hidden">⚡ L.Engine</span>
+            </TabsTrigger>
+            <TabsTrigger value="business" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
+              <span className="hidden sm:inline">💰 Business Paths</span>
+              <span className="sm:hidden">💰 Business</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="enhanced-agi">
