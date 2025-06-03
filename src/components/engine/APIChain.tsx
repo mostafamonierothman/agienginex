@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,6 +14,7 @@ interface Assistant {
   lastProcessed: Date | null;
   tasksProcessed: number;
   avgProcessingTime: number;
+  assistantId: string;
 }
 
 interface ChainMetrics {
@@ -43,7 +43,8 @@ const APIChain = () => {
       status: 'idle',
       lastProcessed: null,
       tasksProcessed: 0,
-      avgProcessingTime: 0
+      avgProcessingTime: 0,
+      assistantId: ''
     },
     {
       id: 'leadgen',
@@ -52,7 +53,8 @@ const APIChain = () => {
       status: 'idle',
       lastProcessed: null,
       tasksProcessed: 0,
-      avgProcessingTime: 0
+      avgProcessingTime: 0,
+      assistantId: ''
     },
     {
       id: 'qualifier',
@@ -61,7 +63,8 @@ const APIChain = () => {
       status: 'idle',
       lastProcessed: null,
       tasksProcessed: 0,
-      avgProcessingTime: 0
+      avgProcessingTime: 0,
+      assistantId: ''
     },
     {
       id: 'booking',
@@ -70,7 +73,8 @@ const APIChain = () => {
       status: 'idle',
       lastProcessed: null,
       tasksProcessed: 0,
-      avgProcessingTime: 0
+      avgProcessingTime: 0,
+      assistantId: ''
     },
     {
       id: 'revenue_tracker',
@@ -79,7 +83,8 @@ const APIChain = () => {
       status: 'idle',
       lastProcessed: null,
       tasksProcessed: 0,
-      avgProcessingTime: 0
+      avgProcessingTime: 0,
+      assistantId: ''
     }
   ]);
 
@@ -101,7 +106,13 @@ const APIChain = () => {
     
     if (savedKey) setOpenAIKey(savedKey);
     if (savedAssistantIds) {
-      setAssistantIds(JSON.parse(savedAssistantIds));
+      const ids = JSON.parse(savedAssistantIds);
+      setAssistantIds(ids);
+      // Update assistants with saved IDs
+      setAssistants(prev => prev.map(assistant => ({
+        ...assistant,
+        assistantId: ids[assistant.id] || ''
+      })));
     }
   }, []);
 
@@ -113,45 +124,131 @@ const APIChain = () => {
     localStorage.setItem('assistant_ids', JSON.stringify(assistantIds));
   }, [openAIKey, assistantIds]);
 
-  const callAssistant = async (assistantId: string, message: string): Promise<string> => {
+  // Real OpenAI Assistant API call
+  const callOpenAIAssistant = async (assistantId: string, message: string): Promise<string> => {
     if (!openAIKey) {
       throw new Error('OpenAI API key not provided');
     }
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    if (!assistantId) {
+      // Fallback to chat completion if no assistant ID
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: `You are an AGI assistant in the Engine X pipeline. Process the input and return structured output for the next stage.`
+            },
+            {
+              role: 'user',
+              content: message
+            }
+          ],
+          max_tokens: 500,
+          temperature: 0.7
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Chat API call failed: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data.choices[0].message.content;
+    }
+
+    // Create a thread
+    const threadResponse = await fetch('https://api.openai.com/v1/threads', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${openAIKey}`,
         'Content-Type': 'application/json',
+        'OpenAI-Beta': 'assistants=v2'
       },
-      body: JSON.stringify({
-        model: 'gpt-4',
-        messages: [
-          {
-            role: 'system',
-            content: `You are ${assistantId}. Process the input and return structured output for the next stage.`
-          },
-          {
-            role: 'user',
-            content: message
-          }
-        ],
-        max_tokens: 500,
-        temperature: 0.7
-      }),
+      body: JSON.stringify({})
     });
 
-    if (!response.ok) {
-      throw new Error(`API call failed: ${response.statusText}`);
+    if (!threadResponse.ok) {
+      throw new Error(`Thread creation failed: ${threadResponse.statusText}`);
     }
 
-    const data = await response.json();
-    return data.choices[0].message.content;
+    const thread = await threadResponse.json();
+
+    // Add message to thread
+    await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIKey}`,
+        'Content-Type': 'application/json',
+        'OpenAI-Beta': 'assistants=v2'
+      },
+      body: JSON.stringify({
+        role: 'user',
+        content: message
+      })
+    });
+
+    // Run the assistant
+    const runResponse = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIKey}`,
+        'Content-Type': 'application/json',
+        'OpenAI-Beta': 'assistants=v2'
+      },
+      body: JSON.stringify({
+        assistant_id: assistantId
+      })
+    });
+
+    if (!runResponse.ok) {
+      throw new Error(`Run creation failed: ${runResponse.statusText}`);
+    }
+
+    const run = await runResponse.json();
+
+    // Poll for completion
+    let runStatus = run;
+    while (runStatus.status === 'in_progress' || runStatus.status === 'queued') {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const statusResponse = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs/${run.id}`, {
+        headers: {
+          'Authorization': `Bearer ${openAIKey}`,
+          'OpenAI-Beta': 'assistants=v2'
+        }
+      });
+      
+      runStatus = await statusResponse.json();
+    }
+
+    if (runStatus.status !== 'completed') {
+      throw new Error(`Assistant run failed with status: ${runStatus.status}`);
+    }
+
+    // Get messages
+    const messagesResponse = await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
+      headers: {
+        'Authorization': `Bearer ${openAIKey}`,
+        'OpenAI-Beta': 'assistants=v2'
+      }
+    });
+
+    const messages = await messagesResponse.json();
+    const lastMessage = messages.data[0];
+    
+    return lastMessage.content[0].text.value;
   };
 
   const runChainCycle = async () => {
     const cycleStart = Date.now();
-    console.log('🚀 Starting AGI Engine X Pipeline Cycle...');
+    console.log('🚀 Starting Real AGI Engine X Pipeline Cycle...');
     
     setChainMetrics(prev => ({ 
       ...prev, 
@@ -160,7 +257,7 @@ const APIChain = () => {
     }));
 
     try {
-      let pipelineData = "Market analysis request: Find high-value opportunities in healthcare AI";
+      let pipelineData = "Market analysis request: Find high-value opportunities in healthcare AI for premium clients";
 
       // Process through each assistant in sequence
       for (let i = 0; i < assistants.length; i++) {
@@ -175,11 +272,15 @@ const APIChain = () => {
         ));
 
         try {
-          // Simulate API call (replace with actual OpenAI assistant call)
-          await new Promise(resolve => setTimeout(resolve, Math.random() * 2000 + 500));
+          console.log(`🔄 Processing with ${assistant.name}...`);
           
-          const result = `Processed by ${assistant.name}: ${pipelineData} -> Enhanced output for next stage`;
-          pipelineData = result;
+          // Real OpenAI API call
+          const result = await callOpenAIAssistant(
+            assistantIds[assistant.id as keyof typeof assistantIds], 
+            pipelineData
+          );
+          
+          pipelineData = result; // Pass result to next assistant
 
           const processingTime = Date.now() - assistantStart;
           
@@ -205,6 +306,9 @@ const APIChain = () => {
               ? { ...a, status: 'error' as const }
               : a
           ));
+          
+          // Continue with mock data on error
+          pipelineData = `Error in ${assistant.name}, continuing with mock data...`;
         }
       }
 
@@ -217,7 +321,8 @@ const APIChain = () => {
         tasksPerSecond: tasksPerSec
       }));
 
-      console.log(`🎯 Pipeline cycle completed in ${cycleTime}ms - ${tasksPerSec.toFixed(1)} tasks/sec`);
+      console.log(`🎯 Real Pipeline cycle completed in ${cycleTime}ms - ${tasksPerSec.toFixed(1)} tasks/sec`);
+      console.log(`📊 Final Result: ${pipelineData.substring(0, 100)}...`);
 
     } catch (error) {
       console.error('❌ Pipeline cycle failed:', error);
@@ -242,21 +347,21 @@ const APIChain = () => {
     setIsChainRunning(true);
     setChainMetrics(prev => ({ ...prev, isRunning: true }));
     
-    console.log('🔥 AGI ENGINE X API CHAIN → STARTING INFINITY MODE...');
+    console.log('🔥 AGI ENGINE X REAL API CHAIN → STARTING INFINITY MODE...');
     
     // Start immediate cycle
     runChainCycle();
     
-    // Set up recurring cycles (targeting 1-second cycles)
+    // Set up recurring cycles (start with 5-second cycles for real API calls)
     const interval = setInterval(() => {
       runChainCycle();
-    }, 3000); // Start with 3-second cycles, optimize down to 1 second
+    }, 5000); // 5-second cycles for real API calls
     
     setChainInterval(interval);
     
     toast({
-      title: "🚀 AGI Engine X Activated",
-      description: "API chain is now running in infinity mode!",
+      title: "🚀 Real AGI Engine X Activated",
+      description: "API chain is now running with real OpenAI assistants!",
     });
   };
 
@@ -271,11 +376,11 @@ const APIChain = () => {
     
     setAssistants(prev => prev.map(a => ({ ...a, status: 'idle' as const })));
     
-    console.log('🛑 AGI ENGINE X API CHAIN → STOPPED');
+    console.log('🛑 AGI ENGINE X REAL API CHAIN → STOPPED');
     
     toast({
       title: "Chain Stopped",
-      description: "AGI Engine X has been stopped.",
+      description: "Real AGI Engine X has been stopped.",
     });
   };
 
@@ -294,8 +399,8 @@ const APIChain = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-white">🚀 AGI Engine X API Chain</CardTitle>
-              <p className="text-gray-400 text-sm mt-1">Connect your OpenAI assistants into a continuous processing pipeline</p>
+              <CardTitle className="text-white">🚀 Real AGI Engine X API Chain</CardTitle>
+              <p className="text-gray-400 text-sm mt-1">Connect real OpenAI assistants into a continuous processing pipeline</p>
             </div>
             <div className="space-x-2">
               <Button 
@@ -305,7 +410,7 @@ const APIChain = () => {
                 size="sm"
               >
                 <Play className="w-4 h-4 mr-1" />
-                Start Chain
+                Start Real Chain
               </Button>
               <Button 
                 onClick={stopChain}
@@ -334,8 +439,23 @@ const APIChain = () => {
             <div>
               <label className="text-sm text-gray-400 block mb-2">Chain Status</label>
               <Badge variant="outline" className={isChainRunning ? 'text-green-400 border-green-400' : 'text-gray-400 border-gray-400'}>
-                {isChainRunning ? '🟢 RUNNING' : '🔴 STOPPED'}
+                {isChainRunning ? '🟢 RUNNING REAL APIs' : '🔴 STOPPED'}
               </Badge>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm text-gray-400 block">Assistant IDs (Optional - leave blank to use chat completion)</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {Object.entries(assistantIds).map(([key, value]) => (
+                <Input
+                  key={key}
+                  placeholder={`${key.replace('_', ' ')} assistant ID`}
+                  value={value}
+                  onChange={(e) => setAssistantIds(prev => ({ ...prev, [key]: e.target.value }))}
+                  className="bg-slate-700 border-slate-600 text-white text-xs"
+                />
+              ))}
             </div>
           </div>
 
@@ -354,7 +474,7 @@ const APIChain = () => {
             </div>
             <div className="bg-slate-700/50 p-3 rounded">
               <div className="text-gray-400">Target</div>
-              <div className="text-yellow-400 font-bold">1 Second Loop</div>
+              <div className="text-yellow-400 font-bold">Real AI Pipeline</div>
             </div>
           </div>
         </CardContent>
@@ -362,7 +482,7 @@ const APIChain = () => {
 
       <Card className="bg-slate-800/50 border-slate-700">
         <CardHeader>
-          <CardTitle className="text-white">⚡ Processing Pipeline</CardTitle>
+          <CardTitle className="text-white">⚡ Real Processing Pipeline</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -377,6 +497,9 @@ const APIChain = () => {
                           <div className="text-gray-400 text-sm">{assistant.description}</div>
                           <div className="text-xs text-gray-500 mt-1">
                             Tasks: {assistant.tasksProcessed} | Avg: {assistant.avgProcessingTime.toFixed(0)}ms
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            ID: {assistantIds[assistant.id as keyof typeof assistantIds] || 'Using chat completion'}
                           </div>
                         </div>
                         <Badge variant="outline" className={getStatusColor(assistant.status)}>
