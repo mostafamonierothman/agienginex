@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
@@ -10,6 +9,7 @@ import EngineAdvancedMetrics from './engine/EngineAdvancedMetrics';
 import TaskCommandCenter from './engine/TaskCommandCenter';
 import LoopsStatus from './engine/LoopsStatus';
 import LoopsPerformance from './engine/LoopsPerformance';
+import LoopEngine from './loops/LoopEngine';
 
 interface EngineState {
   timestamp: string;
@@ -205,10 +205,11 @@ const EngineXDashboard = () => {
         />
 
         <Tabs defaultValue="engine" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-slate-800">
+          <TabsList className="grid w-full grid-cols-4 bg-slate-800">
             <TabsTrigger value="engine" className="text-white">🤖 Engine Control</TabsTrigger>
-            <TabsTrigger value="business" className="text-white">💰 Business Paths</TabsTrigger>
             <TabsTrigger value="loops" className="text-white">🔄 Core Loops</TabsTrigger>
+            <TabsTrigger value="loop-engine" className="text-white">⚡ Loop Engine</TabsTrigger>
+            <TabsTrigger value="business" className="text-white">💰 Business Paths</TabsTrigger>
           </TabsList>
 
           <TabsContent value="engine" className="space-y-6">
@@ -233,10 +234,6 @@ const EngineXDashboard = () => {
             />
           </TabsContent>
 
-          <TabsContent value="business">
-            <BusinessPathsTracker engineState={engineState} />
-          </TabsContent>
-
           <TabsContent value="loops" className="space-y-6">
             {engineState && (
               <>
@@ -244,6 +241,14 @@ const EngineXDashboard = () => {
                 <LoopsPerformance engineState={engineState} />
               </>
             )}
+          </TabsContent>
+
+          <TabsContent value="loop-engine">
+            <LoopEngine engineState={engineState} />
+          </TabsContent>
+
+          <TabsContent value="business">
+            <BusinessPathsTracker engineState={engineState} />
           </TabsContent>
         </Tabs>
       </div>
