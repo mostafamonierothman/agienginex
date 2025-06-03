@@ -99,28 +99,33 @@ const MultiAgentDashboard = () => {
     <div className="space-y-6">
       <Card className="bg-slate-800/50 border-slate-700">
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-white flex items-center gap-2">
-                🤖 Multi-Agent Supervisor V2 Hybrid
-              </CardTitle>
-              <p className="text-gray-400 text-sm mt-1">
-                Autonomous agents with FastAPI backend integration & vector memory
-              </p>
+          <div className="flex flex-col space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex-1">
+                <CardTitle className="text-white flex items-center gap-2">
+                  🤖 Multi-Agent Supervisor V2 Hybrid
+                </CardTitle>
+                <p className="text-gray-400 text-sm mt-1">
+                  Autonomous agents with FastAPI backend integration & vector memory
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="outline" className={backendConnected ? 'text-green-400 border-green-400' : 'text-yellow-400 border-yellow-400'}>
+                  {backendConnected ? '🔗 BACKEND' : '💻 LOCAL'}
+                </Badge>
+                <Badge variant="outline" className={isActive ? 'text-green-400 border-green-400' : 'text-gray-400 border-gray-400'}>
+                  {isActive ? '🟢 SUPERVISING' : '🔴 INACTIVE'}
+                </Badge>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className={backendConnected ? 'text-green-400 border-green-400' : 'text-yellow-400 border-yellow-400'}>
-                {backendConnected ? '🔗 BACKEND' : '💻 LOCAL'}
-              </Badge>
-              <Badge variant="outline" className={isActive ? 'text-green-400 border-green-400' : 'text-gray-400 border-gray-400'}>
-                {isActive ? '🟢 SUPERVISING' : '🔴 INACTIVE'}
-              </Badge>
+            
+            <div className="flex flex-col sm:flex-row gap-2 w-full">
               {isActive ? (
-                <Button onClick={stopSupervision} variant="destructive" size="sm">
+                <Button onClick={stopSupervision} variant="destructive" className="w-full sm:w-auto">
                   Stop Supervision
                 </Button>
               ) : (
-                <Button onClick={startSupervision} className="bg-purple-600 hover:bg-purple-700" size="sm">
+                <Button onClick={startSupervision} className="bg-purple-600 hover:bg-purple-700 w-full sm:w-auto">
                   Start Supervision V2
                 </Button>
               )}
@@ -132,7 +137,7 @@ const MultiAgentDashboard = () => {
           {/* Backend Configuration */}
           <div className="bg-slate-700/50 p-4 rounded border border-slate-600">
             <h3 className="text-white font-medium mb-3">🔗 FastAPI Backend Configuration</h3>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1">
                 <Label htmlFor="backend-url" className="text-gray-400">Backend URL</Label>
                 <Input
@@ -144,7 +149,7 @@ const MultiAgentDashboard = () => {
                 />
               </div>
               <div className="flex items-end">
-                <Button onClick={testBackendConnection} className="bg-blue-600 hover:bg-blue-700">
+                <Button onClick={testBackendConnection} className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
                   Test Connection
                 </Button>
               </div>
