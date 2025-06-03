@@ -83,9 +83,9 @@ const EngineXDashboard = () => {
           pipeline_optimizer_efficiency_percent: Math.floor(Math.random() * 30),
           active_agents: Math.floor(Math.random() * 200) + 100,
           current_revenue: {
-            medjourney_main: 125000,
-            geo_expansion: 24500,
-            waiting_list_targeting: 6800,
+            medjourney_main: 0,
+            geo_expansion: 0,
+            waiting_list_targeting: 0,
             billionaire_path: 0,
             agi_healthcare: 0,
             sweden_health: 0,
