@@ -10,6 +10,7 @@ import TaskCommandCenter from './engine/TaskCommandCenter';
 import LoopsStatus from './engine/LoopsStatus';
 import LoopsPerformance from './engine/LoopsPerformance';
 import LoopEngine from './loops/LoopEngine';
+import APIChain from './engine/APIChain';
 
 interface EngineState {
   timestamp: string;
@@ -205,8 +206,9 @@ const EngineXDashboard = () => {
         />
 
         <Tabs defaultValue="engine" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-slate-800">
+          <TabsList className="grid w-full grid-cols-5 bg-slate-800">
             <TabsTrigger value="engine" className="text-white">🤖 Engine Control</TabsTrigger>
+            <TabsTrigger value="api-chain" className="text-white">🚀 API Chain</TabsTrigger>
             <TabsTrigger value="loops" className="text-white">🔄 Core Loops</TabsTrigger>
             <TabsTrigger value="loop-engine" className="text-white">⚡ Loop Engine</TabsTrigger>
             <TabsTrigger value="business" className="text-white">💰 Business Paths</TabsTrigger>
@@ -232,6 +234,10 @@ const EngineXDashboard = () => {
               setTaskName={setTaskName}
               triggerTask={triggerTask}
             />
+          </TabsContent>
+
+          <TabsContent value="api-chain">
+            <APIChain />
           </TabsContent>
 
           <TabsContent value="loops" className="space-y-6">
