@@ -1,7 +1,9 @@
+
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import TrillionPathDashboard from '../engine/TrillionPathDashboard';
 import AutoDeployDashboard from '../engine/AutoDeployDashboard';
+import OpportunityDetectorDashboard from '../engine/OpportunityDetectorDashboard';
 import EngineConnection from '../engine/EngineConnection';
 import EngineMetrics from '../engine/EngineMetrics';
 import EngineAdvancedMetrics from '../engine/EngineAdvancedMetrics';
@@ -37,7 +39,7 @@ const DashboardTabs = ({
 }: DashboardTabsProps) => {
   return (
     <Tabs defaultValue="trillion-path" className="w-full">
-      <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 bg-slate-800 h-auto gap-1 p-1">
+      <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 lg:grid-cols-10 bg-slate-800 h-auto gap-1 p-1">
         <TabsTrigger value="trillion-path" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
           <span className="hidden sm:inline">💎 Trillion Path</span>
           <span className="sm:hidden">💎 Path</span>
@@ -45,6 +47,10 @@ const DashboardTabs = ({
         <TabsTrigger value="auto-deploy" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
           <span className="hidden sm:inline">🚀 Auto-Deploy</span>
           <span className="sm:hidden">🚀 Deploy</span>
+        </TabsTrigger>
+        <TabsTrigger value="opportunity" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
+          <span className="hidden sm:inline">🔍 Opportunity</span>
+          <span className="sm:hidden">🔍 Opp</span>
         </TabsTrigger>
         <TabsTrigger value="enhanced-agi" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
           <span className="hidden sm:inline">🧠 Enhanced AGI</span>
@@ -82,6 +88,10 @@ const DashboardTabs = ({
 
       <TabsContent value="auto-deploy">
         <AutoDeployDashboard />
+      </TabsContent>
+
+      <TabsContent value="opportunity">
+        <OpportunityDetectorDashboard />
       </TabsContent>
 
       <TabsContent value="enhanced-agi">
