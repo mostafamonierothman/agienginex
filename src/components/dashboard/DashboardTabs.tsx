@@ -1,10 +1,7 @@
 
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import TrillionPathDashboard from '../engine/TrillionPathDashboard';
-import AutoDeployDashboard from '../engine/AutoDeployDashboard';
-import OpportunityDetectorDashboard from '../engine/OpportunityDetectorDashboard';
-import MultiAgentDashboard from '../engine/MultiAgentDashboard';
+import BusinessPathsTracker from '../BusinessPathsTracker';
 import EngineConnection from '../engine/EngineConnection';
 import EngineMetrics from '../engine/EngineMetrics';
 import EngineAdvancedMetrics from '../engine/EngineAdvancedMetrics';
@@ -15,10 +12,42 @@ import LoopEngine from '../loops/LoopEngine';
 import APIChain from '../engine/APIChain';
 import EnhancedAGIEngine from '../engine/EnhancedAGIEngine';
 import OpenAIIntegration from '../engine/OpenAIIntegration';
-import BusinessPathsTracker from '../BusinessPathsTracker';
+import MultiAgentDashboard from '../engine/MultiAgentDashboard';
+
+interface EngineState {
+  timestamp: string;
+  overall_status: string;
+  tasks_completed_last_sec: number;
+  learning_loop_progress_percent: number;
+  latency_loop_current_latency_ms: number;
+  pipeline_optimizer_efficiency_percent: number;
+  active_agents: number;
+  current_revenue: {
+    medjourney_main: number;
+    geo_expansion: number;
+    waiting_list_targeting: number;
+    billionaire_path: number;
+    agi_healthcare: number;
+    sweden_health: number;
+    sweden_crime: number;
+  };
+  loop_status: {
+    learning_loop: string;
+    latency_optimizer_loop: string;
+    pipeline_optimizer_loop: string;
+    hardware_optimizer_loop: string;
+    self_prioritizer_loop: string;
+    opportunity_seeker_loop: string;
+    self_rewrite_loop: string;
+  };
+  estimated_time_to_1_sec_finish_sec: number;
+  estimated_days_to_10M_path: number;
+  engine_cycle_rate_sec: number;
+  femto_aspiration_gap_percent: number;
+}
 
 interface DashboardTabsProps {
-  engineState: any;
+  engineState: EngineState | null;
   apiUrl: string;
   setApiUrl: (url: string) => void;
   apiKey: string;
@@ -39,27 +68,15 @@ const DashboardTabs = ({
   triggerTask
 }: DashboardTabsProps) => {
   return (
-    <Tabs defaultValue="multi-agent" className="w-full">
-      <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 lg:grid-cols-11 bg-slate-800 h-auto gap-1 p-1">
-        <TabsTrigger value="multi-agent" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
-          <span className="hidden sm:inline">🤖 Multi-Agent V2</span>
-          <span className="sm:hidden">🤖 V2</span>
-        </TabsTrigger>
-        <TabsTrigger value="trillion-path" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
-          <span className="hidden sm:inline">💎 Trillion Path</span>
-          <span className="sm:hidden">💎 Path</span>
-        </TabsTrigger>
-        <TabsTrigger value="auto-deploy" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
-          <span className="hidden sm:inline">🚀 Auto-Deploy</span>
-          <span className="sm:hidden">🚀 Deploy</span>
-        </TabsTrigger>
-        <TabsTrigger value="opportunity" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
-          <span className="hidden sm:inline">🔍 Opportunity</span>
-          <span className="sm:hidden">🔍 Opp</span>
-        </TabsTrigger>
+    <Tabs defaultValue="enhanced-agi" className="w-full">
+      <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-8 bg-slate-800 h-auto gap-1 p-1">
         <TabsTrigger value="enhanced-agi" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
           <span className="hidden sm:inline">🧠 Enhanced AGI</span>
           <span className="sm:hidden">🧠 AGI</span>
+        </TabsTrigger>
+        <TabsTrigger value="multi-agent-v2" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
+          <span className="hidden sm:inline">🤖 Multi-Agent V2</span>
+          <span className="sm:hidden">🤖 V2</span>
         </TabsTrigger>
         <TabsTrigger value="openai" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
           <span className="hidden sm:inline">🤖 OpenAI</span>
@@ -87,24 +104,12 @@ const DashboardTabs = ({
         </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="multi-agent">
-        <MultiAgentDashboard />
-      </TabsContent>
-
-      <TabsContent value="trillion-path">
-        <TrillionPathDashboard />
-      </TabsContent>
-
-      <TabsContent value="auto-deploy">
-        <AutoDeployDashboard />
-      </TabsContent>
-
-      <TabsContent value="opportunity">
-        <OpportunityDetectorDashboard />
-      </TabsContent>
-
       <TabsContent value="enhanced-agi">
         <EnhancedAGIEngine />
+      </TabsContent>
+
+      <TabsContent value="multi-agent-v2">
+        <MultiAgentDashboard />
       </TabsContent>
 
       <TabsContent value="openai">
