@@ -16,6 +16,10 @@ const BackendConfiguration = ({
   onBackendUrlChange, 
   onTestConnection 
 }: BackendConfigurationProps) => {
+  const setCloudflareUrl = () => {
+    onBackendUrlChange('https://agienginex-clean.mostafamonier13.workers.dev');
+  };
+
   const setRenderUrl = () => {
     onBackendUrlChange('https://agienginex.onrender.com');
   };
@@ -38,6 +42,13 @@ const BackendConfiguration = ({
       
       <div className="space-y-3">
         <div className="flex flex-wrap gap-2">
+          <Button 
+            onClick={setCloudflareUrl} 
+            size="sm" 
+            className="bg-orange-600 hover:bg-orange-700"
+          >
+            ⚡ Cloudflare (FAST)
+          </Button>
           <Button 
             onClick={setRenderUrl} 
             size="sm" 
@@ -86,6 +97,17 @@ const BackendConfiguration = ({
             </Button>
           </div>
         </div>
+
+        {backendUrl.includes('mostafamonier13.workers.dev') && (
+          <div className="flex items-center gap-2">
+            <Badge className="bg-orange-600 text-white">
+              ⚡ CLOUDFLARE WORKERS
+            </Badge>
+            <span className="text-sm text-gray-400">
+              Fast edge deployment with authentication - No CORS issues
+            </span>
+          </div>
+        )}
 
         {backendUrl.includes('onrender.com') && (
           <div className="flex items-center gap-2">

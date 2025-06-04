@@ -25,58 +25,76 @@ export interface RunAgentResponse {
 
 class FastAPIService {
   private baseUrl: string;
+  private authToken: string;
 
-  constructor(baseUrl: string = 'http://localhost:8000') {
+  constructor(baseUrl: string = 'https://agienginex-clean.mostafamonier13.workers.dev') {
     this.baseUrl = baseUrl;
+    this.authToken = 'supersecrettoken123';
   }
 
   setBaseUrl(url: string): void {
     this.baseUrl = url;
   }
 
+  private getHeaders() {
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${this.authToken}`
+    };
+  }
+
   async getNextMove(): Promise<string> {
     try {
-      const response = await fetch(`${this.baseUrl}/next_move`);
+      const response = await fetch(`${this.baseUrl}/next_move`, {
+        headers: this.getHeaders()
+      });
       if (!response.ok) throw new Error('Failed to get next move');
       const data: NextMoveResponse = await response.json();
+      console.log('AGIengineX next_move response:', data);
       return data.next_move;
     } catch (error) {
-      console.error('FastAPI next_move error:', error);
+      console.error('AGIengineX next_move error:', error);
       return 'Backend unavailable - using local agent intelligence';
     }
   }
 
   async getOpportunity(): Promise<string> {
     try {
-      const response = await fetch(`${this.baseUrl}/opportunity`);
+      const response = await fetch(`${this.baseUrl}/opportunity`, {
+        headers: this.getHeaders()
+      });
       if (!response.ok) throw new Error('Failed to get opportunity');
       const data: OpportunityResponse = await response.json();
+      console.log('AGIengineX opportunity response:', data);
       return data.opportunity;
     } catch (error) {
-      console.error('FastAPI opportunity error:', error);
+      console.error('AGIengineX opportunity error:', error);
       return 'Backend unavailable - using local opportunity detection';
     }
   }
 
   async getLoopInterval(): Promise<number> {
     try {
-      const response = await fetch(`${this.baseUrl}/loop_interval`);
+      const response = await fetch(`${this.baseUrl}/loop_interval`, {
+        headers: this.getHeaders()
+      });
       if (!response.ok) throw new Error('Failed to get loop interval');
       const data: LoopIntervalResponse = await response.json();
+      console.log('AGIengineX loop_interval response:', data);
       return data.dynamic_interval_sec;
     } catch (error) {
-      console.error('FastAPI loop_interval error:', error);
+      console.error('AGIengineX loop_interval error:', error);
       return 3.0; // Default fallback
     }
   }
 
   async runAgent(agentName: string, inputData: string | null = null): Promise<RunAgentResponse> {
     try {
+      console.log(`AGIengineX: Running agent ${agentName} with input:`, inputData);
+      
       const response = await fetch(`${this.baseUrl}/run_agent`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: this.getHeaders(),
         body: JSON.stringify({
           agent_name: agentName,
           input: inputData,
@@ -85,9 +103,10 @@ class FastAPIService {
       
       if (!response.ok) throw new Error('Failed to run agent');
       const data: RunAgentResponse = await response.json();
+      console.log('AGIengineX run_agent response:', data);
       return data;
     } catch (error) {
-      console.error('FastAPI run_agent error:', error);
+      console.error('AGIengineX run_agent error:', error);
       return {
         result: 'Backend unavailable - agent execution failed',
         agent_name: agentName,
@@ -98,7 +117,9 @@ class FastAPIService {
 
   async checkStatus(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}/`);
+      const response = await fetch(`${this.baseUrl}/`, {
+        headers: this.getHeaders()
+      });
       return response.ok;
     } catch (error) {
       return false;
