@@ -14,7 +14,7 @@ import LiveBackendData from './multi-agent/LiveBackendData';
 const MultiAgentDashboard = () => {
   const [isActive, setIsActive] = useState(false);
   const [agents, setAgents] = useState<Agent[]>([]);
-  const [backendUrl, setBackendUrl] = useState('http://localhost:8000');
+  const [backendUrl, setBackendUrl] = useState('https://othmanm-agienginex.hf.space');
   const [backendConnected, setBackendConnected] = useState(false);
   const [loopInterval, setLoopInterval] = useState(3000);
   const [stats, setStats] = useState({
@@ -40,17 +40,15 @@ const MultiAgentDashboard = () => {
   }, [isActive]);
 
   const startSupervision = async () => {
-    // Update backend URL if changed
-    if (backendUrl !== 'http://localhost:8000') {
-      fastAPIService.setBaseUrl(backendUrl);
-      multiAgentSupervisor.setBackendUrl(backendUrl);
-    }
+    // Update backend URL
+    fastAPIService.setBaseUrl(backendUrl);
+    multiAgentSupervisor.setBackendUrl(backendUrl);
 
     await multiAgentSupervisor.startSupervision();
     setIsActive(true);
     toast({
       title: "🤖 Multi-Agent System V2 Activated",
-      description: "Autonomous agents coordinating with hybrid architecture",
+      description: `Autonomous agents coordinating with ${backendUrl.includes('hf.space') ? 'HuggingFace Cloud' : 'backend'}`,
     });
   };
 
@@ -65,9 +63,10 @@ const MultiAgentDashboard = () => {
     setBackendConnected(connected);
     
     if (connected) {
+      const deploymentType = backendUrl.includes('hf.space') ? 'HuggingFace Cloud' : 'Local';
       toast({
         title: "✅ Backend Connected",
-        description: "FastAPI backend is responding - Live data enabled!",
+        description: `${deploymentType} backend is responding - Live data enabled!`,
       });
     } else {
       toast({
