@@ -40,15 +40,19 @@ const MultiAgentDashboard = () => {
   }, [isActive]);
 
   const startSupervision = async () => {
+    console.log('Starting supervision with backend URL:', backendUrl);
+    
     // Update backend URL
     fastAPIService.setBaseUrl(backendUrl);
     multiAgentSupervisor.setBackendUrl(backendUrl);
 
     await multiAgentSupervisor.startSupervision();
     setIsActive(true);
+    
+    const deploymentType = backendUrl.includes('hf.space') ? 'HuggingFace Cloud' : 'backend';
     toast({
       title: "🤖 Multi-Agent System V2 Activated",
-      description: `Autonomous agents coordinating with ${backendUrl.includes('hf.space') ? 'HuggingFace Cloud' : 'backend'}`,
+      description: `Autonomous agents coordinating with ${deploymentType}`,
     });
   };
 
@@ -58,6 +62,8 @@ const MultiAgentDashboard = () => {
   };
 
   const testBackendConnection = async () => {
+    console.log('Testing connection to:', backendUrl);
+    
     fastAPIService.setBaseUrl(backendUrl);
     const connected = await fastAPIService.checkStatus();
     setBackendConnected(connected);
@@ -71,7 +77,7 @@ const MultiAgentDashboard = () => {
     } else {
       toast({
         title: "❌ Backend Unavailable",
-        description: "Will use local agent intelligence",
+        description: "Check if your HuggingFace Space is running. Will use local agent intelligence.",
         variant: "destructive",
       });
     }

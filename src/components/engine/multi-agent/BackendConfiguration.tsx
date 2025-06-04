@@ -41,7 +41,7 @@ const BackendConfiguration = ({
             onClick={setLocalUrl} 
             size="sm" 
             variant="outline"
-            className="border-slate-500 text-white"
+            className="border-slate-500 text-white hover:bg-slate-600"
           >
             💻 Local Development
           </Button>
@@ -55,7 +55,7 @@ const BackendConfiguration = ({
               placeholder="Backend endpoint URL"
               value={backendUrl}
               onChange={(e) => onBackendUrlChange(e.target.value)}
-              className="bg-slate-600 border-slate-500 text-white"
+              className="bg-slate-600 border-slate-500 text-white placeholder:text-gray-400"
             />
           </div>
           <div className="flex items-end">
@@ -71,7 +71,18 @@ const BackendConfiguration = ({
               🌍 CLOUD DEPLOYMENT
             </Badge>
             <span className="text-sm text-gray-400">
-              Accessible from anywhere!
+              Connected to HuggingFace Space - Accessible from anywhere!
+            </span>
+          </div>
+        )}
+
+        {backendUrl.includes('localhost') && (
+          <div className="flex items-center gap-2">
+            <Badge className="bg-blue-600 text-white">
+              💻 LOCAL DEVELOPMENT
+            </Badge>
+            <span className="text-sm text-gray-400">
+              Running on local machine
             </span>
           </div>
         )}
