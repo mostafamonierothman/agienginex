@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import BusinessPathsTracker from '../BusinessPathsTracker';
@@ -13,6 +12,7 @@ import APIChain from '../engine/APIChain';
 import EnhancedAGIEngine from '../engine/EnhancedAGIEngine';
 import OpenAIIntegration from '../engine/OpenAIIntegration';
 import MultiAgentDashboard from '../engine/MultiAgentDashboard';
+import AGITestButton from '../engine/multi-agent/AGITestButton';
 
 interface EngineState {
   timestamp: string;
@@ -68,8 +68,12 @@ const DashboardTabs = ({
   triggerTask
 }: DashboardTabsProps) => {
   return (
-    <Tabs defaultValue="enhanced-agi" className="w-full">
-      <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-8 bg-slate-800 h-auto gap-1 p-1">
+    <Tabs defaultValue="agi-test" className="w-full">
+      <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-9 bg-slate-800 h-auto gap-1 p-1">
+        <TabsTrigger value="agi-test" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
+          <span className="hidden sm:inline">🚀 AGI Test</span>
+          <span className="sm:hidden">🚀 Test</span>
+        </TabsTrigger>
         <TabsTrigger value="enhanced-agi" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
           <span className="hidden sm:inline">🧠 Enhanced AGI</span>
           <span className="sm:hidden">🧠 AGI</span>
@@ -103,6 +107,10 @@ const DashboardTabs = ({
           <span className="sm:hidden">💰 Business</span>
         </TabsTrigger>
       </TabsList>
+
+      <TabsContent value="agi-test">
+        <AGITestButton />
+      </TabsContent>
 
       <TabsContent value="enhanced-agi">
         <EnhancedAGIEngine />
