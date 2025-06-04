@@ -1,6 +1,6 @@
-
 import { vectorMemoryService } from './VectorMemoryService';
 import { fastAPIService } from './FastAPIService';
+import { openAIService } from './OpenAIService';
 import { toast } from '@/hooks/use-toast';
 import { Agent, AgentStats } from '@/types/AgentTypes';
 import { SupervisionCycle } from '@/supervision/SupervisionCycle';
@@ -15,10 +15,17 @@ class MultiAgentSupervisorService {
   async startSupervision(): Promise<void> {
     await this.supervisionCycle.start();
 
+    const backendStatus = this.getBackendStatus() ? 'with FastAPI backend' : 'locally';
+    const openAIStatus = openAIService.isAvailable() ? ' + OpenAI enhanced' : '';
+    
     toast({
       title: "🤖 Multi-Agent Supervisor V2 Activated",
-      description: `${this.getAgents().length} autonomous agents coordinating ${this.getBackendStatus() ? 'with FastAPI backend' : 'locally'}`,
+      description: `${this.getAgents().length} autonomous agents coordinating ${backendStatus}${openAIStatus}`,
     });
+  }
+
+  setOpenAIAvailable(available: boolean): void {
+    this.supervisionCycle.setOpenAIAvailable(available);
   }
 
   stopSupervision(): void {

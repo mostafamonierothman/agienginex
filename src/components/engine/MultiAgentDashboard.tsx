@@ -1,12 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { multiAgentSupervisor, Agent } from '@/services/MultiAgentSupervisor';
 import { fastAPIService } from '@/services/FastAPIService';
+import { openAIService } from '@/services/OpenAIService';
 import { toast } from '@/hooks/use-toast';
 import { useBackendPolling } from '@/hooks/useBackendPolling';
 import MultiAgentHeader from './multi-agent/MultiAgentHeader';
 import BackendConfiguration from './multi-agent/BackendConfiguration';
+import OpenAIConfiguration from './multi-agent/OpenAIConfiguration';
 import AgentStatsGrid from './multi-agent/AgentStatsGrid';
 import AgentStatusList from './multi-agent/AgentStatusList';
 import LiveBackendData from './multi-agent/LiveBackendData';
@@ -16,6 +17,7 @@ const MultiAgentDashboard = () => {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [backendUrl, setBackendUrl] = useState('https://othmanm-agienginex.hf.space');
   const [backendConnected, setBackendConnected] = useState(false);
+  const [openAIConnected, setOpenAIConnected] = useState(false);
   const [loopInterval, setLoopInterval] = useState(3000);
   const [stats, setStats] = useState({
     totalAgents: 0,
@@ -26,6 +28,12 @@ const MultiAgentDashboard = () => {
 
   // Use the new polling hook for live backend data
   const { backendData, isConnected, isPolling, refreshData } = useBackendPolling(isActive && backendConnected);
+
+  useEffect(() => {
+    // Load OpenAI configuration on startup
+    openAIService.loadApiKey();
+    setOpenAIConnected(openAIService.isAvailable());
+  }, []);
 
   useEffect(() => {
     if (isActive) {
@@ -41,19 +49,25 @@ const MultiAgentDashboard = () => {
 
   const startSupervision = async () => {
     console.log('Starting supervision with backend URL:', backendUrl);
+    console.log('OpenAI enhanced:', openAIConnected);
     
     // Update backend URL
     fastAPIService.setBaseUrl(backendUrl);
     multiAgentSupervisor.setBackendUrl(backendUrl);
+
+    // Set OpenAI availability for agents
+    multiAgentSupervisor.setOpenAIAvailable(openAIConnected);
 
     await multiAgentSupervisor.startSupervision();
     setIsActive(true);
     
     const deploymentType = backendUrl.includes('hf.space') ? 'HuggingFace Cloud' : 
                           backendUrl.includes('huggingface.co') ? 'HuggingFace Alternative' : 'backend';
+    const aiEnhancement = openAIConnected ? ' + OpenAI Enhanced' : '';
+    
     toast({
       title: "🤖 Multi-Agent System V2 Activated",
-      description: `Autonomous agents coordinating with ${deploymentType}`,
+      description: `Autonomous agents coordinating with ${deploymentType}${aiEnhancement}`,
     });
   };
 
@@ -107,6 +121,10 @@ const MultiAgentDashboard = () => {
             backendUrl={backendUrl}
             onBackendUrlChange={setBackendUrl}
             onTestConnection={testBackendConnection}
+          />
+
+          <OpenAIConfiguration
+            onConnectionChange={setOpenAIConnected}
           />
 
           <AgentStatsGrid stats={stats} loopInterval={loopInterval} />

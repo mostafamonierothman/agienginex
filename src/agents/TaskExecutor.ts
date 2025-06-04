@@ -1,6 +1,6 @@
-
 import { Agent, TaskResult } from '@/types/AgentTypes';
 import { fastAPIService } from '@/services/FastAPIService';
+import { openAIService } from '@/services/OpenAIService';
 import { vectorMemoryService } from '@/services/VectorMemoryService';
 
 export class TaskExecutor {
@@ -12,8 +12,10 @@ export class TaskExecutor {
 
     let results: TaskResult;
     
-    // Use backend for specific agents if connected
-    if (agent.useBackend) {
+    // Priority: OpenAI > Backend > Local
+    if (openAIService.isAvailable()) {
+      results = await this.executeOpenAITask(agent);
+    } else if (agent.useBackend) {
       results = await this.executeBackendTask(agent);
     } else {
       results = this.generateLocalAgentResult(agent);
@@ -37,6 +39,37 @@ export class TaskExecutor {
       agent.status = 'idle';
       agent.currentTask = undefined;
     }, 2000);
+  }
+
+  private static async executeOpenAITask(agent: Agent): Promise<TaskResult> {
+    try {
+      let action: string;
+      
+      if (agent.id === 'opportunity-detector') {
+        action = await openAIService.generateOpportunity();
+      } else {
+        action = await openAIService.generateAgentDecision(
+          agent.name,
+          agent.currentTask || 'Execute assigned task',
+          `Role: ${agent.role}, Performance: ${agent.performance}%`
+        );
+      }
+
+      console.log(`🧠 OPENAI AGENT ${agent.name} → ${action}`);
+      
+      return {
+        action: `[AI] ${action}`,
+        importance: 0.95 // OpenAI results have highest importance
+      };
+    } catch (error) {
+      console.error(`OpenAI task failed for ${agent.name}:`, error);
+      // Fallback to backend or local
+      if (agent.useBackend) {
+        return await this.executeBackendTask(agent);
+      } else {
+        return this.generateLocalAgentResult(agent);
+      }
+    }
   }
 
   private static async executeBackendTask(agent: Agent): Promise<TaskResult> {

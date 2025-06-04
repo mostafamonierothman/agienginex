@@ -1,14 +1,15 @@
-
 import { Agent } from '@/types/AgentTypes';
 import { AgentFactory } from '@/agents/AgentFactory';
 import { TaskExecutor } from '@/agents/TaskExecutor';
 import { fastAPIService } from '@/services/FastAPIService';
+import { openAIService } from '@/services/OpenAIService';
 
 export class SupervisionCycle {
   private agents: Map<string, Agent>;
   private isRunning = false;
   private supervisionInterval: NodeJS.Timeout | null = null;
   private backendConnected = false;
+  private openAIAvailable = false;
   private dynamicLoopInterval = 3000;
 
   constructor() {
@@ -19,10 +20,17 @@ export class SupervisionCycle {
     // Check FastAPI backend connection
     this.backendConnected = await fastAPIService.checkStatus();
     
+    // Check OpenAI availability
+    this.openAIAvailable = openAIService.isAvailable();
+    
     if (this.backendConnected) {
       // Get dynamic loop interval from backend
       this.dynamicLoopInterval = (await fastAPIService.getLoopInterval()) * 1000;
       console.log(`🔗 FASTAPI BACKEND CONNECTED → Loop interval: ${this.dynamicLoopInterval}ms`);
+    }
+
+    if (this.openAIAvailable) {
+      console.log(`🧠 OPENAI ENHANCED → AI intelligence enabled`);
     }
 
     // Initialize core agents
@@ -33,7 +41,11 @@ export class SupervisionCycle {
     });
 
     console.log('🤖 MULTI-AGENT SUPERVISOR V2 → INITIALIZED');
-    console.log(`👥 AGENTS DEPLOYED: ${this.agents.size} (Backend: ${this.backendConnected ? 'CONNECTED' : 'LOCAL'})`);
+    console.log(`👥 AGENTS DEPLOYED: ${this.agents.size} (Backend: ${this.backendConnected ? 'CONNECTED' : 'LOCAL'}, OpenAI: ${this.openAIAvailable ? 'ENHANCED' : 'LOCAL'})`);
+  }
+
+  setOpenAIAvailable(available: boolean): void {
+    this.openAIAvailable = available;
   }
 
   async start(): Promise<void> {
