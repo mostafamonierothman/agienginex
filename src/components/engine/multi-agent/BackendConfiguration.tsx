@@ -20,6 +20,10 @@ const BackendConfiguration = ({
     onBackendUrlChange('https://othmanm-agienginex.hf.space');
   };
 
+  const setAlternativeHuggingFaceUrl = () => {
+    onBackendUrlChange('https://huggingface.co/spaces/othmanm/AGIengineX');
+  };
+
   const setLocalUrl = () => {
     onBackendUrlChange('http://localhost:8000');
   };
@@ -35,7 +39,14 @@ const BackendConfiguration = ({
             size="sm" 
             className="bg-orange-600 hover:bg-orange-700"
           >
-            🤗 HuggingFace Cloud
+            🤗 HF Space Direct
+          </Button>
+          <Button 
+            onClick={setAlternativeHuggingFaceUrl} 
+            size="sm" 
+            className="bg-orange-500 hover:bg-orange-600"
+          >
+            🤗 HF Space Alt
           </Button>
           <Button 
             onClick={setLocalUrl} 
@@ -71,7 +82,18 @@ const BackendConfiguration = ({
               🌍 CLOUD DEPLOYMENT
             </Badge>
             <span className="text-sm text-gray-400">
-              Connected to HuggingFace Space - Accessible from anywhere!
+              HuggingFace Space - Check if space is running
+            </span>
+          </div>
+        )}
+
+        {backendUrl.includes('huggingface.co') && (
+          <div className="flex items-center gap-2">
+            <Badge className="bg-orange-500 text-white">
+              🌍 HF ALTERNATIVE
+            </Badge>
+            <span className="text-sm text-gray-400">
+              Alternative HuggingFace URL format
             </span>
           </div>
         )}

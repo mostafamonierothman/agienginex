@@ -49,7 +49,8 @@ const MultiAgentDashboard = () => {
     await multiAgentSupervisor.startSupervision();
     setIsActive(true);
     
-    const deploymentType = backendUrl.includes('hf.space') ? 'HuggingFace Cloud' : 'backend';
+    const deploymentType = backendUrl.includes('hf.space') ? 'HuggingFace Cloud' : 
+                          backendUrl.includes('huggingface.co') ? 'HuggingFace Alternative' : 'backend';
     toast({
       title: "🤖 Multi-Agent System V2 Activated",
       description: `Autonomous agents coordinating with ${deploymentType}`,
@@ -69,15 +70,23 @@ const MultiAgentDashboard = () => {
     setBackendConnected(connected);
     
     if (connected) {
-      const deploymentType = backendUrl.includes('hf.space') ? 'HuggingFace Cloud' : 'Local';
+      const deploymentType = backendUrl.includes('hf.space') ? 'HuggingFace Cloud' : 
+                            backendUrl.includes('huggingface.co') ? 'HuggingFace Alternative' : 'Local';
       toast({
         title: "✅ Backend Connected",
         description: `${deploymentType} backend is responding - Live data enabled!`,
       });
     } else {
+      let errorMessage = "Will use local agent intelligence.";
+      if (backendUrl.includes('hf.space')) {
+        errorMessage = "HuggingFace Space may be sleeping or not deployed. Try the alternative URL or check your space status.";
+      } else if (backendUrl.includes('localhost')) {
+        errorMessage = "Make sure your local FastAPI server is running on port 8000.";
+      }
+      
       toast({
         title: "❌ Backend Unavailable",
-        description: "Check if your HuggingFace Space is running. Will use local agent intelligence.",
+        description: errorMessage,
         variant: "destructive",
       });
     }
