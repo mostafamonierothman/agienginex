@@ -15,7 +15,7 @@ import LiveBackendData from './multi-agent/LiveBackendData';
 const MultiAgentDashboard = () => {
   const [isActive, setIsActive] = useState(false);
   const [agents, setAgents] = useState<Agent[]>([]);
-  const [backendUrl, setBackendUrl] = useState('https://othmanm-agienginex.hf.space');
+  const [backendUrl, setBackendUrl] = useState('https://agienginex.onrender.com');
   const [backendConnected, setBackendConnected] = useState(false);
   const [openAIConnected, setOpenAIConnected] = useState(false);
   const [loopInterval, setLoopInterval] = useState(3000);
@@ -61,7 +61,8 @@ const MultiAgentDashboard = () => {
     await multiAgentSupervisor.startSupervision();
     setIsActive(true);
     
-    const deploymentType = backendUrl.includes('hf.space') ? 'HuggingFace Cloud' : 
+    const deploymentType = backendUrl.includes('onrender.com') ? 'Render Production' :
+                          backendUrl.includes('hf.space') ? 'HuggingFace Cloud' : 
                           backendUrl.includes('huggingface.co') ? 'HuggingFace Alternative' : 'backend';
     const aiEnhancement = openAIConnected ? ' + OpenAI Enhanced' : '';
     
@@ -84,7 +85,8 @@ const MultiAgentDashboard = () => {
     setBackendConnected(connected);
     
     if (connected) {
-      const deploymentType = backendUrl.includes('hf.space') ? 'HuggingFace Cloud' : 
+      const deploymentType = backendUrl.includes('onrender.com') ? 'Render Production' :
+                            backendUrl.includes('hf.space') ? 'HuggingFace Cloud' : 
                             backendUrl.includes('huggingface.co') ? 'HuggingFace Alternative' : 'Local';
       toast({
         title: "✅ Backend Connected",
@@ -92,7 +94,9 @@ const MultiAgentDashboard = () => {
       });
     } else {
       let errorMessage = "Will use local agent intelligence.";
-      if (backendUrl.includes('hf.space')) {
+      if (backendUrl.includes('onrender.com')) {
+        errorMessage = "Render deployment may be starting up. Try again in a moment.";
+      } else if (backendUrl.includes('hf.space')) {
         errorMessage = "HuggingFace Space may be sleeping or not deployed. Try the alternative URL or check your space status.";
       } else if (backendUrl.includes('localhost')) {
         errorMessage = "Make sure your local FastAPI server is running on port 8000.";

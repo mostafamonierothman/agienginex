@@ -16,6 +16,10 @@ const BackendConfiguration = ({
   onBackendUrlChange, 
   onTestConnection 
 }: BackendConfigurationProps) => {
+  const setRenderUrl = () => {
+    onBackendUrlChange('https://agienginex.onrender.com');
+  };
+
   const setHuggingFaceUrl = () => {
     onBackendUrlChange('https://othmanm-agienginex.hf.space');
   };
@@ -34,6 +38,13 @@ const BackendConfiguration = ({
       
       <div className="space-y-3">
         <div className="flex flex-wrap gap-2">
+          <Button 
+            onClick={setRenderUrl} 
+            size="sm" 
+            className="bg-green-600 hover:bg-green-700"
+          >
+            🚀 Render (LIVE)
+          </Button>
           <Button 
             onClick={setHuggingFaceUrl} 
             size="sm" 
@@ -75,6 +86,17 @@ const BackendConfiguration = ({
             </Button>
           </div>
         </div>
+
+        {backendUrl.includes('onrender.com') && (
+          <div className="flex items-center gap-2">
+            <Badge className="bg-green-600 text-white">
+              🚀 RENDER DEPLOYMENT
+            </Badge>
+            <span className="text-sm text-gray-400">
+              Production deployment - Always available
+            </span>
+          </div>
+        )}
 
         {backendUrl.includes('hf.space') && (
           <div className="flex items-center gap-2">
