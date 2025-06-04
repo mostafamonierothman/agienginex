@@ -11,6 +11,7 @@ import OpenAIConfiguration from './multi-agent/OpenAIConfiguration';
 import AgentStatsGrid from './multi-agent/AgentStatsGrid';
 import AgentStatusList from './multi-agent/AgentStatusList';
 import LiveBackendData from './multi-agent/LiveBackendData';
+import DynamicAgentRunner from './multi-agent/DynamicAgentRunner';
 
 const MultiAgentDashboard = () => {
   const [isActive, setIsActive] = useState(false);
@@ -134,6 +135,8 @@ const MultiAgentDashboard = () => {
           <AgentStatsGrid stats={stats} loopInterval={loopInterval} />
         </CardContent>
       </Card>
+
+      <DynamicAgentRunner />
 
       {isActive && backendData && (
         <LiveBackendData
