@@ -13,6 +13,7 @@ import EnhancedAGIEngine from '../engine/EnhancedAGIEngine';
 import OpenAIIntegration from '../engine/OpenAIIntegration';
 import MultiAgentDashboard from '../engine/MultiAgentDashboard';
 import AGITestButton from '../engine/multi-agent/AGITestButton';
+import AGIDashboard from '../engine/AGIDashboard';
 
 interface EngineState {
   timestamp: string;
@@ -68,8 +69,12 @@ const DashboardTabs = ({
   triggerTask
 }: DashboardTabsProps) => {
   return (
-    <Tabs defaultValue="agi-test" className="w-full">
-      <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-9 bg-slate-800 h-auto gap-1 p-1">
+    <Tabs defaultValue="agi-dashboard" className="w-full">
+      <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-10 bg-slate-800 h-auto gap-1 p-1">
+        <TabsTrigger value="agi-dashboard" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
+          <span className="hidden sm:inline">🎯 AGI Dashboard</span>
+          <span className="sm:hidden">🎯 AGI</span>
+        </TabsTrigger>
         <TabsTrigger value="agi-test" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
           <span className="hidden sm:inline">🚀 AGI Test</span>
           <span className="sm:hidden">🚀 Test</span>
@@ -107,6 +112,10 @@ const DashboardTabs = ({
           <span className="sm:hidden">💰 Business</span>
         </TabsTrigger>
       </TabsList>
+
+      <TabsContent value="agi-dashboard">
+        <AGIDashboard />
+      </TabsContent>
 
       <TabsContent value="agi-test">
         <AGITestButton />
