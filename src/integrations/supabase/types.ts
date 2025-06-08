@@ -9,6 +9,60 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      agent_memory: {
+        Row: {
+          agent_name: string | null
+          id: string
+          memory_key: string | null
+          memory_value: string | null
+          timestamp: string | null
+          user_id: string | null
+        }
+        Insert: {
+          agent_name?: string | null
+          id?: string
+          memory_key?: string | null
+          memory_value?: string | null
+          timestamp?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          agent_name?: string | null
+          id?: string
+          memory_key?: string | null
+          memory_value?: string | null
+          timestamp?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      agi_goals_enhanced: {
+        Row: {
+          goal_id: number
+          goal_text: string | null
+          priority: number | null
+          progress_percentage: number | null
+          status: string | null
+          timestamp: string | null
+        }
+        Insert: {
+          goal_id?: number
+          goal_text?: string | null
+          priority?: number | null
+          progress_percentage?: number | null
+          status?: string | null
+          timestamp?: string | null
+        }
+        Update: {
+          goal_id?: number
+          goal_text?: string | null
+          priority?: number | null
+          progress_percentage?: number | null
+          status?: string | null
+          timestamp?: string | null
+        }
+        Relationships: []
+      }
       cv_files: {
         Row: {
           content_type: string | null
@@ -54,6 +108,39 @@ export type Database = {
           id?: string
           name?: string
           value?: string
+        }
+        Relationships: []
+      }
+      supervisor_queue: {
+        Row: {
+          action: string | null
+          agent_name: string | null
+          id: string
+          input: string | null
+          output: string | null
+          status: string | null
+          timestamp: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action?: string | null
+          agent_name?: string | null
+          id?: string
+          input?: string | null
+          output?: string | null
+          status?: string | null
+          timestamp?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string | null
+          agent_name?: string | null
+          id?: string
+          input?: string | null
+          output?: string | null
+          status?: string | null
+          timestamp?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
