@@ -52,7 +52,7 @@ export class EnhancedMetaAgent {
             return acc;
         }, {});
 
-        const totalAgents = Object.keys(agentStats).length;
+        const totalAgents = Number(Object.keys(agentStats).length);
         const avgSuccessRate = totalAgents > 0 
             ? Object.values(agentStats).reduce((sum: number, stats: any) => {
                 const total = Number(stats.total) || 1;
