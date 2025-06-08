@@ -1,14 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Brain, Play, Square, RefreshCw, Zap, Activity, Clock } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { agiApiClient } from '@/services/AGIApiClient';
 import { autonomousLoop } from '@/loops/AutonomousLoop';
 import { parallelFarm } from '@/loops/ParallelFarm';
 import { toast } from '@/hooks/use-toast';
+import AGIV4DashboardHeader from './v4/AGIV4DashboardHeader';
+import AGIV4SystemMetrics from './v4/AGIV4SystemMetrics';
+import AGIV4ControlPanel from './v4/AGIV4ControlPanel';
+import AGIV4AgentGrid from './v4/AGIV4AgentGrid';
+import AGIV4SystemMessages from './v4/AGIV4SystemMessages';
 
 const AGIV4Dashboard = () => {
   const [agents, setAgents] = useState([]);
@@ -195,201 +196,40 @@ const AGIV4Dashboard = () => {
     return () => clearInterval(statusInterval);
   }, []);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'running': return 'bg-emerald-500 text-white border-emerald-500';
-      case 'active': return 'bg-blue-500 text-white border-blue-500';
-      case 'error': return 'bg-red-500 text-white border-red-500';
-      default: return 'bg-slate-500 text-white border-slate-500';
-    }
-  };
-
-  const getAgentTypeColor = (type: string) => {
-    switch (type) {
-      case 'Core': return 'text-cyan-400 border-cyan-400';
-      case 'Research': return 'text-blue-400 border-blue-400';
-      case 'Learning': return 'text-green-400 border-green-400';
-      case 'Factory': return 'text-yellow-400 border-yellow-400';
-      case 'Critic': return 'text-red-400 border-red-400';
-      case 'LLM': return 'text-purple-400 border-purple-400';
-      case 'Coordination': return 'text-orange-400 border-orange-400';
-      case 'Memory': return 'text-pink-400 border-pink-400';
-      case 'Strategic': return 'text-indigo-400 border-indigo-400';
-      case 'Opportunity': return 'text-teal-400 border-teal-400';
-      case 'Evolution': return 'text-violet-400 border-violet-400';
-      case 'Collaboration': return 'text-rose-400 border-rose-400';
-      default: return 'text-gray-400 border-gray-400';
-    }
-  };
-
   return (
     <div className="space-y-6">
       <Card className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 border-slate-600/50 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white text-xl">
-            <Brain className="h-6 w-6 text-cyan-400" />
-            AGI V4 Autonomous System Dashboard
-          </CardTitle>
-          <CardDescription className="text-slate-300 text-base">
-            Complete AGI V4 system with {agents.length} active agents running
-          </CardDescription>
-        </CardHeader>
+        <AGIV4DashboardHeader agentCount={agents.length} />
         <CardContent className="space-y-6">
-          {/* System Status */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-slate-700/50 p-4 rounded-lg border border-slate-500/30">
-              <div className="flex items-center gap-2 mb-2">
-                <Activity className="h-5 w-5 text-emerald-400" />
-                <span className="text-slate-200 text-sm font-medium">System Status</span>
-              </div>
-              <Badge className={systemRunning ? 'bg-emerald-500 text-white text-sm px-3 py-1' : 'bg-red-500 text-white text-sm px-3 py-1'}>
-                {systemRunning ? 'AUTONOMOUS' : 'MANUAL'}
-              </Badge>
-            </div>
-            
-            <div className="bg-slate-700/50 p-4 rounded-lg border border-slate-500/30">
-              <div className="flex items-center gap-2 mb-2">
-                <Brain className="h-5 w-5 text-cyan-400" />
-                <span className="text-slate-200 text-sm font-medium">Active Agents</span>
-              </div>
-              <span className="text-white font-bold text-2xl">{agents.length}</span>
-            </div>
-            
-            <div className="bg-slate-700/50 p-4 rounded-lg border border-slate-500/30">
-              <div className="flex items-center gap-2 mb-2">
-                <Clock className="h-5 w-5 text-amber-400" />
-                <span className="text-slate-200 text-sm font-medium">Total Cycles</span>
-              </div>
-              <span className="text-white font-bold text-2xl">{totalCycles}</span>
-            </div>
-            
-            <div className="bg-slate-700/50 p-4 rounded-lg border border-slate-500/30">
-              <div className="flex items-center gap-2 mb-2">
-                <Zap className="h-5 w-5 text-violet-400" />
-                <span className="text-slate-200 text-sm font-medium">System Health</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Progress value={systemHealth} className="flex-1 h-3" />
-                <span className="text-white text-sm font-medium">{systemHealth.toFixed(0)}%</span>
-              </div>
-            </div>
-          </div>
+          <AGIV4SystemMetrics
+            systemRunning={systemRunning}
+            agentCount={agents.length}
+            totalCycles={totalCycles}
+            systemHealth={systemHealth}
+          />
 
-          {/* Control Panel */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-            <Button
-              onClick={runAllAgents}
-              disabled={loading}
-              className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-medium py-3"
-            >
-              <Zap className="h-4 w-4 mr-2" />
-              Run All {agents.length} Agents
-            </Button>
-            
-            <Button
-              onClick={startAutonomousSystem}
-              disabled={systemRunning || loading}
-              className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-medium py-3"
-            >
-              <Play className="h-4 w-4 mr-2" />
-              Start Autonomous
-            </Button>
-            
-            <Button
-              onClick={startParallelFarm}
-              disabled={parallelRunning || loading}
-              className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white font-medium py-3"
-            >
-              <Activity className="h-4 w-4 mr-2" />
-              Start Parallel Farm
-            </Button>
-            
-            <Button
-              onClick={stopAutonomousSystem}
-              disabled={!systemRunning && !parallelRunning}
-              variant="destructive"
-              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 font-medium py-3"
-            >
-              <Square className="h-4 w-4 mr-2" />
-              Stop All
-            </Button>
-          </div>
+          <AGIV4ControlPanel
+            agentCount={agents.length}
+            loading={loading}
+            systemRunning={systemRunning}
+            parallelRunning={parallelRunning}
+            runAllAgents={runAllAgents}
+            startAutonomousSystem={startAutonomousSystem}
+            startParallelFarm={startParallelFarm}
+            stopAutonomousSystem={stopAutonomousSystem}
+          />
 
-          {/* Agent Grid */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-white font-semibold text-lg">All Agents ({agents.length})</h3>
-              <Button
-                onClick={fetchAgents}
-                disabled={loading}
-                variant="outline"
-                size="sm"
-                className="border-slate-500 text-slate-200 hover:bg-slate-700 hover:text-white"
-              >
-                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                Refresh
-              </Button>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {agents.map((agent, index) => (
-                <div key={index} className="bg-slate-700/60 p-4 rounded-lg border border-slate-500/40 hover:bg-slate-700/80 transition-colors">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-white font-medium text-sm truncate">{agent.name}</span>
-                    <Badge 
-                      variant="outline" 
-                      className={`${getStatusColor(agent.status)} text-xs font-medium`}
-                    >
-                      {agent.status.toUpperCase()}
-                    </Badge>
-                  </div>
-                  
-                  <div className="mb-2">
-                    <Badge 
-                      variant="outline" 
-                      className={`${getAgentTypeColor(agent.type)} text-xs font-medium mb-2`}
-                    >
-                      {agent.type}
-                    </Badge>
-                  </div>
-                  
-                  <div className="text-xs text-slate-300 mb-3">{agent.description}</div>
-                  
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1">
-                      <Progress value={agent.performance} className="h-2" />
-                    </div>
-                    <span className="text-xs text-slate-200 font-medium">{agent.performance}%</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <AGIV4AgentGrid
+            agents={agents}
+            loading={loading}
+            fetchAgents={fetchAgents}
+          />
 
-          {/* System Messages */}
-          {systemRunning && (
-            <div className="bg-emerald-900/30 border border-emerald-500/50 p-4 rounded-lg">
-              <div className="flex items-center gap-2 text-emerald-300">
-                <Activity className="h-5 w-5 animate-pulse" />
-                <span className="font-medium text-base">AGI V4 System Running Autonomously</span>
-              </div>
-              <p className="text-slate-200 text-sm mt-2">
-                All {agents.length} agents are executing in autonomous mode. The system will continuously run and evolve.
-              </p>
-            </div>
-          )}
-          
-          {parallelRunning && (
-            <div className="bg-violet-900/30 border border-violet-500/50 p-4 rounded-lg">
-              <div className="flex items-center gap-2 text-violet-300">
-                <Zap className="h-5 w-5 animate-pulse" />
-                <span className="font-medium text-base">Parallel Farm Active</span>
-              </div>
-              <p className="text-slate-200 text-sm mt-2">
-                {agents.length} agents are running in parallel farm mode for maximum efficiency and throughput.
-              </p>
-            </div>
-          )}
+          <AGIV4SystemMessages
+            systemRunning={systemRunning}
+            parallelRunning={parallelRunning}
+            agentCount={agents.length}
+          />
         </CardContent>
       </Card>
     </div>
