@@ -22,14 +22,16 @@ const KPIWidget = ({ label, value, icon, color = 'blue' }: KPIWidgetProps) => {
 
   return (
     <Card className="bg-slate-800/50 border-slate-600/30">
-      <CardContent className="p-4">
+      <CardContent className="p-3 md:p-4">
         <div className="flex items-center justify-between">
-          <div>
-            <div className="text-gray-400 text-sm">{label}</div>
-            <div className={`text-2xl font-bold ${getColorClasses(color)}`}>{value}</div>
+          <div className="min-w-0 flex-1">
+            <div className="text-gray-400 text-xs md:text-sm truncate">{label}</div>
+            <div className={`text-lg md:text-2xl font-bold ${getColorClasses(color)} truncate`}>
+              {value}
+            </div>
           </div>
           {icon && (
-            <div className={`${getColorClasses(color)}`}>
+            <div className={`${getColorClasses(color)} ml-2 flex-shrink-0`}>
               {icon}
             </div>
           )}

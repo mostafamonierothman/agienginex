@@ -65,62 +65,62 @@ const DashboardPage = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-white">AGI V5 Dashboard</h1>
-        <Badge variant="outline" className="text-green-400 border-green-400">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h1 className="text-2xl md:text-3xl font-bold text-white">AGI V5 Dashboard</h1>
+        <Badge variant="outline" className="text-green-400 border-green-400 self-start sm:self-auto">
           {systemStatus}
         </Badge>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <KPIWidget 
           label="System Status" 
           value={systemStatus} 
-          icon={<Activity className="h-5 w-5" />}
+          icon={<Activity className="h-4 w-4 md:h-5 md:w-5" />}
           color="green"
         />
         <KPIWidget 
           label="Cycles" 
           value={kpis.cycles} 
-          icon={<Brain className="h-5 w-5" />}
+          icon={<Brain className="h-4 w-4 md:h-5 md:w-5" />}
           color="blue"
         />
         <KPIWidget 
           label="Active Agents" 
           value={kpis.activeAgents} 
-          icon={<Zap className="h-5 w-5" />}
+          icon={<Zap className="h-4 w-4 md:h-5 md:w-5" />}
           color="purple"
         />
         <KPIWidget 
           label="Projects Completed" 
           value={kpis.projectsCompleted} 
-          icon={<TrendingUp className="h-5 w-5" />}
+          icon={<TrendingUp className="h-4 w-4 md:h-5 md:w-5" />}
           color="cyan"
         />
       </div>
 
       <Card className="bg-slate-800/50 border-slate-600/30">
-        <CardHeader>
-          <CardTitle className="text-white">System Controls</CardTitle>
+        <CardHeader className="pb-3 md:pb-6">
+          <CardTitle className="text-white text-lg md:text-xl">System Controls</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex space-x-4">
+          <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
             <Button
               onClick={startAutonomous}
-              className="bg-green-600 hover:bg-green-700 text-white"
+              className="bg-green-600 hover:bg-green-700 text-white h-11 md:h-10 text-sm md:text-base"
             >
               Start Autonomous
             </Button>
             <Button
               onClick={startParallelFarm}
-              className="bg-yellow-600 hover:bg-yellow-700 text-white"
+              className="bg-yellow-600 hover:bg-yellow-700 text-white h-11 md:h-10 text-sm md:text-base"
             >
               Start Parallel Farm
             </Button>
             <Button
               onClick={stopAll}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-red-600 hover:bg-red-700 text-white h-11 md:h-10 text-sm md:text-base"
             >
               Stop All
             </Button>
@@ -129,15 +129,15 @@ const DashboardPage = () => {
       </Card>
 
       <Card className="bg-slate-800/50 border-slate-600/30">
-        <CardHeader>
-          <CardTitle className="text-white">Recent Activity</CardTitle>
+        <CardHeader className="pb-3 md:pb-6">
+          <CardTitle className="text-white text-lg md:text-xl">Recent Activity</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
-            <div className="text-sm text-green-400">✅ SupervisorAgent: System monitoring active</div>
-            <div className="text-sm text-blue-400">🔍 ResearchAgent: Scanning external sources</div>
-            <div className="text-sm text-purple-400">🧠 LearningAgentV2: Adapting strategies</div>
-            <div className="text-sm text-cyan-400">🌐 BrowserAgent: Web scraping complete</div>
+          <div className="space-y-2 md:space-y-3">
+            <div className="text-sm md:text-base text-green-400">✅ SupervisorAgent: System monitoring active</div>
+            <div className="text-sm md:text-base text-blue-400">🔍 ResearchAgent: Scanning external sources</div>
+            <div className="text-sm md:text-base text-purple-400">🧠 LearningAgentV2: Adapting strategies</div>
+            <div className="text-sm md:text-base text-cyan-400">🌐 BrowserAgent: Web scraping complete</div>
           </div>
         </CardContent>
       </Card>
