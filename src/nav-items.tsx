@@ -1,3 +1,4 @@
+
 export const navItems = [
   {
     title: "AGI Engine",
@@ -9,6 +10,12 @@ export const navItems = [
     title: "AGI V4",
     to: "/agi-v4",
     icon: "zap",
+    variant: "default" as const,
+  },
+  {
+    title: "AGI V5",
+    to: "/agi-v5",
+    icon: "crown",
     variant: "default" as const,
   },
   {
