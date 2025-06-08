@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,11 +14,23 @@ const AGIV4Controls = () => {
   const [coordinationLevel, setCoordinationLevel] = useState([75]);
   const [lastActivity, setLastActivity] = useState<string>('');
   const [systemHealth, setSystemHealth] = useState(95);
-  const [activeAgentCount, setActiveAgentCount] = useState(0);
+  const [activeAgentCount, setActiveAgentCount] = useState(12); // Updated to show real count
   const [openAIEnabled, setOpenAIEnabled] = useState(false);
+
+  // Core agents list - matches the dashboard
+  const getCoreAgentCount = () => {
+    const coreAgents = [
+      'SupervisorAgent', 'ResearchAgent', 'LearningAgentV2', 'FactoryAgent',
+      'CriticAgent', 'LLMAgent', 'CoordinationAgent', 'MemoryAgent',
+      'StrategicAgent', 'OpportunityAgent', 'EvolutionAgent', 'CollaborationAgent'
+    ];
+    return coreAgents.length;
+  };
 
   useEffect(() => {
     checkOpenAIStatus();
+    setActiveAgentCount(getCoreAgentCount()); // Set to actual core agent count
+    
     if (isV4Active) {
       const interval = setInterval(updateSystemStatus, 5000);
       startAutonomousLoop();
@@ -52,7 +63,8 @@ const AGIV4Controls = () => {
       }
 
       setSystemHealth(90 + Math.random() * 10);
-      setActiveAgentCount(Math.floor(Math.random() * 6) + 1);
+      // Keep agent count consistent with actual agents
+      setActiveAgentCount(getCoreAgentCount());
 
     } catch (error) {
       console.error('Error updating system status:', error);
@@ -64,7 +76,11 @@ const AGIV4Controls = () => {
 
     console.log('🚀 V4 Autonomous loop starting...');
     
-    const agents = ['next_move_agent', 'opportunity_agent', 'learning_agent', 'coordination_agent', 'memory_agent', 'critic_agent'];
+    const agents = [
+      'SupervisorAgent', 'ResearchAgent', 'LearningAgentV2', 'FactoryAgent',
+      'CriticAgent', 'LLMAgent', 'CoordinationAgent', 'MemoryAgent',
+      'StrategicAgent', 'OpportunityAgent', 'EvolutionAgent', 'CollaborationAgent'
+    ];
     const randomAgent = agents[Math.floor(Math.random() * agents.length)];
 
     try {
@@ -133,7 +149,7 @@ const AGIV4Controls = () => {
       await supabase.functions.invoke('agi-v4-core/run_agent', {
         method: 'POST',
         body: {
-          agent_name: 'critic_agent',
+          agent_name: 'CriticAgent',
           input: 'emergency_evaluation',
           user_id: 'emergency_system',
           context: { protocol: 'emergency' }
@@ -178,7 +194,7 @@ const AGIV4Controls = () => {
           <div className="bg-blue-900/20 p-3 rounded border border-blue-500/30">
             <h4 className="text-blue-400 text-sm font-medium mb-2">🧠 OpenAI Enhanced Intelligence</h4>
             <p className="text-gray-300 text-xs">
-              All 6 V4 agents are now powered by GPT-4 for real strategic thinking, opportunity detection, and learning insights.
+              All {activeAgentCount} V4 agents are now powered by GPT-4 for real strategic thinking, opportunity detection, and learning insights.
             </p>
           </div>
         )}
@@ -259,7 +275,7 @@ const AGIV4Controls = () => {
             disabled={!isV4Active}
             className="w-full bg-orange-600 hover:bg-orange-700 disabled:opacity-50"
           >
-            <Zap className="w-4 h-4 mr-2" />
+            <Zap className="w-4 w-4 mr-2" />
             🚨 Emergency Protocol
           </Button>
         </div>
@@ -276,7 +292,7 @@ const AGIV4Controls = () => {
         <div className="grid grid-cols-2 gap-2 text-xs">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-            <span className="text-gray-400">Agent Registry</span>
+            <span className="text-gray-400">Agent Registry ({activeAgentCount})</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-green-400 rounded-full"></div>
