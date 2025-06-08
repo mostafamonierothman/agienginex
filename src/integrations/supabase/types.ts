@@ -63,6 +63,27 @@ export type Database = {
         }
         Relationships: []
       }
+      agi_state: {
+        Row: {
+          id: string
+          key: string
+          state: Json
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          key: string
+          state: Json
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          key?: string
+          state?: Json
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       cv_files: {
         Row: {
           content_type: string | null

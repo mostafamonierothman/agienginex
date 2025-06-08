@@ -3,240 +3,223 @@ import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { supabase } from '@/integrations/supabase/client';
 
 export class EnhancedCollaborationAgent {
-    private collaborationNetwork: Map<string, Set<string>> = new Map();
-    private collaborationHistory: Array<{
-        from: string;
-        to: string;
-        task: string;
-        success: boolean;
-        timestamp: string;
+    private collaborationSessions: Array<{
+        id: string;
+        participants: string[];
+        topic: string;
+        status: 'active' | 'completed';
+        messages: Array<{
+            agent: string;
+            message: string;
+            timestamp: string;
+        }>;
+        created: string;
     }> = [];
 
-    async analyzeCollaborationPatterns(): Promise<any> {
+    async initiateCollaboration(topic: string, participants: string[]): Promise<string> {
+        const sessionId = `collab_${Date.now()}`;
+        
+        const session = {
+            id: sessionId,
+            participants,
+            topic,
+            status: 'active' as const,
+            messages: [],
+            created: new Date().toISOString()
+        };
+
+        this.collaborationSessions.push(session);
+        
+        console.log(`[EnhancedCollaborationAgent] Started collaboration on "${topic}" with ${participants.length} agents`);
+        return sessionId;
+    }
+
+    async addMessage(sessionId: string, agent: string, message: string): Promise<void> {
+        const session = this.collaborationSessions.find(s => s.id === sessionId);
+        if (session) {
+            session.messages.push({
+                agent,
+                message,
+                timestamp: new Date().toISOString()
+            });
+        }
+    }
+
+    async coordinateAgentHandoff(fromAgent: string, toAgent: string, context: any): Promise<{
+        success: boolean;
+        handoffData: any;
+        recommendations: string[];
+    }> {
         try {
-            // Get recent collaboration data
-            const { data: recentActivity } = await supabase
-                .from('supervisor_queue')
-                .select('*')
-                .order('timestamp', { ascending: false })
-                .limit(200);
+            const handoffData = {
+                fromAgent,
+                toAgent,
+                context,
+                timestamp: new Date().toISOString(),
+                handoffId: `handoff_${Date.now()}`
+            };
 
-            const patterns = this.buildCollaborationNetwork(recentActivity || []);
-            const recommendations = this.generateCollaborationRecommendations(patterns);
-            const nextCollaboration = this.selectOptimalCollaboration(patterns);
+            const recommendations = this.generateHandoffRecommendations(fromAgent, toAgent, context);
 
+            // Store handoff in memory
+            await supabase
+                .from('agent_memory')
+                .insert({
+                    user_id: 'enhanced_collaboration_agent',
+                    agent_name: 'enhanced_collaboration_agent',
+                    memory_key: `handoff_${handoffData.handoffId}`,
+                    memory_value: JSON.stringify(handoffData),
+                    timestamp: new Date().toISOString()
+                });
+
+            console.log(`[EnhancedCollaborationAgent] Coordinated handoff: ${fromAgent} → ${toAgent}`);
+            
             return {
-                patterns,
-                recommendations,
-                nextCollaboration,
-                networkHealth: this.calculateNetworkHealth(patterns)
+                success: true,
+                handoffData,
+                recommendations
             };
         } catch (error) {
-            console.error('[EnhancedCollaborationAgent] Analysis error:', error);
+            console.error('[EnhancedCollaborationAgent] Handoff failed:', error);
             return {
-                patterns: { agents: 0, connections: 0 },
-                recommendations: ['Collaboration analysis failed'],
-                nextCollaboration: null,
-                networkHealth: 'unknown'
+                success: false,
+                handoffData: null,
+                recommendations: ['Retry handoff with error handling']
             };
         }
     }
 
-    private buildCollaborationNetwork(activities: any[]): any {
-        const agentInteractions = new Map<string, Map<string, number>>();
-        const agentActivity = new Map<string, number>();
-
-        activities.forEach(activity => {
-            const agent = activity.agent_name || 'unknown';
-            
-            // Track individual agent activity
-            agentActivity.set(agent, (agentActivity.get(agent) || 0) + 1);
-
-            // Look for handoff patterns in output
-            const output = activity.output || '';
-            if (output.includes('Handoff') || output.includes('→')) {
-                // Extract potential agent names from handoff messages
-                const agentNames = this.extractAgentNames(output);
-                agentNames.forEach(targetAgent => {
-                    if (targetAgent !== agent) {
-                        if (!agentInteractions.has(agent)) {
-                            agentInteractions.set(agent, new Map());
-                        }
-                        const agentMap = agentInteractions.get(agent)!;
-                        agentMap.set(targetAgent, (agentMap.get(targetAgent) || 0) + 1);
-                    }
-                });
-            }
-        });
-
-        return {
-            agents: agentActivity.size,
-            connections: Array.from(agentInteractions.values()).reduce(
-                (sum, map) => sum + map.size, 0
-            ),
-            mostActiveAgents: Array.from(agentActivity.entries())
-                .sort(([,a], [,b]) => b - a)
-                .slice(0, 5)
-                .map(([agent, activity]) => ({ agent, activity })),
-            collaborationPairs: Array.from(agentInteractions.entries())
-                .flatMap(([from, targets]) => 
-                    Array.from(targets.entries()).map(([to, count]) => ({ from, to, count }))
-                )
-                .sort((a, b) => b.count - a.count)
-                .slice(0, 10),
-            networkDensity: this.calculateNetworkDensity(agentInteractions, agentActivity.size)
-        };
-    }
-
-    private extractAgentNames(text: string): string[] {
-        const agentKeywords = [
-            'ResearchAgent', 'StrategicAgent', 'SupervisorAgent', 'MemoryAgent',
-            'LearningAgent', 'CollaborationAgent', 'GoalAgent', 'MetaAgent',
-            'OpportunityAgent', 'CoordinationAgent', 'FactoryAgent', 'CriticAgent'
-        ];
-        
-        return agentKeywords.filter(agent => text.includes(agent));
-    }
-
-    private calculateNetworkDensity(interactions: Map<string, Map<string, number>>, totalAgents: number): number {
-        const totalPossibleConnections = totalAgents * (totalAgents - 1);
-        const actualConnections = Array.from(interactions.values())
-            .reduce((sum, map) => sum + map.size, 0);
-        
-        return totalPossibleConnections > 0 ? actualConnections / totalPossibleConnections : 0;
-    }
-
-    private generateCollaborationRecommendations(patterns: any): string[] {
+    private generateHandoffRecommendations(fromAgent: string, toAgent: string, context: any): string[] {
         const recommendations = [];
 
-        if (patterns.networkDensity < 0.3) {
-            recommendations.push('Increase inter-agent collaboration frequency');
-            recommendations.push('Implement more agent handoff mechanisms');
+        // Agent-specific handoff strategies
+        if (toAgent.includes('Research')) {
+            recommendations.push('Provide detailed research parameters and scope');
+            recommendations.push('Include relevant keywords and search criteria');
+        }
+        
+        if (toAgent.includes('Learning')) {
+            recommendations.push('Share performance metrics and learning objectives');
+            recommendations.push('Include training data and feedback loops');
+        }
+        
+        if (toAgent.includes('Strategic')) {
+            recommendations.push('Provide long-term objectives and constraints');
+            recommendations.push('Include resource allocation and timeline requirements');
         }
 
-        if (patterns.mostActiveAgents.length > 0) {
-            const topAgent = patterns.mostActiveAgents[0];
-            recommendations.push(`Leverage ${topAgent.agent} as collaboration hub`);
+        if (fromAgent.includes('Meta')) {
+            recommendations.push('Include system optimization insights');
+            recommendations.push('Share performance analytics and bottlenecks');
         }
 
-        if (patterns.connections < patterns.agents) {
-            recommendations.push('Establish collaboration protocols for isolated agents');
-        }
-
-        if (patterns.collaborationPairs.length > 0) {
-            const topPair = patterns.collaborationPairs[0];
-            recommendations.push(`Optimize ${topPair.from} → ${topPair.to} collaboration pipeline`);
-        } else {
-            recommendations.push('Initiate cross-agent collaboration protocols');
-        }
+        recommendations.push('Maintain context continuity across agents');
+        recommendations.push('Log all decisions and reasoning for audit trail');
 
         return recommendations;
     }
 
-    private selectOptimalCollaboration(patterns: any): { initiator: string; target: string; task: string } | null {
-        if (patterns.mostActiveAgents.length < 2) {
-            return {
-                initiator: 'SupervisorAgent',
-                target: 'ResearchAgent',
-                task: 'Establish baseline collaboration protocol'
-            };
-        }
-
-        const agents = patterns.mostActiveAgents.slice(0, 3);
-        const initiator = agents[Math.floor(Math.random() * agents.length)].agent;
-        const target = agents.find(a => a.agent !== initiator)?.agent || 'ResearchAgent';
-
-        const collaborationTasks = [
-            'Knowledge sharing and integration',
-            'Task coordination and handoff optimization',
-            'Cross-domain problem solving',
-            'Collaborative learning and adaptation',
-            'Resource sharing and optimization'
-        ];
+    getCollaborationMetrics(): {
+        activeSessions: number;
+        totalMessages: number;
+        averageParticipants: number;
+        completedSessions: number;
+    } {
+        const activeSessions = this.collaborationSessions.filter(s => s.status === 'active').length;
+        const completedSessions = this.collaborationSessions.filter(s => s.status === 'completed').length;
+        const totalMessages = this.collaborationSessions.reduce((sum, s) => sum + s.messages.length, 0);
+        const averageParticipants = this.collaborationSessions.length > 0 
+            ? this.collaborationSessions.reduce((sum, s) => sum + s.participants.length, 0) / this.collaborationSessions.length
+            : 0;
 
         return {
-            initiator,
-            target,
-            task: collaborationTasks[Math.floor(Math.random() * collaborationTasks.length)]
+            activeSessions,
+            totalMessages,
+            averageParticipants: Math.round(averageParticipants * 10) / 10,
+            completedSessions
         };
     }
 
-    private calculateNetworkHealth(patterns: any): string {
-        const healthScore = (patterns.networkDensity * 0.4) + 
-                          (Math.min(patterns.connections / patterns.agents, 1) * 0.3) +
-                          (Math.min(patterns.collaborationPairs.length / 10, 1) * 0.3);
+    async runner(context: AgentContext): Promise<AgentResponse> {
+        try {
+            const action = context.input?.action || 'coordinate';
+            
+            if (action === 'handoff' && context.input?.fromAgent && context.input?.toAgent) {
+                const handoff = await this.coordinateAgentHandoff(
+                    context.input.fromAgent,
+                    context.input.toAgent,
+                    context.input.context || {}
+                );
 
-        if (healthScore > 0.8) return 'excellent';
-        if (healthScore > 0.6) return 'good';
-        if (healthScore > 0.4) return 'fair';
-        return 'needs_improvement';
-    }
+                await supabase
+                    .from('supervisor_queue')
+                    .insert({
+                        user_id: context.user_id || 'enhanced_collaboration_agent',
+                        agent_name: 'enhanced_collaboration_agent',
+                        action: 'coordinate_handoff',
+                        input: JSON.stringify(context.input),
+                        status: handoff.success ? 'completed' : 'error',
+                        output: `Handoff ${context.input.fromAgent} → ${context.input.toAgent}: ${handoff.success ? 'Success' : 'Failed'}`
+                    });
 
-    async executeCollaboration(collaboration: any): Promise<string> {
-        const collaborationMessage = `Executing collaboration: ${collaboration.initiator} → ${collaboration.target} for "${collaboration.task}"`;
-        
-        // Store collaboration attempt
-        this.collaborationHistory.push({
-            from: collaboration.initiator,
-            to: collaboration.target,
-            task: collaboration.task,
-            success: true,
-            timestamp: new Date().toISOString()
-        });
+                return {
+                    success: handoff.success,
+                    message: `🤝 Enhanced CollaborationAgent: ${handoff.success ? 'Successfully coordinated' : 'Failed to coordinate'} handoff ${context.input.fromAgent} → ${context.input.toAgent}`,
+                    data: { handoff, recommendations: handoff.recommendations },
+                    timestamp: new Date().toISOString(),
+                    nextAgent: context.input.toAgent
+                };
+            }
 
-        return collaborationMessage;
+            // Default coordination action
+            const availableAgents = [
+                'ResearchAgent', 'LearningAgentV2', 'StrategicAgent', 
+                'CreativityAgent', 'CriticAgent', 'MemoryAgent'
+            ];
+            
+            const selectedAgents = availableAgents
+                .sort(() => Math.random() - 0.5)
+                .slice(0, Math.floor(Math.random() * 3) + 2);
+
+            const topic = context.input?.topic || 'System optimization and performance enhancement';
+            const sessionId = await this.initiateCollaboration(topic, selectedAgents);
+            
+            const metrics = this.getCollaborationMetrics();
+
+            await supabase
+                .from('supervisor_queue')
+                .insert({
+                    user_id: context.user_id || 'enhanced_collaboration_agent',
+                    agent_name: 'enhanced_collaboration_agent',
+                    action: 'coordinate_collaboration',
+                    input: JSON.stringify({ topic, agents: selectedAgents }),
+                    status: 'completed',
+                    output: `Started collaboration session ${sessionId} with ${selectedAgents.length} agents`
+                });
+
+            return {
+                success: true,
+                message: `🤝 Enhanced CollaborationAgent: Coordinating ${selectedAgents.length} agents on "${topic}" (${metrics.activeSessions} active sessions)`,
+                data: { 
+                    sessionId, 
+                    participants: selectedAgents, 
+                    topic,
+                    metrics,
+                    action: 'collaboration_initiation'
+                },
+                timestamp: new Date().toISOString(),
+                nextAgent: selectedAgents[0]
+            };
+        } catch (error) {
+            return {
+                success: false,
+                message: `❌ Enhanced CollaborationAgent error: ${error instanceof Error ? error.message : 'Unknown error'}`
+            };
+        }
     }
 }
 
 export async function EnhancedCollaborationAgentRunner(context: AgentContext): Promise<AgentResponse> {
-    try {
-        const enhancedCollab = new EnhancedCollaborationAgent();
-        const analysis = await enhancedCollab.analyzeCollaborationPatterns();
-
-        let message = `🤝 Enhanced CollaborationAgent: Network health ${analysis.networkHealth} (${analysis.patterns.agents} agents, ${analysis.patterns.connections} connections)`;
-        let nextAgent = null;
-
-        if (analysis.nextCollaboration) {
-            const collabResult = await enhancedCollab.executeCollaboration(analysis.nextCollaboration);
-            message += `. ${collabResult}`;
-            nextAgent = analysis.nextCollaboration.target;
-        }
-
-        // Store collaboration insights
-        await supabase
-            .from('agent_memory')
-            .insert({
-                user_id: context.user_id || 'enhanced_collaboration_agent',
-                agent_name: 'enhanced_collaboration_agent',
-                memory_key: 'collaboration_analysis',
-                memory_value: JSON.stringify(analysis),
-                timestamp: new Date().toISOString()
-            });
-
-        // Log to supervisor queue
-        await supabase
-            .from('supervisor_queue')
-            .insert({
-                user_id: context.user_id || 'enhanced_collaboration_agent',
-                agent_name: 'enhanced_collaboration_agent',
-                action: 'enhance_collaboration',
-                input: JSON.stringify({ action: 'analyze_and_optimize_collaboration' }),
-                status: 'completed',
-                output: message
-            });
-
-        return {
-            success: true,
-            message,
-            data: analysis,
-            timestamp: new Date().toISOString(),
-            nextAgent,
-            shouldContinue: true
-        };
-    } catch (error) {
-        return {
-            success: false,
-            message: `❌ Enhanced CollaborationAgent error: ${error instanceof Error ? error.message : 'Unknown error'}`
-        };
-    }
+    const agent = new EnhancedCollaborationAgent();
+    return await agent.runner(context);
 }

@@ -32,11 +32,12 @@ export class SupabaseBackend implements PersistenceBackend {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Prefer': 'resolution=merge-duplicates'
+        'Prefer': 'resolution=merge-duplicates',
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhudWRpbmZlam93b3hseWJpZnFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg3OTgzNTYsImV4cCI6MjA1NDM3NDM1Nn0.QP0Qt8WrTmnwEdn2-OaXiIo56PtdGTczBzUTPCS1DxU'
       },
       body: JSON.stringify({ 
         key, 
-        state: JSON.stringify(state),
+        state: state,
         updated_at: new Date().toISOString()
       })
     });
@@ -49,7 +50,8 @@ export class SupabaseBackend implements PersistenceBackend {
   async loadState(key: string): Promise<any> {
     const response = await fetch(`${this.baseUrl}/rest/v1/agi_state?key=eq.${key}`, {
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhudWRpbmZlam93b3hseWJpZnFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg3OTgzNTYsImV4cCI6MjA1NDM3NDM1Nn0.QP0Qt8WrTmnwEdn2-OaXiIo56PtdGTczBzUTPCS1DxU'
       }
     });
 
@@ -58,14 +60,15 @@ export class SupabaseBackend implements PersistenceBackend {
     }
 
     const data = await response.json();
-    return data.length > 0 ? JSON.parse(data[0].state) : null;
+    return data.length > 0 ? data[0].state : null;
   }
 
   async deleteState(key: string): Promise<void> {
     const response = await fetch(`${this.baseUrl}/rest/v1/agi_state?key=eq.${key}`, {
       method: 'DELETE',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhudWRpbmZlam93b3hseWJpZnFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg3OTgzNTYsImV4cCI6MjA1NDM3NDM1Nn0.QP0Qt8WrTmnwEdn2-OaXiIo56PtdGTczBzUTPCS1DxU'
       }
     });
 

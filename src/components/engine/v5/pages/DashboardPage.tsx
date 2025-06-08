@@ -1,26 +1,44 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Activity, Brain, Zap, TrendingUp } from 'lucide-react';
-import { enhancedAutonomousLoop } from '@/loops/EnhancedAutonomousLoop';
+import { Activity, Brain, Zap, TrendingUp, Database, RefreshCw } from 'lucide-react';
 import { agentRegistry } from '@/config/AgentRegistry';
 import { toast } from '@/hooks/use-toast';
-import { startAutonomousLoop, stopAutonomousLoop, shouldAutoStartLoop } from '@/engine/AutonomousLoopController';
+import { startDeepAutonomousLoop, stopDeepAutonomousLoop, shouldAutoStartDeepLoop, getDeepLoopMetrics, resetDeepLoopMetrics } from '@/engine/DeepAutonomousLoopController';
+import { useAGIStatePersistence } from '@/hooks/usePersistence';
 import KPIWidget from '../components/KPIWidget';
 import AutonomousLoopController from '../components/AutonomousLoopController';
+import PersistenceStatus from '../components/PersistenceStatus';
+import SystemRecovery from '../components/SystemRecovery';
 
 const DashboardPage = () => {
   const [systemStatus, setSystemStatus] = useState('MANUAL');
-  const [isAutonomousRunning, setIsAutonomousRunning] = useState(false);
+  const [isDeepLoopRunning, setIsDeepLoopRunning] = useState(false);
   const [logs, setLogs] = useState([]);
   const [agents, setAgents] = useState([]);
+  
+  const {
+    agents: persistedAgents,
+    setAgents: setPersistedAgents,
+    kpis: persistedKpis,
+    setKpis: setPersistedKpis,
+    systemState,
+    setSystemState,
+    isLoading: persistenceLoading
+  } = useAGIStatePersistence();
+
   const [kpis, setKpis] = useState({
     cycles: 0,
-    activeAgents: 19,
+    activeAgents: 23,
     projectsCompleted: 3,
     totalOperations: 1247,
-    loopSpeed: 3000
+    loopSpeed: 3000,
+    handoffs: 0,
+    collaborations: 0,
+    optimizations: 0,
+    errors: 0
   });
 
   useEffect(() => {
@@ -37,114 +55,168 @@ const DashboardPage = () => {
     }));
     setAgents(agentData);
 
-    // Auto-start autonomous loop if it was previously running
-    if (shouldAutoStartLoop() && agentData.length > 0) {
-      console.log('Auto-starting Autonomous Loop...');
-      setIsAutonomousRunning(true);
-      setSystemStatus('AUTONOMOUS');
-      startAutonomousLoop(
-        null, // supervisorAgent placeholder
+    // Auto-start deep loop if it was previously running
+    if (shouldAutoStartDeepLoop() && agentData.length > 0) {
+      console.log('Auto-starting Deep Autonomous Loop...');
+      setIsDeepLoopRunning(true);
+      setSystemStatus('DEEP_AUTONOMOUS');
+      startDeepAutonomousLoop(
         agentData,
         setAgents,
         setLogs,
         setKpis,
-        { loopDelayMs: 3000, maxCycles: 10000 }
+        { 
+          loopDelayMs: 3000, 
+          maxCycles: 10000,
+          enableHandoffs: true,
+          enableCollaborations: true,
+          adaptiveSpeed: true
+        }
       );
       toast({
-        title: "🚀 Auto-Resumed Autonomous Loop",
-        description: "System automatically resumed from previous session",
+        title: "🚀 Auto-Resumed Deep Loop",
+        description: "Enhanced autonomous system automatically resumed",
       });
     }
-  }, []);
+
+    // Load persisted KPIs if available
+    if (persistedKpis && Object.keys(persistedKpis).length > 0) {
+      setKpis(prev => ({ ...prev, ...persistedKpis }));
+    }
+  }, [persistedKpis]);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const status = enhancedAutonomousLoop.getStatus();
+      const deepMetrics = getDeepLoopMetrics();
       const registryStatus = agentRegistry.getSystemStatus();
       
-      setKpis(prev => ({
-        ...prev,
-        cycles: status.cycleCount,
-        activeAgents: registryStatus.totalAgents
-      }));
+      setKpis(prev => {
+        const updated = {
+          ...prev,
+          cycles: deepMetrics.cycles,
+          activeAgents: registryStatus.totalAgents,
+          handoffs: deepMetrics.handoffs,
+          collaborations: deepMetrics.collaborations,
+          optimizations: deepMetrics.optimizations,
+          errors: deepMetrics.errors
+        };
+        
+        // Persist KPIs
+        setPersistedKpis(updated);
+        return updated;
+      });
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [setPersistedKpis]);
 
-  const startAutonomous = async () => {
+  const startDeepLoop = async () => {
     try {
-      setIsAutonomousRunning(true);
-      setSystemStatus('AUTONOMOUS');
+      setIsDeepLoopRunning(true);
+      setSystemStatus('DEEP_AUTONOMOUS');
       
-      startAutonomousLoop(
-        null, // supervisorAgent placeholder
+      startDeepAutonomousLoop(
         agents,
         setAgents,
         setLogs,
         setKpis,
-        { loopDelayMs: 3000, maxCycles: 10000 }
+        { 
+          loopDelayMs: 3000, 
+          maxCycles: 10000,
+          enableHandoffs: true,
+          enableCollaborations: true,
+          adaptiveSpeed: true
+        }
       );
       
+      // Update system state
+      setSystemState({
+        isRunning: true,
+        lastUpdate: new Date().toISOString(),
+        loopType: 'deep_autonomous'
+      });
+      
       toast({
-        title: "🚀 V5 Autonomous System Started",
-        description: "All agents are now running autonomously",
+        title: "🚀 Deep Autonomous Loop Started",
+        description: "Enhanced system with handoffs and collaborations is now running",
       });
     } catch (error) {
-      setIsAutonomousRunning(false);
+      setIsDeepLoopRunning(false);
       setSystemStatus('MANUAL');
       toast({
-        title: "❌ Failed to Start",
+        title: "❌ Failed to Start Deep Loop",
         description: error.message,
         variant: "destructive"
       });
     }
   };
 
-  const stopAutonomous = () => {
-    setIsAutonomousRunning(false);
+  const stopDeepLoop = () => {
+    setIsDeepLoopRunning(false);
     setSystemStatus('MANUAL');
-    stopAutonomousLoop();
+    stopDeepAutonomousLoop();
+    
+    setSystemState({
+      isRunning: false,
+      lastUpdate: new Date().toISOString(),
+      loopType: 'stopped'
+    });
+    
     toast({
-      title: "⏹️ Autonomous System Stopped",
+      title: "⏹️ Deep Loop Stopped",
       description: "Manual control restored",
     });
   };
 
-  const resetAutonomous = () => {
-    stopAutonomousLoop();
-    setKpis(prev => ({ ...prev, cycles: 0 }));
-    setIsAutonomousRunning(false);
+  const resetSystem = () => {
+    stopDeepAutonomousLoop();
+    resetDeepLoopMetrics();
+    setKpis(prev => ({ 
+      ...prev, 
+      cycles: 0, 
+      handoffs: 0, 
+      collaborations: 0, 
+      optimizations: 0, 
+      errors: 0 
+    }));
+    setIsDeepLoopRunning(false);
     setSystemStatus('MANUAL');
     toast({
-      title: "🔄 System Reset",
-      description: "Cycle counter reset to zero",
+      title: "🔄 System Reset Complete",
+      description: "All metrics reset to zero",
     });
   };
 
-  const startParallelFarm = () => {
-    toast({
-      title: "🔄 Parallel Farm Started",
-      description: "Running agents in parallel mode",
-    });
+  const exportSystemData = () => {
+    return {
+      agents: persistedAgents,
+      kpis: persistedKpis,
+      systemState,
+      timestamp: new Date().toISOString(),
+      version: 'V6'
+    };
   };
 
-  const stopAll = () => {
-    setIsAutonomousRunning(false);
-    setSystemStatus('MANUAL');
-    enhancedAutonomousLoop.stop();
+  const importSystemData = (data: any) => {
+    if (data.agents) setPersistedAgents(data.agents);
+    if (data.kpis) setPersistedKpis(data.kpis);
+    if (data.systemState) setSystemState(data.systemState);
+    
     toast({
-      title: "⏹️ All Systems Stopped",
-      description: "All autonomous operations halted",
+      title: "📥 System Data Imported",
+      description: "Successfully restored from backup",
     });
   };
 
   return (
     <div className="space-y-4 md:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl md:text-3xl font-bold text-white">AGI V5 Dashboard</h1>
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-white">AGI V6 Deep Dashboard</h1>
+          <p className="text-gray-300 text-sm">Enhanced autonomous system with {agents.length} agents</p>
+        </div>
         <Badge variant="outline" className={`self-start sm:self-auto ${
-          systemStatus === 'AUTONOMOUS' 
+          systemStatus === 'DEEP_AUTONOMOUS' 
             ? 'text-green-400 border-green-400' 
             : 'text-gray-400 border-gray-400'
         }`}>
@@ -157,86 +229,129 @@ const DashboardPage = () => {
           label="System Status" 
           value={systemStatus} 
           icon={<Activity className="h-4 w-4 md:h-5 md:w-5" />}
-          color={systemStatus === 'AUTONOMOUS' ? 'green' : 'blue'}
+          color={systemStatus === 'DEEP_AUTONOMOUS' ? 'green' : 'blue'}
         />
         <KPIWidget 
-          label="Cycles" 
+          label="Deep Cycles" 
           value={kpis.cycles} 
           icon={<Brain className="h-4 w-4 md:h-5 md:w-5" />}
           color="blue"
         />
         <KPIWidget 
-          label="Active Agents" 
+          label="Enhanced Agents" 
           value={kpis.activeAgents} 
           icon={<Zap className="h-4 w-4 md:h-5 md:w-5" />}
           color="purple"
         />
         <KPIWidget 
-          label="Projects Completed" 
-          value={kpis.projectsCompleted} 
+          label="Handoffs" 
+          value={kpis.handoffs} 
           icon={<TrendingUp className="h-4 w-4 md:h-5 md:w-5" />}
           color="cyan"
         />
       </div>
 
-      <AutonomousLoopController
-        onStartLoop={startAutonomous}
-        onStopLoop={stopAutonomous}
-        onResetLoop={resetAutonomous}
-        isRunning={isAutonomousRunning}
-        cycles={kpis.cycles}
-        loopSpeed={kpis.loopSpeed}
-      />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card className="bg-slate-800/50 border-slate-600/30">
+          <CardHeader className="pb-3 md:pb-6">
+            <CardTitle className="text-white text-lg md:text-xl flex items-center gap-2">
+              <Brain className="h-5 w-5 text-purple-400" />
+              Deep Loop Controls
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-3">
+              <Button
+                onClick={startDeepLoop}
+                disabled={isDeepLoopRunning}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                Start Deep Loop
+              </Button>
+              <Button
+                onClick={stopDeepLoop}
+                disabled={!isDeepLoopRunning}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Stop Deep Loop
+              </Button>
+              <Button
+                onClick={resetSystem}
+                variant="outline"
+                className="border-yellow-500 text-yellow-400 hover:bg-yellow-500/10"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Reset System
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <PersistenceStatus
+          isLoading={persistenceLoading}
+          error={null}
+          lastSaved={systemState?.lastUpdate}
+          backend="supabase"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card className="bg-slate-800/50 border-slate-600/30">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-white text-lg flex items-center gap-2">
+              <Database className="h-5 w-5 text-blue-400" />
+              Enhanced Metrics
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <div className="text-gray-300">Collaborations</div>
+                <div className="text-cyan-400 font-bold">{kpis.collaborations}</div>
+              </div>
+              <div>
+                <div className="text-gray-300">Optimizations</div>
+                <div className="text-green-400 font-bold">{kpis.optimizations}</div>
+              </div>
+              <div>
+                <div className="text-gray-300">Loop Speed</div>
+                <div className="text-blue-400 font-bold">{kpis.loopSpeed}ms</div>
+              </div>
+              <div>
+                <div className="text-gray-300">System Errors</div>
+                <div className="text-red-400 font-bold">{kpis.errors}</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <SystemRecovery
+          onExport={exportSystemData}
+          onRestore={importSystemData}
+        />
+      </div>
 
       <Card className="bg-slate-800/50 border-slate-600/30">
         <CardHeader className="pb-3 md:pb-6">
-          <CardTitle className="text-white text-lg md:text-xl">System Controls</CardTitle>
+          <CardTitle className="text-white text-lg md:text-xl">Deep Loop Activity</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
-            <Button
-              onClick={startAutonomous}
-              disabled={isAutonomousRunning}
-              className="bg-green-600 hover:bg-green-700 text-white h-11 md:h-10 text-sm md:text-base"
-            >
-              Start Autonomous
-            </Button>
-            <Button
-              onClick={startParallelFarm}
-              className="bg-yellow-600 hover:bg-yellow-700 text-white h-11 md:h-10 text-sm md:text-base"
-            >
-              Start Parallel Farm
-            </Button>
-            <Button
-              onClick={stopAll}
-              className="bg-red-600 hover:bg-red-700 text-white h-11 md:h-10 text-sm md:text-base"
-            >
-              Stop All
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-slate-800/50 border-slate-600/30">
-        <CardHeader className="pb-3 md:pb-6">
-          <CardTitle className="text-white text-lg md:text-xl">Recent Activity</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2 md:space-y-3">
-            <div className="text-sm md:text-base text-green-400">✅ SupervisorAgent: System monitoring active</div>
-            <div className="text-sm md:text-base text-blue-400">🔍 ResearchAgent: Scanning external sources</div>
-            <div className="text-sm md:text-base text-purple-400">🧠 LearningAgentV2: Adapting strategies</div>
-            <div className="text-sm md:text-base text-cyan-400">🌐 BrowserAgent: Web scraping complete</div>
-            {isAutonomousRunning && (
+          <div className="space-y-2 md:space-y-3 max-h-64 overflow-y-auto">
+            {isDeepLoopRunning && (
               <div className="text-sm md:text-base text-yellow-400 animate-pulse">
-                🤖 Autonomous Loop: Running cycle #{kpis.cycles}
+                🤖 Deep Loop Active: Cycle #{kpis.cycles} • {kpis.handoffs} handoffs • {kpis.collaborations} collaborations
               </div>
             )}
-            {logs.slice(-3).map((log, index) => (
+            {logs.slice(-5).map((log, index) => (
               <div key={index} className="text-sm md:text-base text-orange-400">
-                🔄 {log.agent}: {log.action}
+                🔄 {log.agent}: {log.action} → {log.result}
               </div>
             ))}
+            {logs.length === 0 && (
+              <div className="text-gray-400 text-center py-4">
+                No activity yet. Start the Deep Loop to see real-time agent interactions.
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
