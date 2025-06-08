@@ -138,6 +138,60 @@ export class OpenAIService {
       throw error;
     }
   }
+
+  async enhanceV4Agent(agentType: string, input: string, context: any = {}): Promise<string> {
+    if (!this.isAvailable()) {
+      throw new Error('OpenAI API not available');
+    }
+
+    const agentPrompts = {
+      strategic: 'You are a Strategic AI Agent. Analyze the current state and provide specific, actionable strategic recommendations for business growth and system optimization.',
+      opportunity: 'You are an Opportunity Detection AI Agent. Identify high-value business opportunities with clear revenue potential and market viability.',
+      learning: 'You are a Learning AI Agent. Analyze patterns, performance data, and system behavior to generate insights for continuous improvement.',
+      coordination: 'You are a Coordination AI Agent. Optimize multi-agent collaboration, workflow efficiency, and synchronized goal achievement.',
+      memory: 'You are a Memory Management AI Agent. Focus on semantic memory optimization, pattern recognition, and knowledge organization.',
+      critic: 'You are a Performance Critic AI Agent. Evaluate system performance, agent effectiveness, and provide constructive improvement recommendations.'
+    };
+
+    const systemPrompt = agentPrompts[agentType as keyof typeof agentPrompts] || agentPrompts.strategic;
+
+    const messages: OpenAIMessage[] = [
+      {
+        role: 'system',
+        content: systemPrompt
+      },
+      {
+        role: 'user',
+        content: `Input: ${input}\n\nContext: ${JSON.stringify(context)}\n\nProvide a specific, actionable response:`
+      }
+    ];
+
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages,
+          max_tokens: 300,
+          temperature: 0.7
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.statusText}`);
+      }
+
+      const data: OpenAIResponse = await response.json();
+      return data.choices[0].message.content;
+    } catch (error) {
+      console.error('OpenAI V4 agent enhancement failed:', error);
+      throw error;
+    }
+  }
 }
 
 export const openAIService = new OpenAIService();
