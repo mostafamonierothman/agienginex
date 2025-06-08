@@ -139,3 +139,11 @@ export const isDeepAutonomousLoopRunning = (): boolean => {
 export const shouldAutoStartDeepLoop = (): boolean => {
     return loadLoopState();
 };
+
+export const getSystemMetrics = () => {
+    return {
+        running,
+        cycles: 0, // This would be tracked in actual implementation
+        errors: 0
+    };
+};
