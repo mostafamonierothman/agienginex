@@ -260,7 +260,7 @@ export async function EnhancedGoalAgentRunner(context: AgentContext): Promise<Ag
     } catch (error) {
         return {
             success: false,
-            message: `❌ Enhanced GoalAgent error: ${error.message}`
+            message: `❌ Enhanced GoalAgent error: ${error instanceof Error ? error.message : 'Unknown error'}`
         };
     }
 }

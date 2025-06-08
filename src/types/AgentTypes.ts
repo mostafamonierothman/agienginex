@@ -1,3 +1,4 @@
+
 export interface Agent {
   id: string;
   name: string;
@@ -41,6 +42,17 @@ export interface AgentResponse {
   message: string;
   data?: any;
   timestamp?: string;
+  nextAgent?: string; // Add support for agent handoffs
+  shouldContinue?: boolean; // Add support for continuation logic
+}
+
+export interface EnhancedAgentResponse {
+  success: boolean;
+  message: string;
+  data?: any;
+  timestamp?: string;
+  nextAgent?: string;
+  shouldContinue?: boolean;
 }
 
 export interface AgentRegistryEntry {

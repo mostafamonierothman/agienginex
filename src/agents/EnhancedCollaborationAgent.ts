@@ -236,7 +236,7 @@ export async function EnhancedCollaborationAgentRunner(context: AgentContext): P
     } catch (error) {
         return {
             success: false,
-            message: `❌ Enhanced CollaborationAgent error: ${error.message}`
+            message: `❌ Enhanced CollaborationAgent error: ${error instanceof Error ? error.message : 'Unknown error'}`
         };
     }
 }

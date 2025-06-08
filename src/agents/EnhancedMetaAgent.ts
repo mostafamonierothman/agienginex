@@ -179,7 +179,7 @@ export async function EnhancedMetaAgentRunner(context: AgentContext): Promise<Ag
     } catch (error) {
         return {
             success: false,
-            message: `❌ Enhanced MetaAgent error: ${error.message}`
+            message: `❌ Enhanced MetaAgent error: ${error instanceof Error ? error.message : 'Unknown error'}`
         };
     }
 }
