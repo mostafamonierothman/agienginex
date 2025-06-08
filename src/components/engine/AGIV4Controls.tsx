@@ -1,11 +1,12 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Slider } from '@/components/ui/slider';
-import { Brain, Play, Pause, RotateCcw, Zap, Settings } from 'lucide-react';
+import { Brain } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import AGIV4SystemStatus from './v4/AGIV4SystemStatus';
+import AGIV4ControlButtons from './v4/AGIV4ControlButtons';
+import AGIV4Settings from './v4/AGIV4Settings';
+import AGIV4FeatureStatus from './v4/AGIV4FeatureStatus';
 
 const AGIV4Controls = () => {
   const [isV4Active, setIsV4Active] = useState(false);
@@ -14,10 +15,9 @@ const AGIV4Controls = () => {
   const [coordinationLevel, setCoordinationLevel] = useState([75]);
   const [lastActivity, setLastActivity] = useState<string>('');
   const [systemHealth, setSystemHealth] = useState(95);
-  const [activeAgentCount, setActiveAgentCount] = useState(12); // Updated to show real count
+  const [activeAgentCount, setActiveAgentCount] = useState(12);
   const [openAIEnabled, setOpenAIEnabled] = useState(false);
 
-  // Core agents list - matches the dashboard
   const getCoreAgentCount = () => {
     const coreAgents = [
       'SupervisorAgent', 'ResearchAgent', 'LearningAgentV2', 'FactoryAgent',
@@ -29,7 +29,7 @@ const AGIV4Controls = () => {
 
   useEffect(() => {
     checkOpenAIStatus();
-    setActiveAgentCount(getCoreAgentCount()); // Set to actual core agent count
+    setActiveAgentCount(getCoreAgentCount());
     
     if (isV4Active) {
       const interval = setInterval(updateSystemStatus, 5000);
@@ -63,7 +63,6 @@ const AGIV4Controls = () => {
       }
 
       setSystemHealth(90 + Math.random() * 10);
-      // Keep agent count consistent with actual agents
       setActiveAgentCount(getCoreAgentCount());
 
     } catch (error) {
@@ -167,29 +166,14 @@ const AGIV4Controls = () => {
           <Brain className="w-5 h-5 text-purple-400" />
           🎛️ AGI V4 Control Center
         </CardTitle>
-        <div className="flex items-center gap-4 mt-2">
-          <Badge 
-            variant="outline" 
-            className={isV4Active ? 'text-green-400 border-green-400' : 'text-gray-400 border-gray-400'}
-          >
-            {isV4Active ? '🟢 V4 ACTIVE' : '🔴 V4 OFFLINE'}
-          </Badge>
-          <Badge 
-            variant="outline" 
-            className={openAIEnabled ? 'text-blue-400 border-blue-400' : 'text-gray-400 border-gray-400'}
-          >
-            {openAIEnabled ? '🧠 OPENAI ENHANCED' : '🤖 LOCAL MODE'}
-          </Badge>
-          <Badge variant="outline" className="text-blue-400 border-blue-400">
-            Health: {systemHealth.toFixed(0)}%
-          </Badge>
-          <Badge variant="outline" className="text-yellow-400 border-yellow-400">
-            Agents: {activeAgentCount}
-          </Badge>
-        </div>
+        <AGIV4SystemStatus 
+          isV4Active={isV4Active}
+          openAIEnabled={openAIEnabled}
+          systemHealth={systemHealth}
+          activeAgentCount={activeAgentCount}
+        />
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* OpenAI Status */}
         {openAIEnabled && (
           <div className="bg-blue-900/20 p-3 rounded border border-blue-500/30">
             <h4 className="text-blue-400 text-sm font-medium mb-2">🧠 OpenAI Enhanced Intelligence</h4>
@@ -199,88 +183,24 @@ const AGIV4Controls = () => {
           </div>
         )}
 
-        {/* System Controls */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Button 
-            onClick={startV4System}
-            disabled={isV4Active}
-            className="bg-green-600 hover:bg-green-700 disabled:opacity-50"
-          >
-            <Play className="w-4 h-4 mr-2" />
-            Start V4
-          </Button>
-          <Button 
-            onClick={stopV4System}
-            disabled={!isV4Active}
-            className="bg-red-600 hover:bg-red-700 disabled:opacity-50"
-          >
-            <Pause className="w-4 h-4 mr-2" />
-            Stop V4
-          </Button>
-          <Button 
-            onClick={resetV4System}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <RotateCcw className="w-4 h-4 mr-2" />
-            Reset V4
-          </Button>
-        </div>
+        <AGIV4ControlButtons
+          isV4Active={isV4Active}
+          startV4System={startV4System}
+          stopV4System={stopV4System}
+          resetV4System={resetV4System}
+          runEmergencyProtocol={runEmergencyProtocol}
+        />
 
-        {/* Advanced Controls */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <label className="text-gray-400">Autonomous Mode</label>
-            <Switch 
-              checked={autonomousMode}
-              onCheckedChange={setAutonomousMode}
-              disabled={!isV4Active}
-            />
-          </div>
+        <AGIV4Settings
+          isV4Active={isV4Active}
+          autonomousMode={autonomousMode}
+          setAutonomousMode={setAutonomousMode}
+          learningRate={learningRate}
+          setLearningRate={setLearningRate}
+          coordinationLevel={coordinationLevel}
+          setCoordinationLevel={setCoordinationLevel}
+        />
 
-          <div>
-            <label className="text-gray-400 text-sm block mb-2">
-              Learning Rate: {learningRate[0]}s intervals
-            </label>
-            <Slider
-              value={learningRate}
-              onValueChange={setLearningRate}
-              max={10}
-              min={1}
-              step={1}
-              className="w-full"
-              disabled={!isV4Active}
-            />
-          </div>
-
-          <div>
-            <label className="text-gray-400 text-sm block mb-2">
-              Coordination Level: {coordinationLevel[0]}%
-            </label>
-            <Slider
-              value={coordinationLevel}
-              onValueChange={setCoordinationLevel}
-              max={100}
-              min={10}
-              step={5}
-              className="w-full"
-              disabled={!isV4Active}
-            />
-          </div>
-        </div>
-
-        {/* Emergency Controls */}
-        <div className="border-t border-slate-600 pt-4">
-          <Button 
-            onClick={runEmergencyProtocol}
-            disabled={!isV4Active}
-            className="w-full bg-orange-600 hover:bg-orange-700 disabled:opacity-50"
-          >
-            <Zap className="w-4 w-4 mr-2" />
-            🚨 Emergency Protocol
-          </Button>
-        </div>
-
-        {/* System Status */}
         {lastActivity && (
           <div className="bg-slate-700/50 p-3 rounded border border-slate-600">
             <h4 className="text-white text-sm font-medium mb-2">Latest V4 Activity</h4>
@@ -288,33 +208,10 @@ const AGIV4Controls = () => {
           </div>
         )}
 
-        {/* V4 Features Status */}
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-            <span className="text-gray-400">Agent Registry ({activeAgentCount})</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-            <span className="text-gray-400">Vector Memory</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-            <span className="text-gray-400">Learning Loop</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-            <span className="text-gray-400">Multi-Agent Coordination</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 ${openAIEnabled ? 'bg-blue-400' : 'bg-gray-400'} rounded-full`}></div>
-            <span className="text-gray-400">OpenAI Integration</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-            <span className="text-gray-400">Autonomous Goals</span>
-          </div>
-        </div>
+        <AGIV4FeatureStatus 
+          activeAgentCount={activeAgentCount}
+          openAIEnabled={openAIEnabled}
+        />
       </CardContent>
     </Card>
   );

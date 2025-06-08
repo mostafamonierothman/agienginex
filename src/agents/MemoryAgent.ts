@@ -4,27 +4,19 @@ import { supabase } from '@/integrations/supabase/client';
 
 export async function MemoryAgent(context: AgentContext): Promise<AgentResponse> {
   try {
-    // Get memory statistics
+    // Get memory statistics from existing agent_memory table
     const { data: memoryData, error: memoryError } = await supabase
       .from('agent_memory')
       .select('*')
       .order('timestamp', { ascending: false })
       .limit(100);
 
-    const { data: vectorData, error: vectorError } = await supabase
-      .from('vector_memory')
-      .select('*')
-      .order('timestamp', { ascending: false })
-      .limit(50);
-
-    if (memoryError || vectorError) {
-      console.error('MemoryAgent fetch errors:', { memoryError, vectorError });
+    if (memoryError) {
+      console.error('MemoryAgent fetch error:', memoryError);
     }
 
     const memoryCount = memoryData?.length || 0;
-    const vectorCount = vectorData?.length || 0;
-    const totalMemories = memoryCount + vectorCount;
-
+    
     // Analyze memory patterns
     const memoryTypes = memoryData?.reduce((acc, memory) => {
       const key = memory.memory_key || 'unknown';
@@ -32,7 +24,7 @@ export async function MemoryAgent(context: AgentContext): Promise<AgentResponse>
       return acc;
     }, {} as Record<string, number>) || {};
 
-    const memoryInsight = `Managing ${totalMemories} total memories: ${memoryCount} agent memories, ${vectorCount} vector embeddings. Top patterns: ${Object.keys(memoryTypes).slice(0, 3).join(', ')}.`;
+    const memoryInsight = `Managing ${memoryCount} memories. Top patterns: ${Object.keys(memoryTypes).slice(0, 3).join(', ')}.`;
 
     // Store memory management insight
     await supabase
@@ -52,7 +44,7 @@ export async function MemoryAgent(context: AgentContext): Promise<AgentResponse>
         user_id: context.user_id || 'demo_user',
         agent_name: 'memory_agent',
         action: 'memory_management',
-        input: JSON.stringify({ total_memories: totalMemories }),
+        input: JSON.stringify({ total_memories: memoryCount }),
         status: 'completed',
         output: memoryInsight,
         timestamp: new Date().toISOString()
@@ -64,9 +56,7 @@ export async function MemoryAgent(context: AgentContext): Promise<AgentResponse>
       success: true,
       message: `🧠 ${memoryInsight}`,
       data: { 
-        totalMemories,
-        agentMemories: memoryCount,
-        vectorMemories: vectorCount,
+        totalMemories: memoryCount,
         memoryTypes
       },
       timestamp: new Date().toISOString()
