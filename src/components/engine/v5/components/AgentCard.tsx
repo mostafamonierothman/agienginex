@@ -1,9 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Play, Zap, Brain } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Play, Zap, Brain, Loader2 } from 'lucide-react';
 
 interface AgentCardProps {
   agentName: string;
@@ -12,7 +13,7 @@ interface AgentCardProps {
   description?: string;
   version?: string;
   category?: string;
-  onRunAgent: () => void;
+  onRunAgent: (agentName: string, params?: any) => void;
   isRunning?: boolean;
 }
 
@@ -26,6 +27,9 @@ const AgentCard = ({
   onRunAgent, 
   isRunning = false 
 }: AgentCardProps) => {
+  const [inputParam, setInputParam] = useState('');
+  const [localStatus, setLocalStatus] = useState(status);
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'RUNNING': return 'bg-green-500 text-white';
@@ -43,6 +47,31 @@ const AgentCard = ({
     }
   };
 
+  const handleExecute = async () => {
+    setLocalStatus('RUNNING');
+    
+    const params = inputParam ? { param: inputParam } : {};
+    await onRunAgent(agentName, params);
+    
+    setLocalStatus('IDLE');
+    setInputParam(''); // Clear input after execution
+  };
+
+  // Get specific input placeholder based on agent type
+  const getInputPlaceholder = (agentName: string) => {
+    const placeholders = {
+      'BrowserAgent': 'Enter URL to browse',
+      'GoalAgent': 'Enter goal or command',
+      'APIConnectorAgent': 'API endpoint or data',
+      'ResearchAgent': 'Research topic',
+      'OpportunityAgent': 'Market or opportunity area',
+      'MetaAgent': 'System analysis target',
+      'SecurityAgent': 'Security scan target',
+      'CreativityAgent': 'Creative prompt or idea'
+    };
+    return placeholders[agentName] || 'Input parameter (optional)';
+  };
+
   return (
     <Card className="bg-slate-700/50 border-slate-600/30 hover:border-purple-500/50 transition-colors">
       <CardHeader className="pb-2">
@@ -57,8 +86,8 @@ const AgentCard = ({
                 {version}
               </Badge>
             )}
-            <Badge className={`text-xs ${getStatusColor(status)}`}>
-              {status}
+            <Badge className={`text-xs ${getStatusColor(isRunning ? 'RUNNING' : status)}`}>
+              {isRunning ? 'RUNNING' : status}
             </Badge>
           </div>
         </div>
@@ -68,23 +97,40 @@ const AgentCard = ({
           <p className="text-xs text-gray-300">{description}</p>
         )}
         
+        {/* Progress Bar */}
+        {isRunning && (
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="bg-green-500 h-2 rounded-full animate-pulse w-full"></div>
+          </div>
+        )}
+        
         <div className="text-xs text-gray-400">
           <span className="font-medium">Last Action:</span> {lastAction}
         </div>
+
+        {/* Dynamic Input Parameter */}
+        <Input
+          type="text"
+          placeholder={getInputPlaceholder(agentName)}
+          value={inputParam}
+          onChange={(e) => setInputParam(e.target.value)}
+          className="bg-slate-600 border-slate-500 text-white text-xs h-8"
+          disabled={isRunning}
+        />
         
         <Button
-          onClick={onRunAgent}
+          onClick={handleExecute}
           disabled={isRunning}
           size="sm"
           className={`w-full ${
             category === 'enhanced' 
               ? 'bg-purple-600 hover:bg-purple-700' 
               : 'bg-blue-600 hover:bg-blue-700'
-          } text-white disabled:opacity-50`}
+          } text-white disabled:opacity-50 h-8 text-xs`}
         >
           {isRunning ? (
             <>
-              <Zap className="h-3 w-3 mr-1 animate-spin" />
+              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
               Running...
             </>
           ) : (

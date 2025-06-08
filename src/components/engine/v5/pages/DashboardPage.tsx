@@ -8,14 +8,17 @@ import { enhancedAutonomousLoop } from '@/loops/EnhancedAutonomousLoop';
 import { agentRegistry } from '@/config/AgentRegistry';
 import { toast } from '@/hooks/use-toast';
 import KPIWidget from '../components/KPIWidget';
+import AutonomousLoopController from '../components/AutonomousLoopController';
 
 const DashboardPage = () => {
-  const [systemStatus, setSystemStatus] = useState('AUTONOMOUS');
+  const [systemStatus, setSystemStatus] = useState('MANUAL');
+  const [isAutonomousRunning, setIsAutonomousRunning] = useState(false);
   const [kpis, setKpis] = useState({
     cycles: 0,
     activeAgents: 19,
     projectsCompleted: 3,
-    totalOperations: 1247
+    totalOperations: 1247,
+    loopSpeed: 3000
   });
 
   useEffect(() => {
@@ -35,18 +38,40 @@ const DashboardPage = () => {
 
   const startAutonomous = async () => {
     try {
+      setIsAutonomousRunning(true);
+      setSystemStatus('AUTONOMOUS');
       await enhancedAutonomousLoop.start();
       toast({
         title: "🚀 V5 Autonomous System Started",
         description: "All agents are now running autonomously",
       });
     } catch (error) {
+      setIsAutonomousRunning(false);
+      setSystemStatus('MANUAL');
       toast({
         title: "❌ Failed to Start",
         description: error.message,
         variant: "destructive"
       });
     }
+  };
+
+  const stopAutonomous = () => {
+    setIsAutonomousRunning(false);
+    setSystemStatus('MANUAL');
+    enhancedAutonomousLoop.stop();
+    toast({
+      title: "⏹️ Autonomous System Stopped",
+      description: "Manual control restored",
+    });
+  };
+
+  const resetAutonomous = () => {
+    setKpis(prev => ({ ...prev, cycles: 0 }));
+    toast({
+      title: "🔄 System Reset",
+      description: "Cycle counter reset to zero",
+    });
   };
 
   const startParallelFarm = () => {
@@ -57,6 +82,8 @@ const DashboardPage = () => {
   };
 
   const stopAll = () => {
+    setIsAutonomousRunning(false);
+    setSystemStatus('MANUAL');
     enhancedAutonomousLoop.stop();
     toast({
       title: "⏹️ All Systems Stopped",
@@ -68,7 +95,11 @@ const DashboardPage = () => {
     <div className="space-y-4 md:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl md:text-3xl font-bold text-white">AGI V5 Dashboard</h1>
-        <Badge variant="outline" className="text-green-400 border-green-400 self-start sm:self-auto">
+        <Badge variant="outline" className={`self-start sm:self-auto ${
+          systemStatus === 'AUTONOMOUS' 
+            ? 'text-green-400 border-green-400' 
+            : 'text-gray-400 border-gray-400'
+        }`}>
           {systemStatus}
         </Badge>
       </div>
@@ -78,7 +109,7 @@ const DashboardPage = () => {
           label="System Status" 
           value={systemStatus} 
           icon={<Activity className="h-4 w-4 md:h-5 md:w-5" />}
-          color="green"
+          color={systemStatus === 'AUTONOMOUS' ? 'green' : 'blue'}
         />
         <KPIWidget 
           label="Cycles" 
@@ -100,6 +131,15 @@ const DashboardPage = () => {
         />
       </div>
 
+      <AutonomousLoopController
+        onStartLoop={startAutonomous}
+        onStopLoop={stopAutonomous}
+        onResetLoop={resetAutonomous}
+        isRunning={isAutonomousRunning}
+        cycles={kpis.cycles}
+        loopSpeed={kpis.loopSpeed}
+      />
+
       <Card className="bg-slate-800/50 border-slate-600/30">
         <CardHeader className="pb-3 md:pb-6">
           <CardTitle className="text-white text-lg md:text-xl">System Controls</CardTitle>
@@ -108,6 +148,7 @@ const DashboardPage = () => {
           <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
             <Button
               onClick={startAutonomous}
+              disabled={isAutonomousRunning}
               className="bg-green-600 hover:bg-green-700 text-white h-11 md:h-10 text-sm md:text-base"
             >
               Start Autonomous
@@ -138,6 +179,11 @@ const DashboardPage = () => {
             <div className="text-sm md:text-base text-blue-400">🔍 ResearchAgent: Scanning external sources</div>
             <div className="text-sm md:text-base text-purple-400">🧠 LearningAgentV2: Adapting strategies</div>
             <div className="text-sm md:text-base text-cyan-400">🌐 BrowserAgent: Web scraping complete</div>
+            {isAutonomousRunning && (
+              <div className="text-sm md:text-base text-yellow-400 animate-pulse">
+                🤖 Autonomous Loop: Running cycle #{kpis.cycles}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

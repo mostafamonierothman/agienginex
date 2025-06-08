@@ -5,12 +5,16 @@ import { enhancedAutonomousLoop } from '@/loops/EnhancedAutonomousLoop';
 import AgentCard from '../components/AgentCard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Zap, Play, Users } from 'lucide-react';
+import { Zap, Play, Users, RotateCcw, Square } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 const AgentsPage = () => {
   const [agents, setAgents] = useState([]);
   const [runningAgents, setRunningAgents] = useState(new Set());
+  const [isAutonomousRunning, setIsAutonomousRunning] = useState(false);
+  const [showCore, setShowCore] = useState(true);
+  const [showEnhanced, setShowEnhanced] = useState(true);
+  const [cycles, setCycles] = useState(0);
 
   useEffect(() => {
     const registeredAgents = agentRegistry.getAllAgents();
@@ -20,29 +24,44 @@ const AgentsPage = () => {
       lastAction: 'Ready for execution',
       category: agent.category,
       description: agent.description,
-      version: agent.version
+      version: agent.version,
+      runner: agent.runner
     }));
     setAgents(agentData);
   }, [runningAgents]);
 
-  const handleRunAgent = async (agentName: string) => {
+  const handleRunAgent = async (agentName: string, params = {}) => {
     if (runningAgents.has(agentName)) return;
 
     setRunningAgents(prev => new Set(prev).add(agentName));
 
     try {
       const context = {
+        input: params,
         user_id: 'v5_interface',
         timestamp: new Date().toISOString()
       };
 
       const result = await agentRegistry.runAgent(agentName, context);
       
+      // Update agent in local state
+      setAgents(prev => prev.map(agent => 
+        agent.name === agentName 
+          ? { ...agent, status: 'IDLE', lastAction: result.message || 'Task completed' }
+          : agent
+      ));
+      
       toast({
         title: `🤖 ${agentName} Executed`,
         description: result.message || `${agentName} completed successfully`,
       });
     } catch (error) {
+      setAgents(prev => prev.map(agent => 
+        agent.name === agentName 
+          ? { ...agent, status: 'ERROR', lastAction: `Error: ${error.message}` }
+          : agent
+      ));
+      
       toast({
         title: `❌ ${agentName} Failed`,
         description: error.message,
@@ -57,24 +76,93 @@ const AgentsPage = () => {
     }
   };
 
-  const runAllAgents = async () => {
+  const handleRunAllAgents = async () => {
     toast({
-      title: "🚀 Running All Agents",
-      description: `Executing all ${agents.length} agents...`,
+      title: "🚀 Running All Agents in Parallel",
+      description: `Executing all ${agents.length} agents concurrently...`,
     });
 
-    const agentPromises = agents.map(agent => handleRunAgent(agent.name));
-    await Promise.allSettled(agentPromises);
+    // Set all agents to RUNNING
+    agents.forEach(agent => {
+      agent.status = "RUNNING";
+    });
+    setAgents([...agents]);
+
+    // Run all agents in parallel
+    await Promise.all(agents.map(async (agent) => {
+      try {
+        const context = {
+          input: {},
+          user_id: 'v5_parallel',
+          timestamp: new Date().toISOString()
+        };
+
+        const response = await agentRegistry.runAgent(agent.name, context);
+        
+        agent.status = "IDLE";
+        agent.lastAction = response.message || 'Parallel execution completed';
+
+      } catch (error) {
+        agent.status = "ERROR";
+        agent.lastAction = `Error: ${error.message}`;
+      }
+    }));
+
+    // Final update
+    setAgents([...agents]);
+    
+    toast({
+      title: "✅ Parallel Execution Complete",
+      description: "All agents have finished execution",
+    });
+  };
+
+  const handleRunRandomAgent = async () => {
+    const randomAgent = agents[Math.floor(Math.random() * agents.length)];
+    
+    toast({
+      title: `🎲 Running Random Agent: ${randomAgent.name}`,
+      description: "Executing randomly selected agent...",
+    });
+
+    await handleRunAgent(randomAgent.name);
+  };
+
+  const startAutonomousLoop = () => {
+    setIsAutonomousRunning(true);
+    toast({
+      title: "🚀 Autonomous Loop Started",
+      description: "Agents will now run automatically in cycles",
+    });
+
+    // Simulate autonomous loop
+    const autonomousInterval = setInterval(() => {
+      if (!isAutonomousRunning) {
+        clearInterval(autonomousInterval);
+        return;
+      }
+      
+      setCycles(prev => prev + 1);
+      handleRunRandomAgent();
+    }, 3000);
+  };
+
+  const stopAutonomousLoop = () => {
+    setIsAutonomousRunning(false);
+    toast({
+      title: "⏹️ Autonomous Loop Stopped",
+      description: "Manual control restored",
+    });
   };
 
   const coreAgents = agents.filter(a => a.category === 'core');
   const enhancedAgents = agents.filter(a => a.category === 'enhanced');
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-white flex items-center gap-2">
-          <Users className="h-8 w-8 text-purple-400" />
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h1 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-2">
+          <Users className="h-6 w-6 md:h-8 md:w-8 text-purple-400" />
           Agents
         </h1>
         <div className="flex items-center gap-2">
@@ -84,63 +172,109 @@ const AgentsPage = () => {
           <Badge variant="outline" className="text-purple-400 border-purple-400">
             {enhancedAgents.length} Enhanced
           </Badge>
+          {isAutonomousRunning && (
+            <Badge className="bg-green-500 text-white animate-pulse">
+              Autonomous • Cycle #{cycles}
+            </Badge>
+          )}
         </div>
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
         <Button
-          onClick={runAllAgents}
-          className="bg-purple-600 hover:bg-purple-700 text-white"
+          onClick={handleRunAllAgents}
+          className="bg-purple-600 hover:bg-purple-700 text-white h-11 md:h-10"
         >
           <Play className="h-4 w-4 mr-2" />
           Run All {agents.length} Agents
         </Button>
         <Button
-          onClick={() => enhancedAutonomousLoop.runRandomEnhancedAgent()}
-          className="bg-blue-600 hover:bg-blue-700 text-white"
+          onClick={handleRunRandomAgent}
+          className="bg-blue-600 hover:bg-blue-700 text-white h-11 md:h-10"
         >
           <Zap className="h-4 w-4 mr-2" />
           Run Random Agent
         </Button>
+        {!isAutonomousRunning ? (
+          <Button
+            onClick={startAutonomousLoop}
+            className="bg-green-600 hover:bg-green-700 text-white h-11 md:h-10"
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Start Autonomous
+          </Button>
+        ) : (
+          <Button
+            onClick={stopAutonomousLoop}
+            className="bg-red-600 hover:bg-red-700 text-white h-11 md:h-10"
+          >
+            <Square className="h-4 w-4 mr-2" />
+            Stop Autonomous
+          </Button>
+        )}
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4 md:space-y-6">
         <div>
-          <h2 className="text-xl font-semibold text-purple-400 mb-4">🚀 Enhanced Agents (V4.5+)</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {enhancedAgents.map((agent, index) => (
-              <AgentCard
-                key={index}
-                agentName={agent.name}
-                status={agent.status}
-                lastAction={agent.lastAction}
-                description={agent.description}
-                version={agent.version}
-                category={agent.category}
-                onRunAgent={() => handleRunAgent(agent.name)}
-                isRunning={runningAgents.has(agent.name)}
-              />
-            ))}
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg md:text-xl font-semibold text-purple-400">🚀 Enhanced Agents (V4.5+)</h2>
+            <Button
+              onClick={() => setShowEnhanced(!showEnhanced)}
+              variant="outline"
+              size="sm"
+              className="border-purple-400 text-purple-400 hover:bg-purple-400/20"
+            >
+              {showEnhanced ? 'Collapse' : 'Expand'}
+            </Button>
           </div>
+          {showEnhanced && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+              {enhancedAgents.map((agent, index) => (
+                <AgentCard
+                  key={index}
+                  agentName={agent.name}
+                  status={agent.status}
+                  lastAction={agent.lastAction}
+                  description={agent.description}
+                  version={agent.version}
+                  category={agent.category}
+                  onRunAgent={handleRunAgent}
+                  isRunning={runningAgents.has(agent.name)}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         <div>
-          <h2 className="text-xl font-semibold text-blue-400 mb-4">⚙️ Core Agents (V4.0)</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {coreAgents.map((agent, index) => (
-              <AgentCard
-                key={index}
-                agentName={agent.name}
-                status={agent.status}
-                lastAction={agent.lastAction}
-                description={agent.description}
-                version={agent.version}
-                category={agent.category}
-                onRunAgent={() => handleRunAgent(agent.name)}
-                isRunning={runningAgents.has(agent.name)}
-              />
-            ))}
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg md:text-xl font-semibold text-blue-400">⚙️ Core Agents (V4.0)</h2>
+            <Button
+              onClick={() => setShowCore(!showCore)}
+              variant="outline"
+              size="sm"
+              className="border-blue-400 text-blue-400 hover:bg-blue-400/20"
+            >
+              {showCore ? 'Collapse' : 'Expand'}
+            </Button>
           </div>
+          {showCore && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+              {coreAgents.map((agent, index) => (
+                <AgentCard
+                  key={index}
+                  agentName={agent.name}
+                  status={agent.status}
+                  lastAction={agent.lastAction}
+                  description={agent.description}
+                  version={agent.version}
+                  category={agent.category}
+                  onRunAgent={handleRunAgent}
+                  isRunning={runningAgents.has(agent.name)}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
