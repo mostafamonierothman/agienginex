@@ -1,4 +1,3 @@
-
 export interface Agent {
   id: string;
   name: string;
@@ -29,4 +28,32 @@ export interface AgentStats {
 export interface TaskResult {
   action: string;
   importance: number;
+}
+
+export interface AgentContext {
+  input?: any;
+  user_id?: string;
+  timestamp?: string;
+}
+
+export interface AgentResponse {
+  success: boolean;
+  message: string;
+  data?: any;
+  timestamp?: string;
+}
+
+export interface AgentRegistryEntry {
+  name: string;
+  type: string;
+  purpose: string;
+  config: object;
+  created_at?: string;
+}
+
+export interface Goal {
+  goal: string;
+  status: string;
+  source: string;
+  created_at?: string;
 }
