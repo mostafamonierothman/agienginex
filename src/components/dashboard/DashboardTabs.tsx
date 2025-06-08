@@ -141,7 +141,7 @@ const DashboardTabs = ({
       </TabsContent>
 
       <TabsContent value="business" className="space-y-6">
-        <BusinessPathsTracker />
+        <BusinessPathsTracker engineState={engineState} />
       </TabsContent>
     </Tabs>
   );
