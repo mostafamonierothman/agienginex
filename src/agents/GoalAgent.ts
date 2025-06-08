@@ -1,0 +1,110 @@
+
+import { AgentContext, AgentResponse } from '@/types/AgentTypes';
+import { supabase } from '@/integrations/supabase/client';
+
+export class GoalAgent {
+  private goals: string[] = [];
+
+  async addGoal(goal: string): Promise<string> {
+    this.goals.push(goal);
+    
+    // Store in Supabase
+    try {
+      await supabase
+        .from('agi_goals_enhanced')
+        .insert({
+          goal_text: goal,
+          status: 'active',
+          priority: Math.floor(Math.random() * 10) + 1,
+          progress_percentage: 0
+        });
+    } catch (error) {
+      console.error('Failed to store goal:', error);
+    }
+
+    return `Goal added: ${goal}`;
+  }
+
+  async listGoals(): Promise<string[]> {
+    try {
+      const { data, error } = await supabase
+        .from('agi_goals_enhanced')
+        .select('goal_text')
+        .eq('status', 'active')
+        .order('priority', { ascending: false });
+
+      if (error) throw error;
+      return data?.map(g => g.goal_text) || this.goals;
+    } catch (error) {
+      console.error('Failed to fetch goals:', error);
+      return this.goals;
+    }
+  }
+
+  async completeGoal(goal: string): Promise<string> {
+    try {
+      const { error } = await supabase
+        .from('agi_goals_enhanced')
+        .update({ 
+          status: 'completed',
+          progress_percentage: 100
+        })
+        .eq('goal_text', goal)
+        .eq('status', 'active');
+
+      if (error) throw error;
+      
+      this.goals = this.goals.filter(g => g !== goal);
+      return `Goal completed: ${goal}`;
+    } catch (error) {
+      return `Failed to complete goal: ${error.message}`;
+    }
+  }
+
+  async generateSmartGoal(): Promise<string> {
+    const goalTemplates = [
+      'Improve system efficiency by 25% through automated optimization',
+      'Enhance cross-agent communication protocols for better coordination',
+      'Develop autonomous learning mechanisms for skill acquisition',
+      'Implement real-time performance monitoring and self-correction',
+      'Create adaptive decision-making frameworks for complex scenarios',
+      'Establish efficient knowledge consolidation and retrieval systems'
+    ];
+
+    const randomGoal = goalTemplates[Math.floor(Math.random() * goalTemplates.length)];
+    await this.addGoal(randomGoal);
+    return randomGoal;
+  }
+}
+
+export async function GoalAgentRunner(context: AgentContext): Promise<AgentResponse> {
+  try {
+    const goalAgent = new GoalAgent();
+    const newGoal = await goalAgent.generateSmartGoal();
+    const currentGoals = await goalAgent.listGoals();
+
+    // Log to supervisor queue
+    await supabase
+      .from('supervisor_queue')
+      .insert({
+        user_id: context.user_id || 'goal_agent',
+        agent_name: 'goal_agent',
+        action: 'generate_goal',
+        input: JSON.stringify({ action: 'generate_smart_goal' }),
+        status: 'completed',
+        output: `Generated: ${newGoal}. Total active goals: ${currentGoals.length}`
+      });
+
+    return {
+      success: true,
+      message: `🎯 GoalAgent generated new goal: "${newGoal}" (${currentGoals.length} total active goals)`,
+      data: { newGoal, totalGoals: currentGoals.length },
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: `❌ GoalAgent error: ${error.message}`
+    };
+  }
+}
