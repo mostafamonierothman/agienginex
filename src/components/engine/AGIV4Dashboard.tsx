@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { agiApiClient } from '@/services/AGIApiClient';
@@ -10,6 +9,9 @@ import AGIV4SystemMetrics from './v4/AGIV4SystemMetrics';
 import AGIV4ControlPanel from './v4/AGIV4ControlPanel';
 import AGIV4AgentGrid from './v4/AGIV4AgentGrid';
 import AGIV4SystemMessages from './v4/AGIV4SystemMessages';
+import AGIV4DataInitializer from './v4/AGIV4DataInitializer';
+import AGIV4DataMonitor from './v4/AGIV4DataMonitor';
+import AGIV4ActivityFeed from './v4/AGIV4ActivityFeed';
 
 const AGIV4Dashboard = () => {
   const [agents, setAgents] = useState([]);
@@ -18,6 +20,7 @@ const AGIV4Dashboard = () => {
   const [systemHealth, setSystemHealth] = useState(95);
   const [totalCycles, setTotalCycles] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [dataInitialized, setDataInitialized] = useState(false);
 
   // Enhanced Core AGI V4 Agents - ALL agents that should be visible
   const getAllAgents = () => {
@@ -177,6 +180,14 @@ const AGIV4Dashboard = () => {
     }
   };
 
+  const handleDataInitialized = () => {
+    setDataInitialized(true);
+    toast({
+      title: "✅ System Initialized",
+      description: "AGI system is ready for autonomous operation",
+    });
+  };
+
   useEffect(() => {
     fetchAgents();
     
@@ -201,6 +212,10 @@ const AGIV4Dashboard = () => {
       <Card className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 border-slate-600/50 backdrop-blur-sm">
         <AGIV4DashboardHeader agentCount={agents.length} />
         <CardContent className="space-y-6">
+          <AGIV4DataInitializer onDataInitialized={handleDataInitialized} />
+          
+          <AGIV4DataMonitor />
+
           <AGIV4SystemMetrics
             systemRunning={systemRunning}
             agentCount={agents.length}
@@ -219,11 +234,15 @@ const AGIV4Dashboard = () => {
             stopAutonomousSystem={stopAutonomousSystem}
           />
 
-          <AGIV4AgentGrid
-            agents={agents}
-            loading={loading}
-            fetchAgents={fetchAgents}
-          />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <AGIV4AgentGrid
+              agents={agents}
+              loading={loading}
+              fetchAgents={fetchAgents}
+            />
+            
+            <AGIV4ActivityFeed />
+          </div>
 
           <AGIV4SystemMessages
             systemRunning={systemRunning}
