@@ -1,4 +1,3 @@
-
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -55,8 +54,11 @@ export class EnhancedMetaAgent {
 
         const totalAgents = Object.keys(agentStats).length;
         const avgSuccessRate = totalAgents > 0 
-            ? Object.values(agentStats).reduce((sum: number, stats: any) => 
-                sum + (stats.successful / Math.max(stats.total, 1)), 0) / totalAgents
+            ? Object.values(agentStats).reduce((sum: number, stats: any) => {
+                const total = Number(stats.total) || 1;
+                const successful = Number(stats.successful) || 0;
+                return sum + (successful / total);
+            }, 0) / totalAgents
             : 0;
 
         return {
@@ -81,8 +83,9 @@ export class EnhancedMetaAgent {
 
         const lowPerformers = Object.entries(metrics.agentStats)
             .filter(([_, stats]: [string, any]) => {
-                const total = stats.total || 1;
-                return (stats.successful || 0) / total < 0.5;
+                const total = Number(stats.total) || 1;
+                const successful = Number(stats.successful) || 0;
+                return successful / total < 0.5;
             })
             .map(([agent, _]) => agent);
 
