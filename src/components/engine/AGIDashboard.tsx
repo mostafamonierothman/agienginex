@@ -7,7 +7,7 @@ import LiveBackendData from './multi-agent/LiveBackendData';
 import { useBackendPolling } from '@/hooks/useBackendPolling';
 
 const AGIDashboard = () => {
-  const { backendData, isConnected, isPolling, refreshData } = useBackendPolling();
+  const { backendData, isConnected, isPolling, refreshData } = useBackendPolling(true, 2000);
 
   return (
     <div className="space-y-6">
