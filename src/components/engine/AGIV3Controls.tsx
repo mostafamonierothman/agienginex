@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Brain, Zap, Target, Users, Settings, Play, Pause, Memory, ListChecks, Activity } from 'lucide-react';
+import { Brain, Zap, Target, Users, Settings, Play, Pause, Database, ListChecks, Activity } from 'lucide-react';
 import { agiEngineXV3 } from '@/services/AGIengineXV3Service';
 import { toast } from '@/hooks/use-toast';
 
@@ -198,7 +197,7 @@ const AGIV3Controls = () => {
               disabled={isLoading}
               className="w-full bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
             >
-              <Memory className="w-4 h-4" />
+              <Database className="w-4 h-4" />
               {isLoading ? 'Running Enhanced Agent...' : 'Run Enhanced Agent'}
             </Button>
             
@@ -342,7 +341,7 @@ const AGIV3Controls = () => {
         <CardContent className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div className="text-center">
             <div className="bg-slate-700/50 p-4 rounded border border-slate-600">
-              <Memory className="w-8 h-8 text-blue-400 mx-auto mb-2" />
+              <Database className="w-8 h-8 text-blue-400 mx-auto mb-2" />
               <h3 className="text-white text-sm font-medium">Agent Memory</h3>
               <Badge variant="outline" className="text-green-400 border-green-400 mt-1">
                 Enhanced
