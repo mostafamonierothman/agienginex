@@ -1,57 +1,24 @@
+
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import BusinessPathsTracker from '../BusinessPathsTracker';
+import { Brain, Zap, TrendingUp, Users, Target, Settings, Rocket, TestTube, Bot, Activity } from 'lucide-react';
 import EngineConnection from '../engine/EngineConnection';
 import EngineMetrics from '../engine/EngineMetrics';
-import EngineAdvancedMetrics from '../engine/EngineAdvancedMetrics';
-import TaskCommandCenter from '../engine/TaskCommandCenter';
 import LoopsStatus from '../engine/LoopsStatus';
 import LoopsPerformance from '../engine/LoopsPerformance';
-import LoopEngine from '../loops/LoopEngine';
-import APIChain from '../engine/APIChain';
-import EnhancedAGIEngine from '../engine/EnhancedAGIEngine';
-import OpenAIIntegration from '../engine/OpenAIIntegration';
-import MultiAgentDashboard from '../engine/MultiAgentDashboard';
-import AGITestButton from '../engine/multi-agent/AGITestButton';
 import AGIDashboard from '../engine/AGIDashboard';
+import MultiAgentDashboard from '../engine/MultiAgentDashboard';
 import AGIV2Dashboard from '../engine/AGIV2Dashboard';
 import AGIV3Dashboard from '../engine/AGIV3Dashboard';
-import AGIV3Controls from '../engine/AGIV3Controls';
-
-interface EngineState {
-  timestamp: string;
-  overall_status: string;
-  tasks_completed_last_sec: number;
-  learning_loop_progress_percent: number;
-  latency_loop_current_latency_ms: number;
-  pipeline_optimizer_efficiency_percent: number;
-  active_agents: number;
-  current_revenue: {
-    medjourney_main: number;
-    geo_expansion: number;
-    waiting_list_targeting: number;
-    billionaire_path: number;
-    agi_healthcare: number;
-    sweden_health: number;
-    sweden_crime: number;
-  };
-  loop_status: {
-    learning_loop: string;
-    latency_optimizer_loop: string;
-    pipeline_optimizer_loop: string;
-    hardware_optimizer_loop: string;
-    self_prioritizer_loop: string;
-    opportunity_seeker_loop: string;
-    self_rewrite_loop: string;
-  };
-  estimated_time_to_1_sec_finish_sec: number;
-  estimated_days_to_10M_path: number;
-  engine_cycle_rate_sec: number;
-  femto_aspiration_gap_percent: number;
-}
+import AGIV4Dashboard from '../engine/AGIV4Dashboard';
+import AGIV4Controls from '../engine/AGIV4Controls';
+import BusinessPathsTracker from '../BusinessPathsTracker';
+import APIChain from '../engine/APIChain';
+import TaskCommandCenter from '../engine/TaskCommandCenter';
+import EngineAdvancedMetrics from '../engine/EngineAdvancedMetrics';
 
 interface DashboardTabsProps {
-  engineState: EngineState | null;
+  engineState: any;
   apiUrl: string;
   setApiUrl: (url: string) => void;
   apiKey: string;
@@ -72,135 +39,109 @@ const DashboardTabs = ({
   triggerTask
 }: DashboardTabsProps) => {
   return (
-    <Tabs defaultValue="agi-v3" className="w-full">
-      <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-12 bg-slate-800 h-auto gap-1 p-1">
-        <TabsTrigger value="agi-v3" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
-          <span className="hidden sm:inline">🚀 AGI V3</span>
-          <span className="sm:hidden">🚀 V3</span>
+    <Tabs defaultValue="v4" className="w-full">
+      <TabsList className="grid grid-cols-5 lg:grid-cols-10 gap-1 h-auto p-2 bg-slate-800/50">
+        <TabsTrigger value="v4" className="flex flex-col items-center gap-1 text-xs text-white data-[state=active]:bg-purple-600">
+          <Rocket className="w-4 h-4" />
+          V4
         </TabsTrigger>
-        <TabsTrigger value="agi-v3-controls" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
-          <span className="hidden sm:inline">⚡ V3 Controls</span>
-          <span className="sm:hidden">⚡ Ctrl</span>
+        <TabsTrigger value="v3" className="flex flex-col items-center gap-1 text-xs text-white data-[state=active]:bg-blue-600">
+          <Brain className="w-4 h-4" />
+          V3
         </TabsTrigger>
-        <TabsTrigger value="agi-v2" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
-          <span className="hidden sm:inline">🧠 AGI V2</span>
-          <span className="sm:hidden">🧠 V2</span>
+        <TabsTrigger value="v2" className="flex flex-col items-center gap-1 text-xs text-white data-[state=active]:bg-green-600">
+          <Bot className="w-4 h-4" />
+          V2
         </TabsTrigger>
-        <TabsTrigger value="agi-dashboard" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
-          <span className="hidden sm:inline">🎯 AGI Dashboard</span>
-          <span className="sm:hidden">🎯 AGI</span>
+        <TabsTrigger value="ctrl" className="flex flex-col items-center gap-1 text-xs text-white data-[state=active]:bg-yellow-600">
+          <Zap className="w-4 h-4" />
+          Ctrl
         </TabsTrigger>
-        <TabsTrigger value="agi-test" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
-          <span className="hidden sm:inline">🚀 AGI Test</span>
-          <span className="sm:hidden">🚀 Test</span>
+        <TabsTrigger value="agi" className="flex flex-col items-center gap-1 text-xs text-white data-[state=active]:bg-red-600">
+          <Target className="w-4 h-4" />
+          AGI
         </TabsTrigger>
-        <TabsTrigger value="enhanced-agi" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
-          <span className="hidden sm:inline">🧠 Enhanced AGI</span>
-          <span className="sm:hidden">🧠 AGI</span>
+        <TabsTrigger value="test" className="flex flex-col items-center gap-1 text-xs text-white data-[state=active]:bg-orange-600">
+          <TestTube className="w-4 h-4" />
+          Test
         </TabsTrigger>
-        <TabsTrigger value="multi-agent-v2" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
-          <span className="hidden sm:inline">🤖 Multi-Agent V2</span>
-          <span className="sm:hidden">🤖 V2</span>
+        <TabsTrigger value="ai" className="flex flex-col items-center gap-1 text-xs text-white data-[state=active]:bg-cyan-600">
+          <Brain className="w-4 h-4" />
+          AI
         </TabsTrigger>
-        <TabsTrigger value="openai" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
-          <span className="hidden sm:inline">🤖 OpenAI</span>
-          <span className="sm:hidden">🤖 AI</span>
+        <TabsTrigger value="api" className="flex flex-col items-center gap-1 text-xs text-white data-[state=active]:bg-pink-600">
+          <Activity className="w-4 h-4" />
+          API
         </TabsTrigger>
-        <TabsTrigger value="engine" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
-          <span className="hidden sm:inline">⚙️ Engine Control</span>
-          <span className="sm:hidden">⚙️ Engine</span>
+        <TabsTrigger value="engine" className="flex flex-col items-center gap-1 text-xs text-white data-[state=active]:bg-indigo-600">
+          <Settings className="w-4 h-4" />
+          Engine
         </TabsTrigger>
-        <TabsTrigger value="api-chain" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
-          <span className="hidden sm:inline">🚀 API Chain</span>
-          <span className="sm:hidden">🚀 API</span>
-        </TabsTrigger>
-        <TabsTrigger value="loops" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
-          <span className="hidden sm:inline">🔄 Core Loops</span>
-          <span className="sm:hidden">🔄 Loops</span>
-        </TabsTrigger>
-        <TabsTrigger value="loop-engine" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
-          <span className="hidden sm:inline">⚡ Loop Engine</span>
-          <span className="sm:hidden">⚡ L.Engine</span>
-        </TabsTrigger>
-        <TabsTrigger value="business" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
-          <span className="hidden sm:inline">💰 Business Paths</span>
-          <span className="sm:hidden">💰 Business</span>
+        <TabsTrigger value="business" className="flex flex-col items-center gap-1 text-xs text-white data-[state=active]:bg-emerald-600">
+          <TrendingUp className="w-4 h-4" />
+          Business
         </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="agi-v3">
+      <TabsContent value="v4" className="space-y-6">
+        <div className="space-y-6">
+          <AGIV4Controls />
+          <AGIV4Dashboard />
+        </div>
+      </TabsContent>
+
+      <TabsContent value="v3" className="space-y-6">
         <AGIV3Dashboard />
       </TabsContent>
 
-      <TabsContent value="agi-v3-controls">
-        <AGIV3Controls />
-      </TabsContent>
-
-      <TabsContent value="agi-v2">
+      <TabsContent value="v2" className="space-y-6">
         <AGIV2Dashboard />
       </TabsContent>
 
-      <TabsContent value="agi-dashboard">
-        <AGIDashboard />
-      </TabsContent>
-
-      <TabsContent value="agi-test">
-        <AGITestButton />
-      </TabsContent>
-
-      <TabsContent value="enhanced-agi">
-        <EnhancedAGIEngine />
-      </TabsContent>
-
-      <TabsContent value="multi-agent-v2">
-        <MultiAgentDashboard />
-      </TabsContent>
-
-      <TabsContent value="openai">
-        <OpenAIIntegration />
-      </TabsContent>
-
-      <TabsContent value="engine" className="space-y-6">
-        <EngineConnection 
-          apiUrl={apiUrl}
-          setApiUrl={setApiUrl}
-          apiKey={apiKey}
-          setApiKey={setApiKey}
-        />
-
-        {engineState && (
-          <>
-            <EngineMetrics engineState={engineState} />
-            <EngineAdvancedMetrics engineState={engineState} />
-          </>
-        )}
-
-        <TaskCommandCenter 
+      <TabsContent value="ctrl" className="space-y-6">
+        <TaskCommandCenter
           taskName={taskName}
           setTaskName={setTaskName}
           triggerTask={triggerTask}
         />
       </TabsContent>
 
-      <TabsContent value="api-chain">
+      <TabsContent value="agi" className="space-y-6">
+        <AGIDashboard />
+      </TabsContent>
+
+      <TabsContent value="test" className="space-y-6">
+        <MultiAgentDashboard />
+      </TabsContent>
+
+      <TabsContent value="ai" className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <EngineConnection
+            apiUrl={apiUrl}
+            setApiUrl={setApiUrl}
+            apiKey={apiKey}
+            setApiKey={setApiKey}
+          />
+          <EngineAdvancedMetrics engineState={engineState} />
+        </div>
+      </TabsContent>
+
+      <TabsContent value="api" className="space-y-6">
         <APIChain />
       </TabsContent>
 
-      <TabsContent value="loops" className="space-y-6">
-        {engineState && (
-          <>
+      <TabsContent value="engine" className="space-y-6">
+        <div className="space-y-6">
+          <EngineMetrics engineState={engineState} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <LoopsStatus engineState={engineState} />
             <LoopsPerformance engineState={engineState} />
-          </>
-        )}
+          </div>
+        </div>
       </TabsContent>
 
-      <TabsContent value="loop-engine">
-        <LoopEngine engineState={engineState} />
-      </TabsContent>
-
-      <TabsContent value="business">
-        <BusinessPathsTracker engineState={engineState} />
+      <TabsContent value="business" className="space-y-6">
+        <BusinessPathsTracker />
       </TabsContent>
     </Tabs>
   );
