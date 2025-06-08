@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,7 +17,7 @@ const AGIV4Dashboard = () => {
   const [totalCycles, setTotalCycles] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  // Core AGI V4 Agents
+  // Core AGI V4 Agents with improved visibility
   const coreAgents = [
     { name: 'SupervisorAgent', type: 'Core', status: 'ready', performance: 95 },
     { name: 'ResearchAgent', type: 'Research', status: 'ready', performance: 88 },
@@ -153,72 +152,72 @@ const AGIV4Dashboard = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'running': return 'bg-green-500';
-      case 'ready': return 'bg-blue-500';
-      case 'error': return 'bg-red-500';
-      default: return 'bg-gray-500';
+      case 'running': return 'bg-emerald-500 text-white border-emerald-500';
+      case 'ready': return 'bg-blue-500 text-white border-blue-500';
+      case 'error': return 'bg-red-500 text-white border-red-500';
+      default: return 'bg-slate-500 text-white border-slate-500';
     }
   };
 
   return (
     <div className="space-y-6">
-      <Card className="bg-gradient-to-br from-purple-900/30 to-blue-900/30 border-purple-500/30">
+      <Card className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 border-slate-600/50 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white">
-            <Brain className="h-6 w-6 text-purple-400" />
+          <CardTitle className="flex items-center gap-2 text-white text-xl">
+            <Brain className="h-6 w-6 text-cyan-400" />
             AGI V4 Autonomous System Dashboard
           </CardTitle>
-          <CardDescription className="text-gray-300">
+          <CardDescription className="text-slate-300 text-base">
             Complete AGI V4 system with {agents.length} active agents
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* System Status */}
+          {/* System Status - Improved colors */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-black/20 p-4 rounded-lg">
+            <div className="bg-slate-700/50 p-4 rounded-lg border border-slate-500/30">
               <div className="flex items-center gap-2 mb-2">
-                <Activity className="h-4 w-4 text-green-400" />
-                <span className="text-gray-400 text-sm">System Status</span>
+                <Activity className="h-5 w-5 text-emerald-400" />
+                <span className="text-slate-200 text-sm font-medium">System Status</span>
               </div>
-              <Badge className={systemRunning ? 'bg-green-500' : 'bg-red-500'}>
+              <Badge className={systemRunning ? 'bg-emerald-500 text-white text-sm px-3 py-1' : 'bg-red-500 text-white text-sm px-3 py-1'}>
                 {systemRunning ? 'AUTONOMOUS' : 'MANUAL'}
               </Badge>
             </div>
             
-            <div className="bg-black/20 p-4 rounded-lg">
+            <div className="bg-slate-700/50 p-4 rounded-lg border border-slate-500/30">
               <div className="flex items-center gap-2 mb-2">
-                <Brain className="h-4 w-4 text-blue-400" />
-                <span className="text-gray-400 text-sm">Active Agents</span>
+                <Brain className="h-5 w-5 text-cyan-400" />
+                <span className="text-slate-200 text-sm font-medium">Active Agents</span>
               </div>
-              <span className="text-white font-bold text-xl">{agents.length}</span>
+              <span className="text-white font-bold text-2xl">{agents.length}</span>
             </div>
             
-            <div className="bg-black/20 p-4 rounded-lg">
+            <div className="bg-slate-700/50 p-4 rounded-lg border border-slate-500/30">
               <div className="flex items-center gap-2 mb-2">
-                <Clock className="h-4 w-4 text-yellow-400" />
-                <span className="text-gray-400 text-sm">Total Cycles</span>
+                <Clock className="h-5 w-5 text-amber-400" />
+                <span className="text-slate-200 text-sm font-medium">Total Cycles</span>
               </div>
-              <span className="text-white font-bold text-xl">{totalCycles}</span>
+              <span className="text-white font-bold text-2xl">{totalCycles}</span>
             </div>
             
-            <div className="bg-black/20 p-4 rounded-lg">
+            <div className="bg-slate-700/50 p-4 rounded-lg border border-slate-500/30">
               <div className="flex items-center gap-2 mb-2">
-                <Zap className="h-4 w-4 text-purple-400" />
-                <span className="text-gray-400 text-sm">System Health</span>
+                <Zap className="h-5 w-5 text-violet-400" />
+                <span className="text-slate-200 text-sm font-medium">System Health</span>
               </div>
               <div className="flex items-center gap-2">
-                <Progress value={systemHealth} className="flex-1" />
-                <span className="text-white text-sm">{systemHealth.toFixed(0)}%</span>
+                <Progress value={systemHealth} className="flex-1 h-3" />
+                <span className="text-white text-sm font-medium">{systemHealth.toFixed(0)}%</span>
               </div>
             </div>
           </div>
 
-          {/* Control Panel */}
+          {/* Control Panel - Enhanced buttons */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             <Button
               onClick={runAllAgents}
               disabled={loading}
-              className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700"
+              className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-medium py-3"
             >
               <Zap className="h-4 w-4 mr-2" />
               Run All Agents
@@ -227,7 +226,7 @@ const AGIV4Dashboard = () => {
             <Button
               onClick={startAutonomousSystem}
               disabled={systemRunning || loading}
-              className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+              className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-medium py-3"
             >
               <Play className="h-4 w-4 mr-2" />
               Start Autonomous
@@ -236,7 +235,7 @@ const AGIV4Dashboard = () => {
             <Button
               onClick={startParallelFarm}
               disabled={parallelRunning || loading}
-              className="bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700"
+              className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white font-medium py-3"
             >
               <Activity className="h-4 w-4 mr-2" />
               Start Parallel Farm
@@ -246,22 +245,23 @@ const AGIV4Dashboard = () => {
               onClick={stopAutonomousSystem}
               disabled={!systemRunning && !parallelRunning}
               variant="destructive"
+              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 font-medium py-3"
             >
               <Square className="h-4 w-4 mr-2" />
               Stop All
             </Button>
           </div>
 
-          {/* Agent Grid */}
+          {/* Agent Grid - Better contrast */}
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-white font-semibold">All Agents ({agents.length})</h3>
+              <h3 className="text-white font-semibold text-lg">All Agents ({agents.length})</h3>
               <Button
                 onClick={fetchAgents}
                 disabled={loading}
                 variant="outline"
                 size="sm"
-                className="border-gray-600 text-gray-300"
+                className="border-slate-500 text-slate-200 hover:bg-slate-700 hover:text-white"
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                 Refresh
@@ -270,50 +270,50 @@ const AGIV4Dashboard = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {agents.map((agent, index) => (
-                <div key={index} className="bg-black/30 p-3 rounded-lg border border-gray-700">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-white font-medium text-sm">{agent.name}</span>
+                <div key={index} className="bg-slate-700/60 p-4 rounded-lg border border-slate-500/40 hover:bg-slate-700/80 transition-colors">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-white font-medium text-sm truncate">{agent.name}</span>
                     <Badge 
                       variant="outline" 
-                      className={`${getStatusColor(agent.status)} text-white border-none text-xs`}
+                      className={`${getStatusColor(agent.status)} text-xs font-medium`}
                     >
-                      {agent.status}
+                      {agent.status.toUpperCase()}
                     </Badge>
                   </div>
                   
-                  <div className="text-xs text-gray-400 mb-2">{agent.type}</div>
+                  <div className="text-xs text-slate-300 mb-3 font-medium">{agent.type}</div>
                   
                   <div className="flex items-center gap-2">
                     <div className="flex-1">
                       <Progress value={agent.performance} className="h-2" />
                     </div>
-                    <span className="text-xs text-gray-300">{agent.performance}%</span>
+                    <span className="text-xs text-slate-200 font-medium">{agent.performance}%</span>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* System Messages */}
+          {/* System Messages - Enhanced visibility */}
           {systemRunning && (
-            <div className="bg-green-900/20 border border-green-500/30 p-4 rounded-lg">
-              <div className="flex items-center gap-2 text-green-400">
-                <Activity className="h-4 w-4 animate-pulse" />
-                <span className="font-medium">AGI V4 System Running Autonomously</span>
+            <div className="bg-emerald-900/30 border border-emerald-500/50 p-4 rounded-lg">
+              <div className="flex items-center gap-2 text-emerald-300">
+                <Activity className="h-5 w-5 animate-pulse" />
+                <span className="font-medium text-base">AGI V4 System Running Autonomously</span>
               </div>
-              <p className="text-gray-300 text-sm mt-2">
+              <p className="text-slate-200 text-sm mt-2">
                 All agents are executing in autonomous mode. The system will continuously run and evolve.
               </p>
             </div>
           )}
           
           {parallelRunning && (
-            <div className="bg-purple-900/20 border border-purple-500/30 p-4 rounded-lg">
-              <div className="flex items-center gap-2 text-purple-400">
-                <Zap className="h-4 w-4 animate-pulse" />
-                <span className="font-medium">Parallel Farm Active</span>
+            <div className="bg-violet-900/30 border border-violet-500/50 p-4 rounded-lg">
+              <div className="flex items-center gap-2 text-violet-300">
+                <Zap className="h-5 w-5 animate-pulse" />
+                <span className="font-medium text-base">Parallel Farm Active</span>
               </div>
-              <p className="text-gray-300 text-sm mt-2">
+              <p className="text-slate-200 text-sm mt-2">
                 Agents are running in parallel farm mode for maximum efficiency and throughput.
               </p>
             </div>

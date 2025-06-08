@@ -15,15 +15,19 @@ export interface ApprovalRequest {
 
 export class HumanInTheLoopManager {
   static async submitForApproval(request: ApprovalRequest): Promise<string> {
+    // Store approval request in supervisor_queue for now since approval_requests table doesn't exist
     const { data, error } = await supabase
-      .from('approval_requests')
+      .from('supervisor_queue')
       .insert({
         user_id: request.user_id,
         agent_name: request.agent_name,
-        request_type: request.request_type,
-        description: request.description,
-        proposed_action: request.proposed_action,
-        urgency: request.urgency,
+        action: 'approval_request',
+        input: JSON.stringify({
+          request_type: request.request_type,
+          description: request.description,
+          proposed_action: request.proposed_action,
+          urgency: request.urgency
+        }),
         status: 'pending'
       })
       .select('id')
@@ -40,7 +44,7 @@ export class HumanInTheLoopManager {
 
   static async approveRequest(requestId: string, userId: string): Promise<void> {
     const { error } = await supabase
-      .from('approval_requests')
+      .from('supervisor_queue')
       .update({ status: 'approved' })
       .eq('id', requestId)
       .eq('user_id', userId);
@@ -55,10 +59,10 @@ export class HumanInTheLoopManager {
 
   static async rejectRequest(requestId: string, userId: string, reason?: string): Promise<void> {
     const { error } = await supabase
-      .from('approval_requests')
+      .from('supervisor_queue')
       .update({ 
         status: 'rejected',
-        rejection_reason: reason
+        output: reason || 'User rejected'
       })
       .eq('id', requestId)
       .eq('user_id', userId);
@@ -73,18 +77,33 @@ export class HumanInTheLoopManager {
 
   static async getPendingApprovals(userId: string): Promise<ApprovalRequest[]> {
     const { data, error } = await supabase
-      .from('approval_requests')
+      .from('supervisor_queue')
       .select('*')
       .eq('user_id', userId)
+      .eq('action', 'approval_request')
       .eq('status', 'pending')
-      .order('created_at', { ascending: false });
+      .order('timestamp', { ascending: false });
 
     if (error) {
       console.error('Failed to fetch pending approvals:', error);
       return [];
     }
 
-    return data || [];
+    // Transform supervisor_queue data to ApprovalRequest format
+    return (data || []).map(item => {
+      const input = item.input ? JSON.parse(item.input) : {};
+      return {
+        id: item.id,
+        user_id: item.user_id || '',
+        agent_name: item.agent_name || '',
+        request_type: input.request_type || 'action_approval',
+        description: input.description || 'Agent action request',
+        proposed_action: input.proposed_action || 'Unknown action',
+        urgency: input.urgency || 'medium',
+        status: item.status as any || 'pending',
+        created_at: item.timestamp
+      };
+    });
   }
 
   static async requiresHumanApproval(
