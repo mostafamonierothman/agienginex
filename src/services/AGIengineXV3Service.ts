@@ -310,29 +310,51 @@ class AGIEngineXV3Service {
     try {
       console.log('🔍 Testing database connection...');
       
-      // Test each table
-      const tests = [
-        { name: 'supervisor_queue', table: 'supervisor_queue' },
-        { name: 'agent_memory', table: 'agent_memory' },
-        { name: 'agi_goals_enhanced', table: 'agi_goals_enhanced' }
-      ];
-
       const results = {};
       
-      for (const test of tests) {
-        try {
-          const { count, error } = await supabase
-            .from(test.table)
-            .select('*', { count: 'exact', head: true });
-            
-          if (error) {
-            results[test.name] = { status: 'error', error: error.message };
-          } else {
-            results[test.name] = { status: 'ok', count: count || 0 };
-          }
-        } catch (err) {
-          results[test.name] = { status: 'error', error: err.message };
+      // Test supervisor_queue table
+      try {
+        const { count: queueCount, error: queueError } = await supabase
+          .from('supervisor_queue')
+          .select('*', { count: 'exact', head: true });
+          
+        if (queueError) {
+          results['supervisor_queue'] = { status: 'error', error: queueError.message };
+        } else {
+          results['supervisor_queue'] = { status: 'ok', count: queueCount || 0 };
         }
+      } catch (err) {
+        results['supervisor_queue'] = { status: 'error', error: err.message };
+      }
+
+      // Test agent_memory table
+      try {
+        const { count: memoryCount, error: memoryError } = await supabase
+          .from('agent_memory')
+          .select('*', { count: 'exact', head: true });
+          
+        if (memoryError) {
+          results['agent_memory'] = { status: 'error', error: memoryError.message };
+        } else {
+          results['agent_memory'] = { status: 'ok', count: memoryCount || 0 };
+        }
+      } catch (err) {
+        results['agent_memory'] = { status: 'error', error: err.message };
+      }
+
+      // Test agi_goals_enhanced table
+      try {
+        const { count: goalsCount, error: goalsError } = await supabase
+          .from('agi_goals_enhanced')
+          .select('*', { count: 'exact', head: true });
+          
+        if (goalsError) {
+          results['agi_goals_enhanced'] = { status: 'error', error: goalsError.message };
+        } else {
+          results['agi_goals_enhanced'] = { status: 'ok', count: goalsCount || 0 };
+        }
+      } catch (err) {
+        results['agi_goals_enhanced'] = { status: 'error', error: err.message };
       }
       
       console.log('🔍 Database connection test results:', results);
