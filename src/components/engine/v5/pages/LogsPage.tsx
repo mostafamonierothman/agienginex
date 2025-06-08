@@ -25,7 +25,7 @@ const LogsPage = () => {
         ...localLogs
       ];
 
-      setLogs(combinedLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)));
+      setLogs(combinedLogs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
     };
 
     fetchLogs();
