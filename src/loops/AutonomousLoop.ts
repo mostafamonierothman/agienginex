@@ -4,6 +4,13 @@ import { ResearchAgent } from '@/agents/ResearchAgent';
 import { LearningAgentV2 } from '@/agents/LearningAgentV2';
 import { CriticAgent } from '@/agents/CriticAgent';
 import { SupervisorAgent } from '@/agents/SupervisorAgent';
+import { LLMAgent } from '@/agents/LLMAgent';
+import { CoordinationAgent } from '@/agents/CoordinationAgent';
+import { MemoryAgent } from '@/agents/MemoryAgent';
+import { StrategicAgent } from '@/agents/StrategicAgent';
+import { OpportunityAgent } from '@/agents/OpportunityAgent';
+import { EvolutionAgent } from '@/agents/EvolutionAgent';
+import { CollaborationAgent } from '@/agents/CollaborationAgent';
 import { AgentContext } from '@/types/AgentTypes';
 
 export class AutonomousLoop {
@@ -18,7 +25,7 @@ export class AutonomousLoop {
     }
 
     this.isRunning = true;
-    console.log('🚀 Starting Autonomous Loop System...');
+    console.log('🚀 Starting Autonomous Loop System with all 12 agents...');
 
     this.runLoop();
   }
@@ -36,7 +43,7 @@ export class AutonomousLoop {
     if (!this.isRunning) return;
 
     this.cycleCount++;
-    console.log(`🔄 Autonomous Loop Cycle #${this.cycleCount} starting...`);
+    console.log(`🔄 Autonomous Loop Cycle #${this.cycleCount} starting with all 12 agents...`);
 
     const context: AgentContext = {
       user_id: 'autonomous_system',
@@ -44,11 +51,18 @@ export class AutonomousLoop {
     };
 
     try {
-      // Run agents in sequence for coordinated execution
+      // Run all 12 agents in sequence for coordinated execution
       const agentRunners = [
         { name: 'SupervisorAgent', runner: SupervisorAgent },
+        { name: 'CoordinationAgent', runner: CoordinationAgent },
+        { name: 'StrategicAgent', runner: StrategicAgent },
         { name: 'ResearchAgent', runner: ResearchAgent },
+        { name: 'OpportunityAgent', runner: OpportunityAgent },
         { name: 'LearningAgentV2', runner: LearningAgentV2 },
+        { name: 'MemoryAgent', runner: MemoryAgent },
+        { name: 'LLMAgent', runner: LLMAgent },
+        { name: 'EvolutionAgent', runner: EvolutionAgent },
+        { name: 'CollaborationAgent', runner: CollaborationAgent },
         { name: 'FactoryAgent', runner: FactoryAgent },
         { name: 'CriticAgent', runner: CriticAgent }
       ];
@@ -71,7 +85,7 @@ export class AutonomousLoop {
         await new Promise(resolve => setTimeout(resolve, 100));
       }
 
-      console.log(`✅ Autonomous Loop Cycle #${this.cycleCount} completed`);
+      console.log(`✅ Autonomous Loop Cycle #${this.cycleCount} completed with all 12 agents`);
 
     } catch (error) {
       console.error('💥 Autonomous loop cycle error:', error);

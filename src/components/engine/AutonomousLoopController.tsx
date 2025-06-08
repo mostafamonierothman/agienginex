@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -129,15 +128,15 @@ const AutonomousLoopController = () => {
           <div className="bg-black/20 p-3 rounded-lg">
             <div className="text-gray-400">Active Agents</div>
             <div className="text-white font-semibold">
-              8 Core Agents
+              12 Core Agents
             </div>
           </div>
         </div>
 
         <div className="bg-black/30 p-3 rounded-lg">
-          <div className="text-xs text-gray-400 mb-2">Agent Execution Order:</div>
+          <div className="text-xs text-gray-400 mb-2">All 12 Agent Execution Order:</div>
           <div className="flex flex-wrap gap-1 text-xs">
-            {['Supervisor', 'Research', 'Learning', 'Factory', 'Critic'].map((agent, index) => (
+            {['Supervisor', 'Coordination', 'Strategic', 'Research', 'Opportunity', 'Learning', 'Memory', 'LLM', 'Evolution', 'Collaboration', 'Factory', 'Critic'].map((agent, index) => (
               <Badge key={agent} variant="outline" className="text-gray-300 border-gray-600">
                 {index + 1}. {agent}
               </Badge>
@@ -147,7 +146,7 @@ const AutonomousLoopController = () => {
 
         {isRunning && (
           <div className="text-center text-sm text-yellow-400 animate-pulse">
-            🤖 AGI V4 System Running Autonomously...
+            🤖 AGI V4 System Running Autonomously with all 12 agents...
           </div>
         )}
       </CardContent>

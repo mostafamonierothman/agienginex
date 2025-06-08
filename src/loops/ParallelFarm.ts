@@ -5,6 +5,12 @@ import { LearningAgentV2 } from '@/agents/LearningAgentV2';
 import { CriticAgent } from '@/agents/CriticAgent';
 import { SupervisorAgent } from '@/agents/SupervisorAgent';
 import { LLMAgent } from '@/agents/LLMAgent';
+import { CoordinationAgent } from '@/agents/CoordinationAgent';
+import { MemoryAgent } from '@/agents/MemoryAgent';
+import { StrategicAgent } from '@/agents/StrategicAgent';
+import { OpportunityAgent } from '@/agents/OpportunityAgent';
+import { EvolutionAgent } from '@/agents/EvolutionAgent';
+import { CollaborationAgent } from '@/agents/CollaborationAgent';
 import { AgentContext } from '@/types/AgentTypes';
 
 export class ParallelFarm {
@@ -19,7 +25,7 @@ export class ParallelFarm {
     }
 
     this.isRunning = true;
-    console.log('🚀 Starting Parallel Agent Farm...');
+    console.log('🚀 Starting Parallel Agent Farm with all 12 agents...');
 
     this.runFarmCycle(userId);
   }
@@ -37,7 +43,7 @@ export class ParallelFarm {
     if (!this.isRunning) return;
 
     this.cycleCount++;
-    console.log(`🚜 Parallel Farm Cycle #${this.cycleCount} starting...`);
+    console.log(`🚜 Parallel Farm Cycle #${this.cycleCount} starting with all 12 agents...`);
 
     const context: AgentContext = {
       user_id: userId,
@@ -45,14 +51,20 @@ export class ParallelFarm {
     };
 
     try {
-      // Run agents in parallel for maximum efficiency
+      // Run all 12 agents in parallel for maximum efficiency
       const agentPromises = [
         this.runAgentSafely('SupervisorAgent', SupervisorAgent, context),
+        this.runAgentSafely('CoordinationAgent', CoordinationAgent, context),
+        this.runAgentSafely('StrategicAgent', StrategicAgent, context),
         this.runAgentSafely('ResearchAgent', ResearchAgent, context),
+        this.runAgentSafely('OpportunityAgent', OpportunityAgent, context),
         this.runAgentSafely('LearningAgentV2', LearningAgentV2, context),
+        this.runAgentSafely('MemoryAgent', MemoryAgent, context),
+        this.runAgentSafely('LLMAgent', LLMAgent, { ...context, input: { auto_select: true, complexity: 'medium' } }),
+        this.runAgentSafely('EvolutionAgent', EvolutionAgent, context),
+        this.runAgentSafely('CollaborationAgent', CollaborationAgent, context),
         this.runAgentSafely('FactoryAgent', FactoryAgent, context),
-        this.runAgentSafely('CriticAgent', CriticAgent, context),
-        this.runAgentSafely('LLMAgent', LLMAgent, { ...context, input: { auto_select: true, complexity: 'medium' } })
+        this.runAgentSafely('CriticAgent', CriticAgent, context)
       ];
 
       const results = await Promise.allSettled(agentPromises);
