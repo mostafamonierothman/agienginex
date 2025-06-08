@@ -1,20 +1,37 @@
-import { AgentDefinition } from '@/types/AgentTypes';
-import { ResearchAgentRunner } from '@/agents/ResearchAgent';
-import { LearningAgentV2Runner } from '@/agents/LearningAgentV2';
-import { StrategicAgentRunner } from '@/agents/StrategicAgent';
-import { CreativityAgentRunner } from '@/agents/CreativityAgent';
-import { CriticAgentRunner } from '@/agents/CriticAgent';
-import { MemoryAgentRunner } from '@/agents/MemoryAgent';
-import { CollaborationAgentRunner } from '@/agents/CollaborationAgent';
-import { OpportunityAgentRunner } from '@/agents/OpportunityAgent';
-import { EvolutionAgentRunner } from '@/agents/EvolutionAgent';
-import { PlanningAgentRunner } from '@/agents/PlanningAgent';
-import { BrowserAgentRunner } from '@/agents/BrowserAgent';
-import { SupervisorAgentRunner } from '@/agents/SupervisorAgent';
-import { GoalAgentRunner } from '@/agents/GoalAgent';
+
+import { AgentContext, AgentResponse } from '@/types/AgentTypes';
+import { ResearchAgent } from '@/agents/ResearchAgent';
+import { LearningAgentV2 } from '@/agents/LearningAgentV2';
+import { StrategicAgent } from '@/agents/StrategicAgent';
+import { CreativityAgent } from '@/agents/CreativityAgent';
+import { CriticAgent } from '@/agents/CriticAgent';
+import { MemoryAgent } from '@/agents/MemoryAgent';
+import { CollaborationAgent } from '@/agents/CollaborationAgent';
+import { OpportunityAgent } from '@/agents/OpportunityAgent';
+import { EvolutionAgent } from '@/agents/EvolutionAgent';
+import { BrowserAgent } from '@/agents/BrowserAgent';
+import { SupervisorAgent } from '@/agents/SupervisorAgent';
+import { GoalAgent, GoalAgentRunner } from '@/agents/GoalAgent';
 import { EnhancedMetaAgent, EnhancedMetaAgentRunner } from '@/agents/EnhancedMetaAgent';
 import { EnhancedGoalAgent, EnhancedGoalAgentRunner } from '@/agents/EnhancedGoalAgent';
 import { EnhancedCollaborationAgent, EnhancedCollaborationAgentRunner } from '@/agents/EnhancedCollaborationAgent';
+
+export interface AgentDefinition {
+  name: string;
+  description: string;
+  category: string;
+  version: string;
+  runner: (context: AgentContext) => Promise<AgentResponse>;
+  paramSchema: any[];
+}
+
+// Helper function to create agent runners from classes
+const createAgentRunner = (AgentClass: any) => {
+  return async (context: AgentContext): Promise<AgentResponse> => {
+    const agent = new AgentClass();
+    return await agent.runner ? agent.runner(context) : agent(context);
+  };
+};
 
 export const agentRegistry: { [key: string]: AgentDefinition } = {
   research_agent: {
@@ -22,7 +39,7 @@ export const agentRegistry: { [key: string]: AgentDefinition } = {
     description: "Conducts research on specified topics, gathering information from various sources.",
     category: "Core",
     version: "V4",
-    runner: ResearchAgentRunner,
+    runner: createAgentRunner(ResearchAgent),
     paramSchema: []
   },
   learning_agent_v2: {
@@ -30,7 +47,7 @@ export const agentRegistry: { [key: string]: AgentDefinition } = {
     description: "Analyzes data and extracts insights to improve decision-making processes.",
     category: "Core",
     version: "V4",
-    runner: LearningAgentV2Runner,
+    runner: createAgentRunner(LearningAgentV2),
     paramSchema: []
   },
   strategic_agent: {
@@ -38,7 +55,7 @@ export const agentRegistry: { [key: string]: AgentDefinition } = {
     description: "Develops long-term strategies and plans to achieve organizational goals.",
     category: "Core",
     version: "V4",
-    runner: StrategicAgentRunner,
+    runner: StrategicAgent,
     paramSchema: []
   },
   creativity_agent: {
@@ -46,7 +63,7 @@ export const agentRegistry: { [key: string]: AgentDefinition } = {
     description: "Generates innovative ideas and solutions to complex problems.",
     category: "Core",
     version: "V4",
-    runner: CreativityAgentRunner,
+    runner: createAgentRunner(CreativityAgent),
     paramSchema: []
   },
   critic_agent: {
@@ -54,7 +71,7 @@ export const agentRegistry: { [key: string]: AgentDefinition } = {
     description: "Evaluates ideas and plans, identifying potential weaknesses and risks.",
     category: "Core",
     version: "V4",
-    runner: CriticAgentRunner,
+    runner: CriticAgent,
     paramSchema: []
   },
   memory_agent: {
@@ -62,7 +79,7 @@ export const agentRegistry: { [key: string]: AgentDefinition } = {
     description: "Stores and retrieves information, providing context for decision-making.",
     category: "Core",
     version: "V4",
-    runner: MemoryAgentRunner,
+    runner: createAgentRunner(MemoryAgent),
     paramSchema: []
   },
   collaboration_agent: {
@@ -70,7 +87,7 @@ export const agentRegistry: { [key: string]: AgentDefinition } = {
     description: "Facilitates communication and coordination between different agents.",
     category: "Coordination",
     version: "V4",
-    runner: CollaborationAgentRunner,
+    runner: CollaborationAgent,
     paramSchema: []
   },
   opportunity_agent: {
@@ -78,7 +95,7 @@ export const agentRegistry: { [key: string]: AgentDefinition } = {
     description: "Identifies and evaluates potential opportunities for growth and expansion.",
     category: "Strategic",
     version: "V4",
-    runner: OpportunityAgentRunner,
+    runner: createAgentRunner(OpportunityAgent),
     paramSchema: []
   },
   evolution_agent: {
@@ -86,15 +103,7 @@ export const agentRegistry: { [key: string]: AgentDefinition } = {
     description: "Continuously improves and adapts strategies based on feedback and results.",
     category: "Strategic",
     version: "V4",
-    runner: EvolutionAgentRunner,
-    paramSchema: []
-  },
-  planning_agent: {
-    name: "PlanningAgent",
-    description: "Creates detailed plans and timelines for executing strategies.",
-    category: "Strategic",
-    version: "V4",
-    runner: PlanningAgentRunner,
+    runner: createAgentRunner(EvolutionAgent),
     paramSchema: []
   },
   browser_agent: {
@@ -102,7 +111,7 @@ export const agentRegistry: { [key: string]: AgentDefinition } = {
     description: "Automates web browsing tasks, such as data extraction and form filling.",
     category: "Tool",
     version: "V4",
-    runner: BrowserAgentRunner,
+    runner: createAgentRunner(BrowserAgent),
     paramSchema: []
   },
   supervisor_agent: {
@@ -110,7 +119,7 @@ export const agentRegistry: { [key: string]: AgentDefinition } = {
     description: "Oversees and coordinates the activities of all agents, ensuring alignment with goals.",
     category: "Coordination",
     version: "V4",
-    runner: SupervisorAgentRunner,
+    runner: createAgentRunner(SupervisorAgent),
     paramSchema: []
   },
   goal_agent: {
@@ -185,4 +194,15 @@ export const getSystemStatus = () => {
     toolAgents,
     enhancedAgents
   };
+};
+
+// Export types needed by other components
+export type RegisteredAgent = {
+  name: string;
+  status: string;
+  lastAction: string;
+  category: string;
+  description: string;
+  version: string;
+  runner: (context: AgentContext) => Promise<AgentResponse>;
 };

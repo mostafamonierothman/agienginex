@@ -1,4 +1,3 @@
-
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -79,4 +78,8 @@ export async function CriticAgent(context: AgentContext): Promise<AgentResponse>
       message: `❌ CriticAgent error: ${error instanceof Error ? error.message : 'Unknown error'}`
     };
   }
+}
+
+export async function CriticAgentRunner(context: AgentContext): Promise<AgentResponse> {
+  return await CriticAgent(context);
 }

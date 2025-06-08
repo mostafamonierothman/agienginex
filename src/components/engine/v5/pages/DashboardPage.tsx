@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +11,24 @@ import KPIWidget from '../components/KPIWidget';
 import AutonomousLoopController from '../components/AutonomousLoopController';
 import PersistenceStatus from '../components/PersistenceStatus';
 import SystemRecovery from '../components/SystemRecovery';
+
+interface SystemState {
+  isRunning: boolean;
+  lastUpdate: string;
+  loopType?: string;
+}
+
+interface KPIState {
+  cycles: number;
+  activeAgents: number;
+  projectsCompleted: number;
+  totalOperations: number;
+  loopSpeed: number;
+  handoffs: number;
+  collaborations: number;
+  optimizations: number;
+  errors: number;
+}
 
 const DashboardPage = () => {
   const [systemStatus, setSystemStatus] = useState('MANUAL');
@@ -29,7 +46,7 @@ const DashboardPage = () => {
     isLoading: persistenceLoading
   } = useAGIStatePersistence();
 
-  const [kpis, setKpis] = useState({
+  const [kpis, setKpis] = useState<KPIState>({
     cycles: 0,
     activeAgents: 23,
     projectsCompleted: 3,
@@ -130,11 +147,12 @@ const DashboardPage = () => {
       );
       
       // Update system state
-      setSystemState({
+      const newSystemState: SystemState = {
         isRunning: true,
         lastUpdate: new Date().toISOString(),
         loopType: 'deep_autonomous'
-      });
+      };
+      setSystemState(newSystemState);
       
       toast({
         title: "🚀 Deep Autonomous Loop Started",
@@ -156,11 +174,12 @@ const DashboardPage = () => {
     setSystemStatus('MANUAL');
     stopDeepAutonomousLoop();
     
-    setSystemState({
+    const newSystemState: SystemState = {
       isRunning: false,
       lastUpdate: new Date().toISOString(),
       loopType: 'stopped'
-    });
+    };
+    setSystemState(newSystemState);
     
     toast({
       title: "⏹️ Deep Loop Stopped",
