@@ -27,9 +27,9 @@ class FastAPIService {
   private baseUrl: string;
   private authToken: string;
 
-  constructor(baseUrl: string = 'https://agienginex-clean.mostafamonier13.workers.dev') {
+  constructor(baseUrl: string = 'https://hnudinfejowoxlybifqq.supabase.co/functions/v1/agienginex') {
     this.baseUrl = baseUrl;
-    this.authToken = 'supersecrettoken123';
+    this.authToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhudWRpbmZlam93b3hseWJpZnFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg3OTgzNTYsImV4cCI6MjA1NDM3NDM1Nn0.QP0Qt8WrTmnwEdn2-OaXiIo56PtdGTczBzUTPCS1DxU';
   }
 
   setBaseUrl(url: string): void {
@@ -50,10 +50,10 @@ class FastAPIService {
       });
       if (!response.ok) throw new Error('Failed to get next move');
       const data: NextMoveResponse = await response.json();
-      console.log('AGIengineX next_move response:', data);
+      console.log('🚀 AGIengineX next_move response:', data);
       return data.next_move;
     } catch (error) {
-      console.error('AGIengineX next_move error:', error);
+      console.error('❌ AGIengineX next_move error:', error);
       return 'Backend unavailable - using local agent intelligence';
     }
   }
@@ -65,10 +65,10 @@ class FastAPIService {
       });
       if (!response.ok) throw new Error('Failed to get opportunity');
       const data: OpportunityResponse = await response.json();
-      console.log('AGIengineX opportunity response:', data);
+      console.log('🚀 AGIengineX opportunity response:', data);
       return data.opportunity;
     } catch (error) {
-      console.error('AGIengineX opportunity error:', error);
+      console.error('❌ AGIengineX opportunity error:', error);
       return 'Backend unavailable - using local opportunity detection';
     }
   }
@@ -80,17 +80,17 @@ class FastAPIService {
       });
       if (!response.ok) throw new Error('Failed to get loop interval');
       const data: LoopIntervalResponse = await response.json();
-      console.log('AGIengineX loop_interval response:', data);
+      console.log('🚀 AGIengineX loop_interval response:', data);
       return data.dynamic_interval_sec;
     } catch (error) {
-      console.error('AGIengineX loop_interval error:', error);
+      console.error('❌ AGIengineX loop_interval error:', error);
       return 3.0; // Default fallback
     }
   }
 
   async runAgent(agentName: string, inputData: string | null = null): Promise<RunAgentResponse> {
     try {
-      console.log(`AGIengineX: Running agent ${agentName} with input:`, inputData);
+      console.log(`🚀 AGIengineX: Running agent ${agentName} with input:`, inputData);
       
       const response = await fetch(`${this.baseUrl}/run_agent`, {
         method: 'POST',
@@ -103,10 +103,10 @@ class FastAPIService {
       
       if (!response.ok) throw new Error('Failed to run agent');
       const data: RunAgentResponse = await response.json();
-      console.log('AGIengineX run_agent response:', data);
+      console.log('🚀 AGIengineX run_agent response:', data);
       return data;
     } catch (error) {
-      console.error('AGIengineX run_agent error:', error);
+      console.error('❌ AGIengineX run_agent error:', error);
       return {
         result: 'Backend unavailable - agent execution failed',
         agent_name: agentName,
