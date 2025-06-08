@@ -68,7 +68,7 @@ class AGIEngineXV3Service {
 
       if (error) {
         console.error('Error creating goal:', error);
-        return false;
+        throw error;
       }
 
       // Log goal creation in supervisor queue
@@ -77,15 +77,20 @@ class AGIEngineXV3Service {
         enhanced_text: enhancedGoalText 
       }, 'completed', `Goal created with ID: ${data[0]?.goal_id}`);
 
-      return true;
+      return { success: true, goal: data[0] };
     } catch (error) {
       console.error('Error creating smart goal:', error);
-      return false;
+      await this.logSupervisorAction('goal_agent', 'create_goal', { 
+        goal_text: goalText 
+      }, 'error', error.message);
+      throw error;
     }
   }
 
   async getAgentMemory(agentName: string, memoryKey: string) {
     try {
+      console.log(`🧠 Getting memory for ${agentName}:${memoryKey}`);
+      
       const { data, error } = await supabase
         .from('agent_memory')
         .select('memory_value')
@@ -94,11 +99,14 @@ class AGIEngineXV3Service {
         .order('timestamp', { ascending: false })
         .limit(1);
 
-      if (error || !data || data.length === 0) {
-        return null;
+      if (error) {
+        console.error('Error getting agent memory:', error);
+        throw error;
       }
 
-      return data[0].memory_value;
+      const result = data && data.length > 0 ? data[0].memory_value : null;
+      console.log(`🧠 Memory result for ${agentName}:${memoryKey}:`, result);
+      return result;
     } catch (error) {
       console.error('Error getting agent memory:', error);
       return null;
@@ -107,30 +115,36 @@ class AGIEngineXV3Service {
 
   async setAgentMemory(agentName: string, memoryKey: string, memoryValue: string) {
     try {
-      const { error } = await supabase
+      console.log(`🧠 Setting memory for ${agentName}:${memoryKey}`);
+      
+      const { data, error } = await supabase
         .from('agent_memory')
         .insert({
-          user_id: 'system_user', // Can be enhanced with actual user auth
+          user_id: 'system_user',
           agent_name: agentName,
           memory_key: memoryKey,
           memory_value: memoryValue
-        });
+        })
+        .select();
 
       if (error) {
         console.error('Error setting agent memory:', error);
-        return false;
+        throw error;
       }
 
-      return true;
+      console.log(`🧠 Memory set successfully for ${agentName}:${memoryKey}`);
+      return { success: true, data: data[0] };
     } catch (error) {
       console.error('Error setting agent memory:', error);
-      return false;
+      throw error;
     }
   }
 
   async logSupervisorAction(agentName: string, action: string, input: any, status: string, output: string = '') {
     try {
-      const { error } = await supabase
+      console.log(`📝 Logging supervisor action: ${agentName} - ${action} - ${status}`);
+      
+      const { data, error } = await supabase
         .from('supervisor_queue')
         .insert({
           user_id: 'system_user',
@@ -139,18 +153,26 @@ class AGIEngineXV3Service {
           input: JSON.stringify(input),
           status: status,
           output: output
-        });
+        })
+        .select();
 
       if (error) {
         console.error('Error logging supervisor action:', error);
+        throw error;
       }
+
+      console.log(`📝 Supervisor action logged successfully:`, data[0]);
+      return { success: true, data: data[0] };
     } catch (error) {
       console.error('Error logging supervisor action:', error);
+      return { success: false, error: error.message };
     }
   }
 
   async getSupervisorLogs(limit: number = 10) {
     try {
+      console.log(`📊 Getting supervisor logs (limit: ${limit})`);
+      
       const { data, error } = await supabase
         .from('supervisor_queue')
         .select('*')
@@ -159,9 +181,10 @@ class AGIEngineXV3Service {
 
       if (error) {
         console.error('Error getting supervisor logs:', error);
-        return [];
+        throw error;
       }
 
+      console.log(`📊 Retrieved ${data?.length || 0} supervisor logs`);
       return data || [];
     } catch (error) {
       console.error('Error getting supervisor logs:', error);
@@ -171,6 +194,8 @@ class AGIEngineXV3Service {
 
   async getActiveGoals() {
     try {
+      console.log(`🎯 Getting active goals`);
+      
       const { data, error } = await supabase
         .from('agi_goals_enhanced')
         .select('*')
@@ -179,9 +204,10 @@ class AGIEngineXV3Service {
 
       if (error) {
         console.error('Error getting active goals:', error);
-        return [];
+        throw error;
       }
 
+      console.log(`🎯 Retrieved ${data?.length || 0} active goals`);
       return data || [];
     } catch (error) {
       console.error('Error getting active goals:', error);
@@ -191,28 +217,36 @@ class AGIEngineXV3Service {
 
   async updateGoalProgress(goalId: number, progress: number) {
     try {
-      const { error } = await supabase
+      console.log(`🎯 Updating goal ${goalId} progress to ${progress}%`);
+      
+      const { data, error } = await supabase
         .from('agi_goals_enhanced')
         .update({ 
           progress_percentage: Math.min(100, Math.max(0, progress)),
           status: progress >= 100 ? 'completed' : 'active'
         })
-        .eq('goal_id', goalId);
+        .eq('goal_id', goalId)
+        .select();
 
       if (error) {
         console.error('Error updating goal progress:', error);
-        return false;
+        throw error;
       }
 
       await this.logSupervisorAction('goal_tracker', 'update_progress', { 
         goal_id: goalId, 
         progress 
-      }, 'completed');
+      }, 'completed', `Goal ${goalId} progress updated to ${progress}%`);
 
-      return true;
+      console.log(`🎯 Goal progress updated successfully:`, data[0]);
+      return { success: true, goal: data[0] };
     } catch (error) {
       console.error('Error updating goal progress:', error);
-      return false;
+      await this.logSupervisorAction('goal_tracker', 'update_progress', { 
+        goal_id: goalId, 
+        progress 
+      }, 'error', error.message);
+      throw error;
     }
   }
 
@@ -252,6 +286,8 @@ class AGIEngineXV3Service {
       // Log completion
       await this.logSupervisorAction(agentName, 'enhanced_run', contextualInput, 'completed', result);
 
+      console.log(`🤖 Agent ${agentName} completed successfully`);
+      
       return {
         agent_name: agentName,
         result: result,
@@ -266,6 +302,44 @@ class AGIEngineXV3Service {
         result: `Error: ${error.message}`,
         status: 'error'
       };
+    }
+  }
+
+  // Test database connectivity
+  async testDatabaseConnection() {
+    try {
+      console.log('🔍 Testing database connection...');
+      
+      // Test each table
+      const tests = [
+        { name: 'supervisor_queue', table: 'supervisor_queue' },
+        { name: 'agent_memory', table: 'agent_memory' },
+        { name: 'agi_goals_enhanced', table: 'agi_goals_enhanced' }
+      ];
+
+      const results = {};
+      
+      for (const test of tests) {
+        try {
+          const { count, error } = await supabase
+            .from(test.table)
+            .select('*', { count: 'exact', head: true });
+            
+          if (error) {
+            results[test.name] = { status: 'error', error: error.message };
+          } else {
+            results[test.name] = { status: 'ok', count: count || 0 };
+          }
+        } catch (err) {
+          results[test.name] = { status: 'error', error: err.message };
+        }
+      }
+      
+      console.log('🔍 Database connection test results:', results);
+      return results;
+    } catch (error) {
+      console.error('Database connection test failed:', error);
+      return { error: error.message };
     }
   }
 }

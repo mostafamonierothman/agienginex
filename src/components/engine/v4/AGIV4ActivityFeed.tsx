@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Activity, Clock, User, Zap } from 'lucide-react';
+import { Activity, Clock, User, Zap, RefreshCw, AlertCircle } from 'lucide-react';
 
 interface ActivityItem {
   id: string;
@@ -18,24 +18,30 @@ interface ActivityItem {
 const AGIV4ActivityFeed = () => {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchRecentActivities = async () => {
     try {
-      const { data, error } = await supabase
+      console.log('📊 Fetching recent activities...');
+      setError(null);
+      
+      const { data, error: fetchError } = await supabase
         .from('supervisor_queue')
         .select('id, timestamp, agent_name, action, status, output')
         .order('timestamp', { ascending: false })
         .limit(20);
 
-      if (error) {
-        console.error('Error fetching activities:', error);
-        return;
+      if (fetchError) {
+        console.error('Error fetching activities:', fetchError);
+        throw new Error(`Failed to fetch activities: ${fetchError.message}`);
       }
 
+      console.log(`📊 Found ${data?.length || 0} activities`);
       setActivities(data || []);
+      setIsLoading(false);
     } catch (error) {
       console.error('Error fetching activities:', error);
-    } finally {
+      setError(error.message);
       setIsLoading(false);
     }
   };
@@ -44,6 +50,7 @@ const AGIV4ActivityFeed = () => {
     fetchRecentActivities();
 
     // Set up real-time subscription
+    console.log('🔄 Setting up real-time activity subscription...');
     const channel = supabase
       .channel('activity_feed')
       .on('postgres_changes', {
@@ -51,28 +58,63 @@ const AGIV4ActivityFeed = () => {
         schema: 'public',
         table: 'supervisor_queue'
       }, (payload) => {
+        console.log('🔄 New activity:', payload);
         const newActivity = payload.new as ActivityItem;
         setActivities(prev => [newActivity, ...prev.slice(0, 19)]);
       })
       .subscribe();
 
+    // Auto-refresh every 30 seconds
+    const refreshInterval = setInterval(fetchRecentActivities, 30000);
+
     return () => {
+      console.log('🧹 Cleaning up activity feed subscription...');
       supabase.removeChannel(channel);
+      clearInterval(refreshInterval);
     };
   }, []);
 
   const getStatusColor = (status: string) => {
-    switch (status) {
+    switch (status?.toLowerCase()) {
       case 'completed': return 'bg-green-500';
       case 'error': return 'bg-red-500';
       case 'started': return 'bg-blue-500';
+      case 'running': return 'bg-yellow-500';
       default: return 'bg-gray-500';
     }
   };
 
   const formatTimestamp = (timestamp: string) => {
-    return new Date(timestamp).toLocaleTimeString();
+    try {
+      return new Date(timestamp).toLocaleTimeString();
+    } catch (error) {
+      return 'Invalid time';
+    }
   };
+
+  if (error) {
+    return (
+      <Card className="bg-red-900/30 border border-red-500/50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-red-300">
+            <AlertCircle className="h-5 w-5" />
+            Activity Feed Error
+          </CardTitle>
+          <CardDescription className="text-red-200">
+            {error}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <button 
+            onClick={fetchRecentActivities}
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+          >
+            Retry
+          </button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -80,6 +122,7 @@ const AGIV4ActivityFeed = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-white">
             <Activity className="h-5 w-5 text-cyan-400 animate-pulse" />
+            <RefreshCw className="h-4 w-4 animate-spin" />
             Loading Activity Feed...
           </CardTitle>
         </CardHeader>
@@ -95,7 +138,7 @@ const AGIV4ActivityFeed = () => {
           Agent Activity Feed
         </CardTitle>
         <CardDescription className="text-slate-300">
-          Real-time agent execution logs and status updates
+          Real-time agent execution logs and status updates ({activities.length} records)
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -103,7 +146,8 @@ const AGIV4ActivityFeed = () => {
           {activities.length === 0 ? (
             <div className="text-center py-8 text-slate-400">
               <Zap className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No agent activity yet. Start the autonomous system to see logs here.</p>
+              <p>No agent activity yet.</p>
+              <p className="text-sm mt-2">Click "Initialize System" first, then start the autonomous system to see logs here.</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -116,15 +160,15 @@ const AGIV4ActivityFeed = () => {
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-blue-400" />
                       <span className="text-white font-medium">
-                        {activity.agent_name}
+                        {activity.agent_name || 'Unknown Agent'}
                       </span>
                       <Badge variant="outline" className="text-xs">
-                        {activity.action}
+                        {activity.action || 'Unknown Action'}
                       </Badge>
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge className={`${getStatusColor(activity.status)} text-white text-xs`}>
-                        {activity.status}
+                        {activity.status || 'Unknown'}
                       </Badge>
                       <div className="flex items-center gap-1 text-slate-400 text-xs">
                         <Clock className="h-3 w-3" />
