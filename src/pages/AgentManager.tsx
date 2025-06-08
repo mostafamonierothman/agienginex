@@ -26,7 +26,16 @@ const AgentManager = () => {
       setLoading(true);
       const result = await agiApiClient.listAgents();
       if (result.success) {
-        setAgents(result.agents || []);
+        const agentData = result.agents || [];
+        const formattedAgents: Agent[] = agentData.map(agent => ({
+          agent_name: agent.agent_name,
+          agent_type: agent.agent_type,
+          purpose: agent.purpose || 'No description available',
+          status: agent.status || 'idle',
+          last_run: agent.last_run,
+          performance_score: agent.performance_score
+        }));
+        setAgents(formattedAgents);
       }
     } catch (error) {
       console.error('Failed to fetch agents:', error);
@@ -48,6 +57,8 @@ const AgentManager = () => {
       await agiApiClient.installAgent({
         agent_name: agentName,
         agent_type: "Custom",
+        purpose: "Custom agent for specific tasks",
+        config: { custom: true }
       });
 
       toast({
@@ -156,7 +167,7 @@ const AgentManager = () => {
                   </Badge>
                 </div>
                 <CardDescription className="text-gray-400">
-                  {agent.purpose || 'No description available'}
+                  {agent.purpose}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -167,7 +178,7 @@ const AgentManager = () => {
                       variant={agent.status === 'active' ? 'default' : 'secondary'}
                       className={agent.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}
                     >
-                      {agent.status || 'unknown'}
+                      {agent.status}
                     </Badge>
                   </div>
                   
