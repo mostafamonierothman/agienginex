@@ -33,7 +33,7 @@ const createAgentRunner = (AgentClass: any) => {
   };
 };
 
-export const agentRegistry: { [key: string]: AgentDefinition } = {
+const agentDefinitions: { [key: string]: AgentDefinition } = {
   research_agent: {
     name: "ResearchAgent",
     description: "Conducts research on specified topics, gathering information from various sources.",
@@ -55,7 +55,9 @@ export const agentRegistry: { [key: string]: AgentDefinition } = {
     description: "Develops long-term strategies and plans to achieve organizational goals.",
     category: "Core",
     version: "V4",
-    runner: StrategicAgent,
+    runner: async (context: AgentContext): Promise<AgentResponse> => {
+      return await StrategicAgent(context);
+    },
     paramSchema: []
   },
   creativity_agent: {
@@ -71,7 +73,9 @@ export const agentRegistry: { [key: string]: AgentDefinition } = {
     description: "Evaluates ideas and plans, identifying potential weaknesses and risks.",
     category: "Core",
     version: "V4",
-    runner: CriticAgent,
+    runner: async (context: AgentContext): Promise<AgentResponse> => {
+      return await CriticAgent(context);
+    },
     paramSchema: []
   },
   memory_agent: {
@@ -87,7 +91,9 @@ export const agentRegistry: { [key: string]: AgentDefinition } = {
     description: "Facilitates communication and coordination between different agents.",
     category: "Coordination",
     version: "V4",
-    runner: CollaborationAgent,
+    runner: async (context: AgentContext): Promise<AgentResponse> => {
+      return await CollaborationAgent(context);
+    },
     paramSchema: []
   },
   opportunity_agent: {
@@ -156,9 +162,9 @@ export const agentRegistry: { [key: string]: AgentDefinition } = {
   }
 };
 
-export const agentList: AgentDefinition[] = Object.values(agentRegistry);
+const agentList: AgentDefinition[] = Object.values(agentDefinitions);
 
-export const agentCategories = [
+const agentCategories = [
   "Core",
   "Coordination",
   "Strategic",
@@ -166,19 +172,19 @@ export const agentCategories = [
   "Enhanced"
 ];
 
-export const getAgentsByCategory = (category: string) => {
+const getAgentsByCategory = (category: string) => {
   return agentList.filter(agent => agent.category === category);
 };
 
-export const getAgentByName = (name: string) => {
-  return agentRegistry[name];
+const getAgentByName = (name: string) => {
+  return agentDefinitions[name];
 };
 
-export const getAllAgents = () => {
+const getAllAgents = () => {
   return agentList;
 };
 
-export const getSystemStatus = () => {
+const getSystemStatus = () => {
   const totalAgents = agentList.length;
   const coreAgents = getAgentsByCategory("Core").length;
   const strategicAgents = getAgentsByCategory("Strategic").length;
@@ -198,8 +204,8 @@ export const getSystemStatus = () => {
 };
 
 // Helper function to run an agent by name
-export const runAgent = async (agentName: string, context: AgentContext): Promise<AgentResponse> => {
-  const agent = agentRegistry[agentName];
+const runAgent = async (agentName: string, context: AgentContext): Promise<AgentResponse> => {
+  const agent = agentDefinitions[agentName];
   if (!agent) {
     throw new Error(`Agent ${agentName} not found in registry`);
   }
@@ -207,10 +213,21 @@ export const runAgent = async (agentName: string, context: AgentContext): Promis
 };
 
 // Helper function to get a random agent
-export const getRandomAgent = () => {
-  const agents = Object.keys(agentRegistry);
+const getRandomAgent = () => {
+  const agents = Object.keys(agentDefinitions);
   const randomKey = agents[Math.floor(Math.random() * agents.length)];
-  return agentRegistry[randomKey];
+  return agentDefinitions[randomKey];
+};
+
+// Export the registry object with all methods
+export const agentRegistry = {
+  ...agentDefinitions,
+  getAllAgents,
+  getAgentsByCategory,
+  getAgentByName,
+  getSystemStatus,
+  runAgent,
+  getRandomAgent
 };
 
 // Export types needed by other components
@@ -223,3 +240,6 @@ export type RegisteredAgent = {
   version: string;
   runner: (context: AgentContext) => Promise<AgentResponse>;
 };
+
+// Export individual functions for backward compatibility
+export { agentList, agentCategories, getAgentsByCategory, getAgentByName, getAllAgents, getSystemStatus, runAgent, getRandomAgent };
