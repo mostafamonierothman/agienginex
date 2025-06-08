@@ -5,8 +5,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { navItems } from "./nav-items";
 import Index from "./pages/Index";
+import AGIV4 from "./pages/AGIV4";
+import AGIProPlatform from "./pages/AGIProPlatform";
 
 const queryClient = new QueryClient();
 
@@ -18,9 +19,8 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          {navItems.map(({ to, page }) => (
-            <Route key={to} path={to} element={page} />
-          ))}
+          <Route path="/agi-v4" element={<AGIV4 />} />
+          <Route path="/agi-pro" element={<AGIProPlatform />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
