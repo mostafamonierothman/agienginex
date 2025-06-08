@@ -80,7 +80,10 @@ export class EnhancedMetaAgent {
         }
 
         const lowPerformers = Object.entries(metrics.agentStats)
-            .filter(([_, stats]: [string, any]) => stats.successful / Math.max(stats.total, 1) < 0.5)
+            .filter(([_, stats]: [string, any]) => {
+                const total = stats.total || 1;
+                return (stats.successful || 0) / total < 0.5;
+            })
             .map(([agent, _]) => agent);
 
         if (lowPerformers.length > 0) {
