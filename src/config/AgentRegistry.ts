@@ -17,14 +17,14 @@ import { OpportunityAgent } from '@/agents/OpportunityAgent';
 import { EvolutionAgent } from '@/agents/EvolutionAgent';
 import { CollaborationAgent } from '@/agents/CollaborationAgent';
 
-// Import new enhanced agents
-import { BrowserAgent } from '@/agents/BrowserAgent';
-import { APIConnectorAgent } from '@/agents/APIConnectorAgent';
-import { GoalAgent } from '@/agents/GoalAgent';
-import { MetaAgent } from '@/agents/MetaAgent';
-import { SecurityAgent } from '@/agents/SecurityAgent';
-import { TimelineAgent } from '@/agents/TimelineAgent';
-import { CreativityAgent } from '@/agents/CreativityAgent';
+// Import enhanced agent runners (not the classes)
+import { BrowserAgentRunner } from '@/agents/BrowserAgent';
+import { APIConnectorAgentRunner } from '@/agents/APIConnectorAgent';
+import { GoalAgentRunner } from '@/agents/GoalAgent';
+import { MetaAgentRunner } from '@/agents/MetaAgent';
+import { SecurityAgentRunner } from '@/agents/SecurityAgent';
+import { TimelineAgentRunner } from '@/agents/TimelineAgent';
+import { CreativityAgentRunner } from '@/agents/CreativityAgent';
 
 export interface RegisteredAgent {
   name: string;
@@ -50,7 +50,7 @@ export class AgentRegistryClass {
   }
 
   private initializeAgents() {
-    // Core agents (12) - store the function references directly
+    // Core agents (12) - these are function exports that take context and return AgentResponse
     this.registerAgent('SupervisorAgent', 'Monitors all system activities', 'core', 'V4.0', SupervisorAgent);
     this.registerAgent('ResearchAgent', 'Scans external sources for insights', 'core', 'V4.0', ResearchAgent);
     this.registerAgent('LearningAgentV2', 'Advanced learning and adaptation', 'core', 'V4.0', LearningAgentV2);
@@ -64,14 +64,14 @@ export class AgentRegistryClass {
     this.registerAgent('EvolutionAgent', 'Handles agent evolution and genomes', 'core', 'V4.0', EvolutionAgent);
     this.registerAgent('CollaborationAgent', 'Manages agent-to-agent communication', 'core', 'V4.0', CollaborationAgent);
 
-    // Enhanced agents (7) - store the function references directly
-    this.registerAgent('BrowserAgent', 'Web browsing and scraping capabilities', 'enhanced', 'V4.5+', BrowserAgent);
-    this.registerAgent('APIConnectorAgent', 'External API integrations', 'enhanced', 'V4.5+', APIConnectorAgent);
-    this.registerAgent('GoalAgent', 'Goal setting and tracking', 'enhanced', 'V4.5+', GoalAgent);
-    this.registerAgent('MetaAgent', 'System analysis and optimization', 'enhanced', 'V4.5+', MetaAgent);
-    this.registerAgent('SecurityAgent', 'Security monitoring and threat detection', 'enhanced', 'V4.5+', SecurityAgent);
-    this.registerAgent('TimelineAgent', 'Scheduling and time management', 'enhanced', 'V4.5+', TimelineAgent);
-    this.registerAgent('CreativityAgent', 'Creative ideation and innovation', 'enhanced', 'V4.5+', CreativityAgent);
+    // Enhanced agents (7) - these use the runner functions that are exported from each agent file
+    this.registerAgent('BrowserAgent', 'Web browsing and scraping capabilities', 'enhanced', 'V4.5+', BrowserAgentRunner);
+    this.registerAgent('APIConnectorAgent', 'External API integrations', 'enhanced', 'V4.5+', APIConnectorAgentRunner);
+    this.registerAgent('GoalAgent', 'Goal setting and tracking', 'enhanced', 'V4.5+', GoalAgentRunner);
+    this.registerAgent('MetaAgent', 'System analysis and optimization', 'enhanced', 'V4.5+', MetaAgentRunner);
+    this.registerAgent('SecurityAgent', 'Security monitoring and threat detection', 'enhanced', 'V4.5+', SecurityAgentRunner);
+    this.registerAgent('TimelineAgent', 'Scheduling and time management', 'enhanced', 'V4.5+', TimelineAgentRunner);
+    this.registerAgent('CreativityAgent', 'Creative ideation and innovation', 'enhanced', 'V4.5+', CreativityAgentRunner);
 
     console.log(`🚀 AgentRegistry: Initialized ${this.agents.length} agents`);
   }
