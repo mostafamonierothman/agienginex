@@ -36,7 +36,7 @@ export class EnhancedAutonomousLoop {
     }
 
     this.isRunning = true;
-    console.log('🚀 Starting Enhanced Autonomous Loop V4.5 with 20 agents...');
+    console.log('🚀 Starting Enhanced Autonomous Loop V4.5 with 19 agents...');
 
     this.runLoop();
   }
@@ -54,7 +54,7 @@ export class EnhancedAutonomousLoop {
     if (!this.isRunning) return;
 
     this.cycleCount++;
-    console.log(`🔄 Enhanced Loop Cycle #${this.cycleCount} starting with all 20 agents...`);
+    console.log(`🔄 Enhanced Loop Cycle #${this.cycleCount} starting with all 19 agents...`);
 
     const context: AgentContext = {
       user_id: 'enhanced_autonomous_system',
@@ -78,7 +78,7 @@ export class EnhancedAutonomousLoop {
         { name: 'CriticAgent', runner: CriticAgent }
       ];
 
-      // Enhanced Agents (8 new)
+      // Enhanced Agents (7 new)
       const enhancedAgents = [
         { name: 'BrowserAgent', runner: BrowserAgentRunner },
         { name: 'APIConnectorAgent', runner: APIConnectorAgentRunner },
@@ -111,7 +111,7 @@ export class EnhancedAutonomousLoop {
         await new Promise(resolve => setTimeout(resolve, 150));
       }
 
-      console.log(`✅ Enhanced Loop Cycle #${this.cycleCount} completed with all 20 agents (12 core + 8 enhanced)`);
+      console.log(`✅ Enhanced Loop Cycle #${this.cycleCount} completed with all 19 agents (12 core + 7 enhanced)`);
 
     } catch (error) {
       console.error('💥 Enhanced autonomous loop cycle error:', error);
@@ -139,7 +139,7 @@ export class EnhancedAutonomousLoop {
     return {
       isRunning: this.isRunning,
       cycleCount: this.cycleCount,
-      totalAgents: 20 // 12 core + 8 enhanced
+      totalAgents: 19 // 12 core + 7 enhanced
     };
   }
 

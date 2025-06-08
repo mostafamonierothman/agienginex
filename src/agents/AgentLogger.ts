@@ -63,3 +63,6 @@ export class AgentLogger {
     }
   }
 }
+
+// Export singleton instance
+export const agentLogger = new AgentLogger();

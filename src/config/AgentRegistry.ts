@@ -1,7 +1,6 @@
 
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { agentLogger } from '@/agents/AgentLogger';
-import { persistentMemory } from '@/core/PersistentMemory';
 import { toast } from '@/hooks/use-toast';
 
 // Import all core agents
@@ -51,28 +50,30 @@ export class AgentRegistryClass {
   }
 
   private initializeAgents() {
-    // Core agents (12)
-    this.registerAgent('SupervisorAgent', 'Monitors all system activities', 'core', 'V4.0', new SupervisorAgent());
-    this.registerAgent('ResearchAgent', 'Scans external sources for insights', 'core', 'V4.0', new ResearchAgent());
-    this.registerAgent('LearningAgentV2', 'Advanced learning and adaptation', 'core', 'V4.0', new LearningAgentV2());
-    this.registerAgent('FactoryAgent', 'Creates new agents dynamically', 'core', 'V4.0', new FactoryAgent());
-    this.registerAgent('CriticAgent', 'Evaluates system performance', 'core', 'V4.0', new CriticAgent());
-    this.registerAgent('LLMAgent', 'Language model processing', 'core', 'V4.0', new LLMAgent());
-    this.registerAgent('CoordinationAgent', 'Manages agent workflows', 'core', 'V4.0', new CoordinationAgent());
-    this.registerAgent('MemoryAgent', 'Vector memory management', 'core', 'V4.0', new MemoryAgent());
-    this.registerAgent('StrategicAgent', 'Strategic planning and decisions', 'core', 'V4.0', new StrategicAgent());
-    this.registerAgent('OpportunityAgent', 'Identifies market opportunities', 'core', 'V4.0', new OpportunityAgent());
-    this.registerAgent('EvolutionAgent', 'Handles agent evolution and genomes', 'core', 'V4.0', new EvolutionAgent());
-    this.registerAgent('CollaborationAgent', 'Manages agent-to-agent communication', 'core', 'V4.0', new CollaborationAgent());
+    // Core agents (12) - using proper context parameter
+    const defaultContext: AgentContext = { user_id: 'system', timestamp: new Date().toISOString() };
+    
+    this.registerAgent('SupervisorAgent', 'Monitors all system activities', 'core', 'V4.0', new SupervisorAgent(defaultContext));
+    this.registerAgent('ResearchAgent', 'Scans external sources for insights', 'core', 'V4.0', new ResearchAgent(defaultContext));
+    this.registerAgent('LearningAgentV2', 'Advanced learning and adaptation', 'core', 'V4.0', new LearningAgentV2(defaultContext));
+    this.registerAgent('FactoryAgent', 'Creates new agents dynamically', 'core', 'V4.0', new FactoryAgent(defaultContext));
+    this.registerAgent('CriticAgent', 'Evaluates system performance', 'core', 'V4.0', new CriticAgent(defaultContext));
+    this.registerAgent('LLMAgent', 'Language model processing', 'core', 'V4.0', new LLMAgent(defaultContext));
+    this.registerAgent('CoordinationAgent', 'Manages agent workflows', 'core', 'V4.0', new CoordinationAgent(defaultContext));
+    this.registerAgent('MemoryAgent', 'Vector memory management', 'core', 'V4.0', new MemoryAgent(defaultContext));
+    this.registerAgent('StrategicAgent', 'Strategic planning and decisions', 'core', 'V4.0', new StrategicAgent(defaultContext));
+    this.registerAgent('OpportunityAgent', 'Identifies market opportunities', 'core', 'V4.0', new OpportunityAgent(defaultContext));
+    this.registerAgent('EvolutionAgent', 'Handles agent evolution and genomes', 'core', 'V4.0', new EvolutionAgent(defaultContext));
+    this.registerAgent('CollaborationAgent', 'Manages agent-to-agent communication', 'core', 'V4.0', new CollaborationAgent(defaultContext));
 
-    // Enhanced agents (8)
-    this.registerAgent('BrowserAgent', 'Web browsing and scraping capabilities', 'enhanced', 'V4.5+', new BrowserAgent());
-    this.registerAgent('APIConnectorAgent', 'External API integrations', 'enhanced', 'V4.5+', new APIConnectorAgent());
-    this.registerAgent('GoalAgent', 'Goal setting and tracking', 'enhanced', 'V4.5+', new GoalAgent());
-    this.registerAgent('MetaAgent', 'System analysis and optimization', 'enhanced', 'V4.5+', new MetaAgent());
-    this.registerAgent('SecurityAgent', 'Security monitoring and threat detection', 'enhanced', 'V4.5+', new SecurityAgent());
-    this.registerAgent('TimelineAgent', 'Scheduling and time management', 'enhanced', 'V4.5+', new TimelineAgent());
-    this.registerAgent('CreativityAgent', 'Creative ideation and innovation', 'enhanced', 'V4.5+', new CreativityAgent());
+    // Enhanced agents (7) - using proper context parameter
+    this.registerAgent('BrowserAgent', 'Web browsing and scraping capabilities', 'enhanced', 'V4.5+', new BrowserAgent(defaultContext));
+    this.registerAgent('APIConnectorAgent', 'External API integrations', 'enhanced', 'V4.5+', new APIConnectorAgent(defaultContext));
+    this.registerAgent('GoalAgent', 'Goal setting and tracking', 'enhanced', 'V4.5+', new GoalAgent(defaultContext));
+    this.registerAgent('MetaAgent', 'System analysis and optimization', 'enhanced', 'V4.5+', new MetaAgent(defaultContext));
+    this.registerAgent('SecurityAgent', 'Security monitoring and threat detection', 'enhanced', 'V4.5+', new SecurityAgent(defaultContext));
+    this.registerAgent('TimelineAgent', 'Scheduling and time management', 'enhanced', 'V4.5+', new TimelineAgent(defaultContext));
+    this.registerAgent('CreativityAgent', 'Creative ideation and innovation', 'enhanced', 'V4.5+', new CreativityAgent(defaultContext));
 
     console.log(`🚀 AgentRegistry: Initialized ${this.agents.length} agents`);
   }
@@ -130,6 +131,16 @@ export class AgentRegistryClass {
         timestamp: new Date().toISOString()
       };
     }
+  }
+
+  async runRandomAgent(context?: AgentContext): Promise<AgentResponse> {
+    const randomAgent = this.getRandomAgent();
+    const defaultContext: AgentContext = context || {
+      user_id: 'random_execution',
+      timestamp: new Date().toISOString()
+    };
+    
+    return await this.runAgent(randomAgent.name, defaultContext);
   }
 
   getAllAgents(): RegisteredAgent[] {
