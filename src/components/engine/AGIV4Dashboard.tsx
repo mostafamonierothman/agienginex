@@ -1,12 +1,22 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Brain, Zap, Target, Users, Database, Settings, Play, TrendingUp, MessageSquare } from 'lucide-react';
+import { Brain, Zap, Target, Users, Database, Settings, Play, TrendingUp, MessageSquare, Activity, Shield, Award } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+
+const AVAILABLE_AGENTS = [
+  { name: 'FactoryAgent', type: 'Factory', category: 'generator', description: 'Creates new agents dynamically using templates' },
+  { name: 'ResearchAgent', type: 'Research', category: 'scanner', description: 'Scans external sources for insights and trends' },
+  { name: 'LearningAgentV2', type: 'Learning', category: 'learning', description: 'Generates learning goals and adapts strategies' },
+  { name: 'CriticAgent', type: 'Critic', category: 'evaluation', description: 'Evaluates system performance and provides feedback' },
+  { name: 'SupervisorAgent', type: 'Supervisor', category: 'coordination', description: 'Monitors and coordinates all agent activities' },
+  { name: 'StrategicAgent', type: 'Strategic', category: 'strategy', description: 'Plans high-level strategic decisions' },
+  { name: 'OpportunityAgent', type: 'Opportunity', category: 'analyzer', description: 'Identifies business opportunities and market gaps' },
+  { name: 'CoordinationAgent', type: 'Coordination', category: 'coordination', description: 'Manages inter-agent communication and workflows' }
+];
 
 interface Agent {
   name: string;
@@ -24,7 +34,7 @@ interface AgentExecution {
 }
 
 const AGIV4Dashboard = () => {
-  const [availableAgents, setAvailableAgents] = useState<Agent[]>([]);
+  const [availableAgents, setAvailableAgents] = useState(AVAILABLE_AGENTS);
   const [selectedAgent, setSelectedAgent] = useState<string>('');
   const [agentInput, setAgentInput] = useState<string>('');
   const [lastExecution, setLastExecution] = useState<AgentExecution | null>(null);
@@ -33,35 +43,17 @@ const AGIV4Dashboard = () => {
   const [agentMemories, setAgentMemories] = useState<any[]>([]);
   const [activeGoals, setActiveGoals] = useState<any[]>([]);
   const [systemStats, setSystemStats] = useState({
-    totalAgents: 0,
+    totalAgents: AVAILABLE_AGENTS.length,
     executionsToday: 0,
     memoryEntries: 0,
     activeGoals: 0
   });
 
   useEffect(() => {
-    loadV4System();
+    loadDashboardData();
     const interval = setInterval(loadDashboardData, 5000);
     return () => clearInterval(interval);
   }, []);
-
-  const loadV4System = async () => {
-    try {
-      // Load available agents from V4 core
-      const { data, error } = await supabase.functions.invoke('agi-v4-core', {
-        method: 'GET'
-      });
-
-      if (data?.agents) {
-        setAvailableAgents(data.agents);
-        setSystemStats(prev => ({ ...prev, totalAgents: data.agents.length }));
-      }
-
-      await loadDashboardData();
-    } catch (error) {
-      console.error('Error loading V4 system:', error);
-    }
-  };
 
   const loadDashboardData = async () => {
     try {
@@ -111,9 +103,10 @@ const AGIV4Dashboard = () => {
     console.log(`🚀 V4 Executing agent: ${selectedAgent}`);
 
     try {
-      const { data, error } = await supabase.functions.invoke('agi-v4-core/run_agent', {
-        method: 'POST',
+      // Execute agent via function
+      const { data, error } = await supabase.functions.invoke('agi-v4-core', {
         body: {
+          action: 'run_agent',
           agent_name: selectedAgent,
           input: agentInput || null,
           user_id: 'demo_user',
@@ -123,7 +116,14 @@ const AGIV4Dashboard = () => {
 
       if (error) throw error;
 
-      setLastExecution(data);
+      setLastExecution({
+        result: data?.message || 'Agent executed successfully',
+        agent_name: selectedAgent,
+        execution_time: data?.execution_time || 0,
+        status: data?.success ? 'success' : 'error',
+        metadata: data?.data
+      });
+      
       setAgentInput('');
       
       // Refresh dashboard data
@@ -145,23 +145,25 @@ const AGIV4Dashboard = () => {
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case 'strategy': return <Target className="w-4 h-4" />;
-      case 'analysis': return <TrendingUp className="w-4 h-4" />;
+      case 'scanner': return <TrendingUp className="w-4 h-4" />;
       case 'learning': return <Brain className="w-4 h-4" />;
       case 'coordination': return <Users className="w-4 h-4" />;
-      case 'memory': return <Database className="w-4 h-4" />;
-      case 'evaluation': return <Settings className="w-4 h-4" />;
-      default: return <Zap className="w-4 h-4" />;
+      case 'generator': return <Zap className="w-4 h-4" />;
+      case 'evaluation': return <Shield className="w-4 h-4" />;
+      case 'analyzer': return <Activity className="w-4 h-4" />;
+      default: return <Settings className="w-4 h-4" />;
     }
   };
 
   const getCategoryColor = (category: string) => {
     switch (category) {
       case 'strategy': return 'border-purple-400 text-purple-400';
-      case 'analysis': return 'border-blue-400 text-blue-400';
+      case 'scanner': return 'border-blue-400 text-blue-400';
       case 'learning': return 'border-green-400 text-green-400';
       case 'coordination': return 'border-yellow-400 text-yellow-400';
-      case 'memory': return 'border-cyan-400 text-cyan-400';
+      case 'generator': return 'border-cyan-400 text-cyan-400';
       case 'evaluation': return 'border-red-400 text-red-400';
+      case 'analyzer': return 'border-orange-400 text-orange-400';
       default: return 'border-gray-400 text-gray-400';
     }
   };
@@ -169,17 +171,20 @@ const AGIV4Dashboard = () => {
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
-        <h2 className="text-3xl font-bold text-white mb-2">🚀 AGI V4 Platform</h2>
-        <p className="text-gray-400">Next-Generation Autonomous Agent System</p>
+        <h2 className="text-3xl font-bold text-white mb-2">🚀 AGI V4+ Enterprise Platform</h2>
+        <p className="text-gray-400">Next-Generation Autonomous Agent System with Enterprise Features</p>
         <div className="flex items-center justify-center gap-4 mt-2">
           <Badge variant="outline" className="text-green-400 border-green-400">
-            V4.0 ACTIVE
+            V4+ ENTERPRISE
           </Badge>
           <Badge variant="outline" className="text-blue-400 border-blue-400">
             {systemStats.totalAgents} AGENTS
           </Badge>
           <Badge variant="outline" className="text-purple-400 border-purple-400">
-            LEARNING
+            AUTO-HEALING
+          </Badge>
+          <Badge variant="outline" className="text-yellow-400 border-yellow-400">
+            MULTI-TENANT
           </Badge>
         </div>
       </div>
@@ -189,7 +194,7 @@ const AGIV4Dashboard = () => {
         <Card className="bg-slate-800/50 border-slate-700">
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-purple-400">{systemStats.totalAgents}</div>
-            <div className="text-sm text-gray-400">V4 Agents</div>
+            <div className="text-sm text-gray-400">V4+ Agents</div>
           </CardContent>
         </Card>
         <Card className="bg-slate-800/50 border-slate-700">
@@ -213,10 +218,10 @@ const AGIV4Dashboard = () => {
       </div>
 
       <Tabs defaultValue="agents" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 bg-slate-800">
+        <TabsList className="grid w-full grid-cols-5 bg-slate-800">
           <TabsTrigger value="agents" className="text-white">
             <Brain className="w-4 h-4 mr-2" />
-            V4 Agents
+            V4+ Agents
           </TabsTrigger>
           <TabsTrigger value="memory" className="text-white">
             <Database className="w-4 h-4 mr-2" />
@@ -230,6 +235,10 @@ const AGIV4Dashboard = () => {
             <MessageSquare className="w-4 h-4 mr-2" />
             Activity
           </TabsTrigger>
+          <TabsTrigger value="enterprise" className="text-white">
+            <Award className="w-4 h-4 mr-2" />
+            Enterprise
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="agents" className="space-y-4">
@@ -237,13 +246,13 @@ const AGIV4Dashboard = () => {
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <Brain className="w-5 h-5 text-purple-400" />
-                🤖 V4 Agent Execution Center
+                🤖 V4+ Agent Execution Center
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-gray-400 text-sm mb-2 block">Select V4 Agent</label>
+                  <label className="text-gray-400 text-sm mb-2 block">Select V4+ Agent</label>
                   <select
                     value={selectedAgent}
                     onChange={(e) => setSelectedAgent(e.target.value)}
@@ -252,7 +261,7 @@ const AGIV4Dashboard = () => {
                     <option value="">Choose an agent...</option>
                     {availableAgents.map((agent) => (
                       <option key={agent.name} value={agent.name}>
-                        {agent.name} - {agent.category}
+                        {agent.name} - {agent.type}
                       </option>
                     ))}
                   </select>
@@ -274,7 +283,7 @@ const AGIV4Dashboard = () => {
                 className="w-full bg-purple-600 hover:bg-purple-700"
               >
                 <Play className={`w-4 h-4 mr-2 ${isExecuting ? 'animate-spin' : ''}`} />
-                {isExecuting ? 'Executing V4 Agent...' : 'Execute V4 Agent'}
+                {isExecuting ? 'Executing V4+ Agent...' : 'Execute V4+ Agent'}
               </Button>
 
               {lastExecution && (
@@ -313,26 +322,31 @@ const AGIV4Dashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Agent Registry */}
+          {/* All Available Agents Registry */}
           <Card className="bg-slate-800/50 border-slate-700">
             <CardHeader>
-              <CardTitle className="text-white">📋 V4 Agent Registry</CardTitle>
+              <CardTitle className="text-white">📋 Complete V4+ Agent Registry</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {availableAgents.map((agent) => (
                   <div 
                     key={agent.name}
-                    className="bg-slate-700/50 p-4 rounded border border-slate-600"
+                    className="bg-slate-700/50 p-4 rounded border border-slate-600 hover:border-slate-500 transition-colors"
                   >
                     <div className="flex items-center gap-2 mb-2">
                       {getCategoryIcon(agent.category)}
                       <h4 className="text-white font-medium text-sm">{agent.name}</h4>
                     </div>
                     <p className="text-gray-400 text-xs mb-2">{agent.description}</p>
-                    <Badge variant="outline" className={`text-xs ${getCategoryColor(agent.category)}`}>
-                      {agent.category} • v{agent.version}
-                    </Badge>
+                    <div className="flex gap-2">
+                      <Badge variant="outline" className={`text-xs ${getCategoryColor(agent.category)}`}>
+                        {agent.type}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs text-gray-400 border-gray-500">
+                        {agent.category}
+                      </Badge>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -449,6 +463,56 @@ const AGIV4Dashboard = () => {
                     No activity logs yet. Execute agents to see system activity.
                   </div>
                 )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="enterprise" className="space-y-4">
+          <Card className="bg-slate-800/50 border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Award className="w-5 h-5 text-yellow-400" />
+                🏢 Enterprise Features
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-slate-700/50 p-4 rounded">
+                  <h4 className="text-white font-medium mb-2">🚀 Auto-Startup</h4>
+                  <p className="text-gray-400 text-sm mb-3">System automatically boots and starts autonomous loops</p>
+                  <Badge variant="outline" className="text-green-400 border-green-400">ACTIVE</Badge>
+                </div>
+                
+                <div className="bg-slate-700/50 p-4 rounded">
+                  <h4 className="text-white font-medium mb-2">🏢 Multi-Tenant</h4>
+                  <p className="text-gray-400 text-sm mb-3">Support for multiple users with isolated agent environments</p>
+                  <Badge variant="outline" className="text-blue-400 border-blue-400">ENABLED</Badge>
+                </div>
+                
+                <div className="bg-slate-700/50 p-4 rounded">
+                  <h4 className="text-white font-medium mb-2">🔧 Self-Healing</h4>
+                  <p className="text-gray-400 text-sm mb-3">Agents automatically recover from failures and bootstrap missing components</p>
+                  <Badge variant="outline" className="text-purple-400 border-purple-400">MONITORING</Badge>
+                </div>
+                
+                <div className="bg-slate-700/50 p-4 rounded">
+                  <h4 className="text-white font-medium mb-2">🏆 Promotion Engine</h4>
+                  <p className="text-gray-400 text-sm mb-3">Best performing agents get priority and enhanced resources</p>
+                  <Badge variant="outline" className="text-yellow-400 border-yellow-400">ACTIVE</Badge>
+                </div>
+                
+                <div className="bg-slate-700/50 p-4 rounded">
+                  <h4 className="text-white font-medium mb-2">🗂️ Memory Compression</h4>
+                  <p className="text-gray-400 text-sm mb-3">Intelligent vector memory optimization and cleanup</p>
+                  <Badge variant="outline" className="text-cyan-400 border-cyan-400">OPTIMIZING</Badge>
+                </div>
+                
+                <div className="bg-slate-700/50 p-4 rounded">
+                  <h4 className="text-white font-medium mb-2">📊 Advanced Analytics</h4>
+                  <p className="text-gray-400 text-sm mb-3">Real-time performance metrics and agent behavior analysis</p>
+                  <Badge variant="outline" className="text-orange-400 border-orange-400">TRACKING</Badge>
+                </div>
               </div>
             </CardContent>
           </Card>
