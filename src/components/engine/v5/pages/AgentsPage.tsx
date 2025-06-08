@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { agentRegistry } from '@/config/AgentRegistry';
 import { enhancedAutonomousLoop } from '@/loops/EnhancedAutonomousLoop';
@@ -15,6 +14,7 @@ const AgentsPage = () => {
   const [showCore, setShowCore] = useState(true);
   const [showEnhanced, setShowEnhanced] = useState(true);
   const [cycles, setCycles] = useState(0);
+  const [logs, setLogs] = useState([]);
 
   useEffect(() => {
     const registeredAgents = agentRegistry.getAllAgents();
@@ -28,6 +28,24 @@ const AgentsPage = () => {
       runner: agent.runner
     }));
     setAgents(agentData);
+
+    // Auto-start autonomous loop if it was previously running
+    if (shouldAutoStartLoop() && agentData.length > 0) {
+      console.log('Auto-starting Autonomous Loop from AgentsPage...');
+      setIsAutonomousRunning(true);
+      startAutonomousLoop(
+        null, // supervisorAgent placeholder
+        agentData,
+        setAgents,
+        setLogs,
+        (kpis) => setCycles(kpis.cycles),
+        { loopDelayMs: 3000, maxCycles: 10000 }
+      );
+      toast({
+        title: "🚀 Auto-Resumed Autonomous Loop",
+        description: "System automatically resumed from previous session",
+      });
+    }
   }, [runningAgents]);
 
   const handleRunAgent = async (agentName: string, params = {}) => {
@@ -130,25 +148,23 @@ const AgentsPage = () => {
 
   const startAutonomousLoop = () => {
     setIsAutonomousRunning(true);
+    startAutonomousLoop(
+      null, // supervisorAgent placeholder
+      agents,
+      setAgents,
+      setLogs,
+      (kpis) => setCycles(kpis.cycles),
+      { loopDelayMs: 3000, maxCycles: 10000 }
+    );
     toast({
       title: "🚀 Autonomous Loop Started",
       description: "Agents will now run automatically in cycles",
     });
-
-    // Simulate autonomous loop
-    const autonomousInterval = setInterval(() => {
-      if (!isAutonomousRunning) {
-        clearInterval(autonomousInterval);
-        return;
-      }
-      
-      setCycles(prev => prev + 1);
-      handleRunRandomAgent();
-    }, 3000);
   };
 
   const stopAutonomousLoop = () => {
     setIsAutonomousRunning(false);
+    stopAutonomousLoop();
     toast({
       title: "⏹️ Autonomous Loop Stopped",
       description: "Manual control restored",

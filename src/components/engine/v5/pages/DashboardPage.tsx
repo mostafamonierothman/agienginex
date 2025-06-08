@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,12 +6,15 @@ import { Activity, Brain, Zap, TrendingUp } from 'lucide-react';
 import { enhancedAutonomousLoop } from '@/loops/EnhancedAutonomousLoop';
 import { agentRegistry } from '@/config/AgentRegistry';
 import { toast } from '@/hooks/use-toast';
+import { startAutonomousLoop, stopAutonomousLoop, shouldAutoStartLoop } from '@/engine/AutonomousLoopController';
 import KPIWidget from '../components/KPIWidget';
 import AutonomousLoopController from '../components/AutonomousLoopController';
 
 const DashboardPage = () => {
   const [systemStatus, setSystemStatus] = useState('MANUAL');
   const [isAutonomousRunning, setIsAutonomousRunning] = useState(false);
+  const [logs, setLogs] = useState([]);
+  const [agents, setAgents] = useState([]);
   const [kpis, setKpis] = useState({
     cycles: 0,
     activeAgents: 19,
@@ -20,6 +22,40 @@ const DashboardPage = () => {
     totalOperations: 1247,
     loopSpeed: 3000
   });
+
+  useEffect(() => {
+    // Load agents from registry
+    const registeredAgents = agentRegistry.getAllAgents();
+    const agentData = registeredAgents.map(agent => ({
+      name: agent.name,
+      status: 'IDLE',
+      lastAction: 'Ready for execution',
+      category: agent.category,
+      description: agent.description,
+      version: agent.version,
+      runner: agent.runner
+    }));
+    setAgents(agentData);
+
+    // Auto-start autonomous loop if it was previously running
+    if (shouldAutoStartLoop() && agentData.length > 0) {
+      console.log('Auto-starting Autonomous Loop...');
+      setIsAutonomousRunning(true);
+      setSystemStatus('AUTONOMOUS');
+      startAutonomousLoop(
+        null, // supervisorAgent placeholder
+        agentData,
+        setAgents,
+        setLogs,
+        setKpis,
+        { loopDelayMs: 3000, maxCycles: 10000 }
+      );
+      toast({
+        title: "🚀 Auto-Resumed Autonomous Loop",
+        description: "System automatically resumed from previous session",
+      });
+    }
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -40,7 +76,16 @@ const DashboardPage = () => {
     try {
       setIsAutonomousRunning(true);
       setSystemStatus('AUTONOMOUS');
-      await enhancedAutonomousLoop.start();
+      
+      startAutonomousLoop(
+        null, // supervisorAgent placeholder
+        agents,
+        setAgents,
+        setLogs,
+        setKpis,
+        { loopDelayMs: 3000, maxCycles: 10000 }
+      );
+      
       toast({
         title: "🚀 V5 Autonomous System Started",
         description: "All agents are now running autonomously",
@@ -59,7 +104,7 @@ const DashboardPage = () => {
   const stopAutonomous = () => {
     setIsAutonomousRunning(false);
     setSystemStatus('MANUAL');
-    enhancedAutonomousLoop.stop();
+    stopAutonomousLoop();
     toast({
       title: "⏹️ Autonomous System Stopped",
       description: "Manual control restored",
@@ -67,7 +112,10 @@ const DashboardPage = () => {
   };
 
   const resetAutonomous = () => {
+    stopAutonomousLoop();
     setKpis(prev => ({ ...prev, cycles: 0 }));
+    setIsAutonomousRunning(false);
+    setSystemStatus('MANUAL');
     toast({
       title: "🔄 System Reset",
       description: "Cycle counter reset to zero",
@@ -184,6 +232,11 @@ const DashboardPage = () => {
                 🤖 Autonomous Loop: Running cycle #{kpis.cycles}
               </div>
             )}
+            {logs.slice(-3).map((log, index) => (
+              <div key={index} className="text-sm md:text-base text-orange-400">
+                🔄 {log.agent}: {log.action}
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
