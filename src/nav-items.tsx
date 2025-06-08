@@ -1,20 +1,26 @@
-
-import { HomeIcon, BrainCircuit, Zap, Rocket, Store } from "lucide-react";
-
 export const navItems = [
   {
-    title: "Home",
+    title: "AGI Engine",
     to: "/",
-    icon: <HomeIcon className="h-4 w-4" />,
+    icon: "brain",
+    variant: "default" as const,
   },
   {
     title: "AGI V4",
     to: "/agi-v4",
-    icon: <BrainCircuit className="h-4 w-4" />,
+    icon: "zap",
+    variant: "default" as const,
   },
   {
-    title: "AGI Pro Platform",
+    title: "AGI Pro",
     to: "/agi-pro",
-    icon: <Store className="h-4 w-4" />,
+    icon: "crown",
+    variant: "default" as const,
+  },
+  {
+    title: "Agent Manager",
+    to: "/agent-manager",
+    icon: "settings",
+    variant: "default" as const,
   },
 ];

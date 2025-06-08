@@ -1,4 +1,3 @@
-
 import React from 'react';
 import EngineHeader from './EngineHeader';
 import AGIV4Dashboard from './AGIV4Dashboard';
@@ -7,6 +6,8 @@ import BackgroundLoopController from './BackgroundLoopController';
 import AutonomousLoopController from './AutonomousLoopController';
 import AgentAnalyticsDashboard from './AgentAnalyticsDashboard';
 import EnterpriseAgentRegistry from './EnterpriseAgentRegistry';
+import LLMConfiguration from './LLMConfiguration';
+import ParallelFarmController from './ParallelFarmController';
 
 const AGIProDashboard = () => {
   return (
@@ -15,7 +16,12 @@ const AGIProDashboard = () => {
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <AutonomousLoopController />
+        <ParallelFarmController />
+      </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <BackgroundLoopController />
+        <LLMConfiguration />
       </div>
       
       <EnterpriseAgentRegistry />
