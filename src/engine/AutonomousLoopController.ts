@@ -1,6 +1,5 @@
 
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
-import { SupervisorAgent } from '@/agents/SupervisorAgent';
 
 let running = false;
 let loopInterval: any = null;
@@ -19,7 +18,7 @@ const loadLoopState = (): boolean => {
 };
 
 export const startAutonomousLoop = (
-    supervisorAgent: SupervisorAgent, 
+    supervisorAgent: any, 
     agents: any[], 
     setAgents: Function, 
     setLogs: Function, 

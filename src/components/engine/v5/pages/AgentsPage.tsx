@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Zap, Play, Users, RotateCcw, Square } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { startAutonomousLoop, stopAutonomousLoop, shouldAutoStartLoop } from '@/engine/AutonomousLoopController';
 
 const AgentsPage = () => {
   const [agents, setAgents] = useState([]);
@@ -146,7 +147,7 @@ const AgentsPage = () => {
     await handleRunAgent(randomAgent.name);
   };
 
-  const startAutonomousLoop = () => {
+  const handleStartAutonomousLoop = () => {
     setIsAutonomousRunning(true);
     startAutonomousLoop(
       null, // supervisorAgent placeholder
@@ -162,7 +163,7 @@ const AgentsPage = () => {
     });
   };
 
-  const stopAutonomousLoop = () => {
+  const handleStopAutonomousLoop = () => {
     setIsAutonomousRunning(false);
     stopAutonomousLoop();
     toast({
@@ -213,7 +214,7 @@ const AgentsPage = () => {
         </Button>
         {!isAutonomousRunning ? (
           <Button
-            onClick={startAutonomousLoop}
+            onClick={handleStartAutonomousLoop}
             className="bg-green-600 hover:bg-green-700 text-white h-11 md:h-10"
           >
             <RotateCcw className="h-4 w-4 mr-2" />
@@ -221,7 +222,7 @@ const AgentsPage = () => {
           </Button>
         ) : (
           <Button
-            onClick={stopAutonomousLoop}
+            onClick={handleStopAutonomousLoop}
             className="bg-red-600 hover:bg-red-700 text-white h-11 md:h-10"
           >
             <Square className="h-4 w-4 mr-2" />
