@@ -1,12 +1,14 @@
 
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { supabase } from '@/integrations/supabase/client';
+import { getRandomTemplate } from '@/utils/agent_templates';
 
 export async function FactoryAgent(context: AgentContext): Promise<AgentResponse> {
   try {
-    const agentName = `Agent_${Date.now()}`;
-    const agentType = "Custom";
-    const purpose = "Self-created agent for exploratory tasks";
+    // Get a random agent template
+    const template = getRandomTemplate();
+    const timestamp = Date.now();
+    const agentName = `${template.nameTemplate}${timestamp}`;
 
     // Create agent in supervisor queue as a registry entry
     const { data, error } = await supabase
@@ -17,16 +19,18 @@ export async function FactoryAgent(context: AgentContext): Promise<AgentResponse
         action: 'agent_creation',
         input: JSON.stringify({
           new_agent_name: agentName,
-          agent_type: agentType,
-          purpose: purpose,
+          agent_type: template.type,
+          purpose: template.purpose,
           config: {
+            ...template.config,
             learning: true,
             coordination: true,
-            autonomous: true
+            autonomous: true,
+            template_based: true
           }
         }),
         status: 'completed',
-        output: `Created new agent: ${agentName}`,
+        output: `Created new ${template.type} agent: ${agentName}`,
         timestamp: new Date().toISOString()
       });
 
@@ -38,12 +42,17 @@ export async function FactoryAgent(context: AgentContext): Promise<AgentResponse
       };
     }
 
-    console.log(`🏭 FactoryAgent created new agent: ${agentName}`);
+    console.log(`🏭 FactoryAgent created new ${template.type} agent: ${agentName}`);
     
     return {
       success: true,
-      message: `✅ FactoryAgent created new agent: ${agentName}`,
-      data: { agentName, agentType, purpose },
+      message: `✅ FactoryAgent created new ${template.type} agent: ${agentName}`,
+      data: { 
+        agentName, 
+        agentType: template.type, 
+        purpose: template.purpose,
+        template: template.nameTemplate
+      },
       timestamp: new Date().toISOString()
     };
   } catch (error) {

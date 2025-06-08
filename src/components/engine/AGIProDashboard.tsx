@@ -5,6 +5,7 @@ import AGIV4Dashboard from './AGIV4Dashboard';
 import AgentMarketplace from './AgentMarketplace';
 import BackgroundLoopController from './BackgroundLoopController';
 import AutonomousLoopController from './AutonomousLoopController';
+import AgentAnalyticsDashboard from './AgentAnalyticsDashboard';
 
 const AGIProDashboard = () => {
   return (
@@ -20,6 +21,8 @@ const AGIProDashboard = () => {
         <AGIV4Dashboard />
         <AgentMarketplace />
       </div>
+
+      <AgentAnalyticsDashboard />
     </div>
   );
 };
