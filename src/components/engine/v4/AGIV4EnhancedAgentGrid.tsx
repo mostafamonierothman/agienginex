@@ -214,7 +214,7 @@ const AGIV4EnhancedAgentGrid = () => {
         <CardContent>
           {/* Enhanced Agents Section */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-purple-400 mb-3">🚀 Enhanced Agents (V4.5)</h3>
+            <h3 className="text-lg font-semibold text-purple-400 mb-3">🚀 Enhanced Agents (V4.5) - {enhancedAgents.length} agents</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {enhancedAgents.map((agent) => {
                 const IconComponent = getAgentIcon(agent.name);
@@ -264,7 +264,7 @@ const AGIV4EnhancedAgentGrid = () => {
 
           {/* Core Agents Section */}
           <div>
-            <h3 className="text-lg font-semibold text-blue-400 mb-3">⚙️ Core Agents (V4.0)</h3>
+            <h3 className="text-lg font-semibold text-blue-400 mb-3">⚙️ Core Agents (V4.0) - {coreAgents.length} agents</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
               {coreAgents.map((agent) => {
                 const IconComponent = getAgentIcon(agent.name);

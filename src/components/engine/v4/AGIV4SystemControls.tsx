@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,12 @@ import { toast } from '@/hooks/use-toast';
 
 const AGIV4SystemControls = () => {
   const [systemStatus, setSystemStatus] = useState({ isRunning: false, cycleCount: 0, totalAgents: 20 });
-  const [registryStatus, setRegistryStatus] = useState({ totalAgents: 0, coreAgents: 0, enhancedAgents: 0 });
+  const [registryStatus, setRegistryStatus] = useState({ 
+    totalAgents: 0, 
+    coreAgents: 0, 
+    enhancedAgents: 0,
+    version: 'V4.5+'
+  });
 
   useEffect(() => {
     const interval = setInterval(() => {

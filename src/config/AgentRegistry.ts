@@ -1,9 +1,15 @@
 
-import { FactoryAgent } from '@/agents/FactoryAgent';
+import { AgentContext, AgentResponse } from '@/types/AgentTypes';
+import { agentLogger } from '@/agents/AgentLogger';
+import { persistentMemory } from '@/core/PersistentMemory';
+import { toast } from '@/hooks/use-toast';
+
+// Import all core agents
+import { SupervisorAgent } from '@/agents/SupervisorAgent';
 import { ResearchAgent } from '@/agents/ResearchAgent';
 import { LearningAgentV2 } from '@/agents/LearningAgentV2';
+import { FactoryAgent } from '@/agents/FactoryAgent';
 import { CriticAgent } from '@/agents/CriticAgent';
-import { SupervisorAgent } from '@/agents/SupervisorAgent';
 import { LLMAgent } from '@/agents/LLMAgent';
 import { CoordinationAgent } from '@/agents/CoordinationAgent';
 import { MemoryAgent } from '@/agents/MemoryAgent';
@@ -12,148 +18,149 @@ import { OpportunityAgent } from '@/agents/OpportunityAgent';
 import { EvolutionAgent } from '@/agents/EvolutionAgent';
 import { CollaborationAgent } from '@/agents/CollaborationAgent';
 
-// New V4.5 Agents
-import { BrowserAgentRunner } from '@/agents/BrowserAgent';
-import { APIConnectorAgentRunner } from '@/agents/APIConnectorAgent';
-import { GoalAgentRunner } from '@/agents/GoalAgent';
-import { MetaAgentRunner } from '@/agents/MetaAgent';
-import { SecurityAgentRunner } from '@/agents/SecurityAgent';
-import { TimelineAgentRunner } from '@/agents/TimelineAgent';
-import { CreativityAgentRunner } from '@/agents/CreativityAgent';
-
-import { AgentLogger } from '@/agents/AgentLogger';
-import { UpgradedSupervisor } from '@/core/UpgradedSupervisor';
-import { PersistentMemory } from '@/core/PersistentMemory';
+// Import new enhanced agents
+import { BrowserAgent } from '@/agents/BrowserAgent';
+import { APIConnectorAgent } from '@/agents/APIConnectorAgent';
+import { GoalAgent } from '@/agents/GoalAgent';
+import { MetaAgent } from '@/agents/MetaAgent';
+import { SecurityAgent } from '@/agents/SecurityAgent';
+import { TimelineAgent } from '@/agents/TimelineAgent';
+import { CreativityAgent } from '@/agents/CreativityAgent';
 
 export interface RegisteredAgent {
   name: string;
-  runner: Function;
   description: string;
   category: 'core' | 'enhanced' | 'utility';
   version: string;
+  instance: any;
 }
 
-export class AgentRegistry {
-  private static instance: AgentRegistry;
-  private agents: Map<string, RegisteredAgent> = new Map();
-  private logger: AgentLogger;
-  private supervisor: UpgradedSupervisor;
-  private memory: PersistentMemory;
+export interface SystemStatus {
+  totalAgents: number;
+  coreAgents: number;
+  enhancedAgents: number;
+  version: string;
+}
 
-  private constructor() {
-    this.logger = new AgentLogger();
-    this.supervisor = new UpgradedSupervisor();
-    this.memory = new PersistentMemory();
+export class AgentRegistryClass {
+  private agents: RegisteredAgent[] = [];
+  private instances: Map<string, any> = new Map();
+
+  constructor() {
     this.initializeAgents();
   }
 
-  static getInstance(): AgentRegistry {
-    if (!AgentRegistry.instance) {
-      AgentRegistry.instance = new AgentRegistry();
-    }
-    return AgentRegistry.instance;
+  private initializeAgents() {
+    // Core agents (12)
+    this.registerAgent('SupervisorAgent', 'Monitors all system activities', 'core', 'V4.0', new SupervisorAgent());
+    this.registerAgent('ResearchAgent', 'Scans external sources for insights', 'core', 'V4.0', new ResearchAgent());
+    this.registerAgent('LearningAgentV2', 'Advanced learning and adaptation', 'core', 'V4.0', new LearningAgentV2());
+    this.registerAgent('FactoryAgent', 'Creates new agents dynamically', 'core', 'V4.0', new FactoryAgent());
+    this.registerAgent('CriticAgent', 'Evaluates system performance', 'core', 'V4.0', new CriticAgent());
+    this.registerAgent('LLMAgent', 'Language model processing', 'core', 'V4.0', new LLMAgent());
+    this.registerAgent('CoordinationAgent', 'Manages agent workflows', 'core', 'V4.0', new CoordinationAgent());
+    this.registerAgent('MemoryAgent', 'Vector memory management', 'core', 'V4.0', new MemoryAgent());
+    this.registerAgent('StrategicAgent', 'Strategic planning and decisions', 'core', 'V4.0', new StrategicAgent());
+    this.registerAgent('OpportunityAgent', 'Identifies market opportunities', 'core', 'V4.0', new OpportunityAgent());
+    this.registerAgent('EvolutionAgent', 'Handles agent evolution and genomes', 'core', 'V4.0', new EvolutionAgent());
+    this.registerAgent('CollaborationAgent', 'Manages agent-to-agent communication', 'core', 'V4.0', new CollaborationAgent());
+
+    // Enhanced agents (8)
+    this.registerAgent('BrowserAgent', 'Web browsing and scraping capabilities', 'enhanced', 'V4.5+', new BrowserAgent());
+    this.registerAgent('APIConnectorAgent', 'External API integrations', 'enhanced', 'V4.5+', new APIConnectorAgent());
+    this.registerAgent('GoalAgent', 'Goal setting and tracking', 'enhanced', 'V4.5+', new GoalAgent());
+    this.registerAgent('MetaAgent', 'System analysis and optimization', 'enhanced', 'V4.5+', new MetaAgent());
+    this.registerAgent('SecurityAgent', 'Security monitoring and threat detection', 'enhanced', 'V4.5+', new SecurityAgent());
+    this.registerAgent('TimelineAgent', 'Scheduling and time management', 'enhanced', 'V4.5+', new TimelineAgent());
+    this.registerAgent('CreativityAgent', 'Creative ideation and innovation', 'enhanced', 'V4.5+', new CreativityAgent());
+
+    console.log(`🚀 AgentRegistry: Initialized ${this.agents.length} agents`);
   }
 
-  private async initializeAgents(): Promise<void> {
-    // Core V4 Agents (12 original)
-    this.registerAgent('SupervisorAgent', SupervisorAgent, 'System oversight and coordination', 'core', 'v4.0');
-    this.registerAgent('CoordinationAgent', CoordinationAgent, 'Multi-agent coordination', 'core', 'v4.0');
-    this.registerAgent('StrategicAgent', StrategicAgent, 'Strategic planning and analysis', 'core', 'v4.0');
-    this.registerAgent('ResearchAgent', ResearchAgent, 'Research and information gathering', 'core', 'v4.0');
-    this.registerAgent('OpportunityAgent', OpportunityAgent, 'Opportunity detection and analysis', 'core', 'v4.0');
-    this.registerAgent('LearningAgentV2', LearningAgentV2, 'Machine learning and adaptation', 'core', 'v4.0');
-    this.registerAgent('MemoryAgent', MemoryAgent, 'Memory management and retrieval', 'core', 'v4.0');
-    this.registerAgent('LLMAgent', LLMAgent, 'Language model interactions', 'core', 'v4.0');
-    this.registerAgent('EvolutionAgent', EvolutionAgent, 'Evolutionary optimization', 'core', 'v4.0');
-    this.registerAgent('CollaborationAgent', CollaborationAgent, 'Agent collaboration facilitation', 'core', 'v4.0');
-    this.registerAgent('FactoryAgent', FactoryAgent, 'Dynamic agent creation', 'core', 'v4.0');
-    this.registerAgent('CriticAgent', CriticAgent, 'Performance evaluation and criticism', 'core', 'v4.0');
-
-    // Enhanced V4.5 Agents (8 new)
-    this.registerAgent('BrowserAgent', BrowserAgentRunner, 'Web browsing and content extraction', 'enhanced', 'v4.5');
-    this.registerAgent('APIConnectorAgent', APIConnectorAgentRunner, 'External API integration', 'enhanced', 'v4.5');
-    this.registerAgent('GoalAgent', GoalAgentRunner, 'Goal management and tracking', 'enhanced', 'v4.5');
-    this.registerAgent('MetaAgent', MetaAgentRunner, 'System meta-analysis and optimization', 'enhanced', 'v4.5');
-    this.registerAgent('SecurityAgent', SecurityAgentRunner, 'Security monitoring and threat detection', 'enhanced', 'v4.5');
-    this.registerAgent('TimelineAgent', TimelineAgentRunner, 'Time management and scheduling', 'enhanced', 'v4.5');
-    this.registerAgent('CreativityAgent', CreativityAgentRunner, 'Creative ideation and innovation', 'enhanced', 'v4.5');
-
-    // Register all agents with supervisor
-    for (const [name] of this.agents) {
-      await this.supervisor.registerAgent(name);
-    }
-
-    console.log(`🚀 AgentRegistry V4.5 initialized with ${this.agents.size} agents`);
-    await this.logger.log('AgentRegistry', 'initialize', `${this.agents.size} agents registered successfully`, 'success');
-  }
-
-  private registerAgent(name: string, runner: Function, description: string, category: 'core' | 'enhanced' | 'utility', version: string): void {
-    this.agents.set(name, {
+  private registerAgent(name: string, description: string, category: 'core' | 'enhanced' | 'utility', version: string, instance: any) {
+    const agent: RegisteredAgent = {
       name,
-      runner,
       description,
       category,
-      version
-    });
+      version,
+      instance
+    };
+    
+    this.agents.push(agent);
+    this.instances.set(name, instance);
+    
+    agentLogger.log('AgentRegistry', 'register', `${name} registered successfully`);
   }
 
-  getAgent(name: string): RegisteredAgent | undefined {
-    return this.agents.get(name);
-  }
-
-  getAllAgents(): RegisteredAgent[] {
-    return Array.from(this.agents.values());
-  }
-
-  getCoreAgents(): RegisteredAgent[] {
-    return this.getAllAgents().filter(agent => agent.category === 'core');
-  }
-
-  getEnhancedAgents(): RegisteredAgent[] {
-    return this.getAllAgents().filter(agent => agent.category === 'enhanced');
-  }
-
-  getRandomAgent(): RegisteredAgent | undefined {
-    const agents = this.getAllAgents();
-    return agents[Math.floor(Math.random() * agents.length)];
-  }
-
-  async runAgent(name: string, context: any): Promise<any> {
-    const agent = this.getAgent(name);
-    if (!agent) {
-      throw new Error(`Agent ${name} not found in registry`);
+  async runAgent(agentName: string, context: AgentContext): Promise<AgentResponse> {
+    const instance = this.instances.get(agentName);
+    
+    if (!instance) {
+      throw new Error(`Agent ${agentName} not found in registry`);
     }
 
     try {
-      await this.supervisor.reportHealth(name, 'OK');
-      const result = await agent.runner(context);
-      await this.logger.log('AgentRegistry', 'run_agent', `${name} executed successfully`, 'success');
-      return result;
+      agentLogger.log(agentName, 'start', `Executing with context: ${JSON.stringify(context)}`);
+      
+      let result;
+      if (instance.execute) {
+        result = await instance.execute(context);
+      } else if (instance.run) {
+        result = await instance.run(context);
+      } else {
+        result = await instance.process(context);
+      }
+
+      agentLogger.log(agentName, 'complete', `Result: ${JSON.stringify(result)}`);
+      
+      return {
+        success: true,
+        message: result?.message || `${agentName} executed successfully`,
+        data: result,
+        timestamp: new Date().toISOString()
+      };
+      
     } catch (error) {
-      await this.supervisor.reportHealth(name, 'ERROR');
-      await this.logger.log('AgentRegistry', 'run_agent', `${name} failed: ${error.message}`, 'error');
-      throw error;
+      const errorMessage = error.message || 'Unknown error occurred';
+      agentLogger.log(agentName, 'error', errorMessage);
+      
+      return {
+        success: false,
+        message: errorMessage,
+        timestamp: new Date().toISOString()
+      };
     }
   }
 
-  getSystemStatus() {
+  getAllAgents(): RegisteredAgent[] {
+    return this.agents;
+  }
+
+  getAgent(name: string): RegisteredAgent | undefined {
+    return this.agents.find(agent => agent.name === name);
+  }
+
+  getRandomAgent(): RegisteredAgent {
+    const randomIndex = Math.floor(Math.random() * this.agents.length);
+    return this.agents[randomIndex];
+  }
+
+  getSystemStatus(): SystemStatus {
+    const coreAgents = this.agents.filter(a => a.category === 'core').length;
+    const enhancedAgents = this.agents.filter(a => a.category === 'enhanced').length;
+    
     return {
-      totalAgents: this.agents.size,
-      coreAgents: this.getCoreAgents().length,
-      enhancedAgents: this.getEnhancedAgents().length,
-      supervisorStatus: this.supervisor.getSystemStatus(),
-      version: 'v4.5+'
+      totalAgents: this.agents.length,
+      coreAgents,
+      enhancedAgents,
+      version: 'V4.5+'
     };
   }
 
-  async runRandomAgent(context: any): Promise<any> {
-    const agent = this.getRandomAgent();
-    if (!agent) {
-      throw new Error('No agents available');
-    }
-    return await this.runAgent(agent.name, context);
+  getAgentsByCategory(category: 'core' | 'enhanced' | 'utility'): RegisteredAgent[] {
+    return this.agents.filter(agent => agent.category === category);
   }
 }
 
 // Export singleton instance
-export const agentRegistry = AgentRegistry.getInstance();
+export const agentRegistry = new AgentRegistryClass();
