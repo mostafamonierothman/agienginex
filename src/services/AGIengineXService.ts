@@ -13,6 +13,14 @@ export interface AgentInfo {
   capabilities: string[];
 }
 
+export interface AGIGoal {
+  id: string;
+  goal_text: string;
+  priority: number;
+  status: string;
+  progress_percentage: number;
+}
+
 class AGIengineXService {
   private baseUrl: string;
   private authToken: string;
@@ -69,15 +77,90 @@ class AGIengineXService {
       return [
         {
           name: 'next_move_agent',
-          description: 'Strategic Decision Making',
-          capabilities: ['Strategic Planning', 'Business Analysis', 'Decision Making']
+          description: 'Strategic Decision Making with Goal Context',
+          capabilities: ['Strategic Planning', 'Business Analysis', 'Goal-Driven Decision Making']
         },
         {
           name: 'opportunity_agent',
-          description: 'Market Opportunity Detection',
-          capabilities: ['Market Analysis', 'Opportunity Detection', 'Revenue Optimization']
+          description: 'Market Opportunity Detection with Environment Awareness',
+          capabilities: ['Market Analysis', 'Opportunity Detection', 'Revenue Optimization', 'Environment Adaptation']
+        },
+        {
+          name: 'critic_agent',
+          description: 'Self-Reflection and Performance Evaluation',
+          capabilities: ['System Analysis', 'Performance Evaluation', 'Self-Improvement', 'Quality Assessment']
         }
       ];
+    }
+  }
+
+  async getCurrentGoals(): Promise<AGIGoal[]> {
+    try {
+      const response = await fetch(`${this.baseUrl}/goals`, {
+        headers: this.getHeaders()
+      });
+      
+      if (!response.ok) throw new Error('Failed to get goals');
+      const data = await response.json();
+      
+      return data.goals || [];
+    } catch (error) {
+      console.error('Get goals error:', error);
+      return [];
+    }
+  }
+
+  async createGoal(goalText: string, priority: number = 5): Promise<boolean> {
+    try {
+      const response = await fetch(`${this.baseUrl}/goals`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({
+          goal_text: goalText,
+          priority: priority
+        })
+      });
+      
+      return response.ok;
+    } catch (error) {
+      console.error('Create goal error:', error);
+      return false;
+    }
+  }
+
+  async runAgentChain(chainName: string = 'standard_agi_loop'): Promise<any> {
+    try {
+      const response = await fetch(`${this.baseUrl}/chain`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({
+          chain_name: chainName
+        })
+      });
+      
+      if (!response.ok) throw new Error('Failed to run agent chain');
+      return await response.json();
+    } catch (error) {
+      console.error('Agent chain error:', error);
+      return { error: 'Agent chain execution failed' };
+    }
+  }
+
+  async triggerWebhook(eventType: string, eventData: any): Promise<boolean> {
+    try {
+      const response = await fetch(`${this.baseUrl}/webhook`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({
+          event_type: eventType,
+          ...eventData
+        })
+      });
+      
+      return response.ok;
+    } catch (error) {
+      console.error('Webhook trigger error:', error);
+      return false;
     }
   }
 
@@ -93,8 +176,16 @@ class AGIengineXService {
       console.error('Status check error:', error);
       return {
         status: 'local_mode',
-        agents_active: 0,
-        loop_running: false
+        agi_loop_running: false,
+        active_goals: 0,
+        performance_score: 'N/A',
+        agi_features: {
+          autonomy: false,
+          self_reflection: false,
+          goal_driven: false,
+          environment_adaptive: false,
+          agent_chaining: false
+        }
       };
     }
   }
