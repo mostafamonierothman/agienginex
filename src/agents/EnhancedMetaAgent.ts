@@ -53,13 +53,13 @@ export class EnhancedMetaAgent {
         }, {});
 
         const totalAgents = Number(Object.keys(agentStats).length);
-        const avgSuccessRate = totalAgents > 0 
-            ? Object.values(agentStats).reduce((sum: number, stats: any) => {
-                const total = Number(stats.total) || 1;
-                const successful = Number(stats.successful) || 0;
-                return sum + (successful / total);
-            }, 0) / totalAgents
-            : 0;
+        const totalSuccessSum = Object.values(agentStats).reduce((sum: number, stats: any) => {
+            const total = Number(stats.total) || 1;
+            const successful = Number(stats.successful) || 0;
+            return sum + (successful / total);
+        }, 0);
+        
+        const avgSuccessRate = totalAgents > 0 ? Number(totalSuccessSum) / Number(totalAgents) : 0;
 
         return {
             totalAgents,
