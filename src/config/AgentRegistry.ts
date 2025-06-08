@@ -29,7 +29,7 @@ export interface AgentDefinition {
 const createAgentRunner = (AgentClass: any) => {
   return async (context: AgentContext): Promise<AgentResponse> => {
     const agent = new AgentClass();
-    return await agent.runner ? agent.runner(context) : agent(context);
+    return await agent.runner(context);
   };
 };
 
@@ -192,8 +192,25 @@ export const getSystemStatus = () => {
     strategicAgents,
     coordinationAgents,
     toolAgents,
-    enhancedAgents
+    enhancedAgents,
+    version: 'V6'
   };
+};
+
+// Helper function to run an agent by name
+export const runAgent = async (agentName: string, context: AgentContext): Promise<AgentResponse> => {
+  const agent = agentRegistry[agentName];
+  if (!agent) {
+    throw new Error(`Agent ${agentName} not found in registry`);
+  }
+  return await agent.runner(context);
+};
+
+// Helper function to get a random agent
+export const getRandomAgent = () => {
+  const agents = Object.keys(agentRegistry);
+  const randomKey = agents[Math.floor(Math.random() * agents.length)];
+  return agentRegistry[randomKey];
 };
 
 // Export types needed by other components
