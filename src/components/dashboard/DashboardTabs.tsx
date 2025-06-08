@@ -15,6 +15,8 @@ import MultiAgentDashboard from '../engine/MultiAgentDashboard';
 import AGITestButton from '../engine/multi-agent/AGITestButton';
 import AGIDashboard from '../engine/AGIDashboard';
 import AGIV2Dashboard from '../engine/AGIV2Dashboard';
+import AGIV3Dashboard from '../engine/AGIV3Dashboard';
+import AGIV3Controls from '../engine/AGIV3Controls';
 
 interface EngineState {
   timestamp: string;
@@ -70,8 +72,16 @@ const DashboardTabs = ({
   triggerTask
 }: DashboardTabsProps) => {
   return (
-    <Tabs defaultValue="agi-v2" className="w-full">
-      <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-11 bg-slate-800 h-auto gap-1 p-1">
+    <Tabs defaultValue="agi-v3" className="w-full">
+      <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-12 bg-slate-800 h-auto gap-1 p-1">
+        <TabsTrigger value="agi-v3" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
+          <span className="hidden sm:inline">🚀 AGI V3</span>
+          <span className="sm:hidden">🚀 V3</span>
+        </TabsTrigger>
+        <TabsTrigger value="agi-v3-controls" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
+          <span className="hidden sm:inline">⚡ V3 Controls</span>
+          <span className="sm:hidden">⚡ Ctrl</span>
+        </TabsTrigger>
         <TabsTrigger value="agi-v2" className="text-white text-xs sm:text-sm px-2 py-2 whitespace-nowrap">
           <span className="hidden sm:inline">🧠 AGI V2</span>
           <span className="sm:hidden">🧠 V2</span>
@@ -117,6 +127,14 @@ const DashboardTabs = ({
           <span className="sm:hidden">💰 Business</span>
         </TabsTrigger>
       </TabsList>
+
+      <TabsContent value="agi-v3">
+        <AGIV3Dashboard />
+      </TabsContent>
+
+      <TabsContent value="agi-v3-controls">
+        <AGIV3Controls />
+      </TabsContent>
 
       <TabsContent value="agi-v2">
         <AGIV2Dashboard />
