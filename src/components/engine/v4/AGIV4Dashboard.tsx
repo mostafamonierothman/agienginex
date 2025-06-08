@@ -2,13 +2,12 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Brain, Activity, Database, Settings, Zap } from 'lucide-react';
+import { Brain, Activity, Database, Settings, Zap, Users } from 'lucide-react';
 import AGIV4DataInitializer from './AGIV4DataInitializer';
 import AGIV4DataMonitor from './AGIV4DataMonitor';
 import AGIV4ActivityFeed from './AGIV4ActivityFeed';
 import AGIV4EnhancedAgentGrid from './AGIV4EnhancedAgentGrid';
-import AGIV4Controls from '../AGIV4Controls';
-import AutonomousLoopController from '../AutonomousLoopController';
+import AGIV4SystemControls from './AGIV4SystemControls';
 
 const AGIV4Dashboard = () => {
   const [isDataInitialized, setIsDataInitialized] = useState(false);
@@ -32,8 +31,8 @@ const AGIV4Dashboard = () => {
       <Tabs defaultValue="agents" className="space-y-4">
         <TabsList className="grid w-full grid-cols-5 bg-slate-800/50">
           <TabsTrigger value="agents" className="flex items-center gap-2">
-            <Zap className="h-4 w-4" />
-            Enhanced Agents
+            <Users className="h-4 w-4" />
+            All Agents
           </TabsTrigger>
           <TabsTrigger value="controls" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
@@ -58,7 +57,7 @@ const AGIV4Dashboard = () => {
         </TabsContent>
 
         <TabsContent value="controls" className="space-y-4">
-          <AGIV4Controls />
+          <AGIV4SystemControls />
         </TabsContent>
 
         <TabsContent value="data" className="space-y-4">
@@ -70,7 +69,7 @@ const AGIV4Dashboard = () => {
         </TabsContent>
 
         <TabsContent value="autonomous" className="space-y-4">
-          <AutonomousLoopController />
+          <AGIV4SystemControls />
           <Card className="bg-slate-800/50 border border-slate-600/30">
             <CardHeader>
               <CardTitle className="text-white">Enhanced Autonomous System Status</CardTitle>
