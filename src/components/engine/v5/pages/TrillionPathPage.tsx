@@ -23,7 +23,9 @@ const TrillionPathPage = () => {
     executionSuccesses: 0,
     realRevenue: 0,
     activeConversions: 0,
-    opportunityMultiplier: 1.0
+    opportunityMultiplier: 1.0,
+    tasksExecuted: 0,
+    leadsGenerated: 0
   });
   const [supervisorStatus, setSupervisorStatus] = useState({
     isRunning: false,
