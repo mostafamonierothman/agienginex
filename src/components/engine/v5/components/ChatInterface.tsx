@@ -1,10 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Send, Mic, Brain, Zap, Target } from 'lucide-react';
 import { sendChatToAgent } from '@/services/EnhancedChatService';
+import { agentCommunicationBus } from '@/services/AgentCommunicationBus';
+import { saveChatMessage } from '@/utils/saveChatMessage';
 
 interface ChatInterfaceProps {
   onSendMessage: (message: string) => void;
@@ -14,6 +16,19 @@ const ChatInterface = ({ onSendMessage }: ChatInterfaceProps) => {
   const [message, setMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [executingActions, setExecutingActions] = useState<string[]>([]);
+  const [activeAgentCount, setActiveAgentCount] = useState(0);
+
+  useEffect(() => {
+    // Update active agent count from communication bus
+    const updateAgentCount = () => {
+      const stats = agentCommunicationBus.getSystemStats();
+      setActiveAgentCount(stats.activeAgents);
+    };
+
+    updateAgentCount();
+    const interval = setInterval(updateAgentCount, 2000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,6 +38,9 @@ const ChatInterface = ({ onSendMessage }: ChatInterfaceProps) => {
       
       try {
         console.log('[ChatInterface] Processing immediate action request:', message);
+        
+        // Save user message to system memory immediately
+        await saveChatMessage('User', `User: ${message}`);
         
         // Send user message first
         onSendMessage(`User: ${message}`);
@@ -44,17 +62,26 @@ const ChatInterface = ({ onSendMessage }: ChatInterfaceProps) => {
           const executionInfo = result.executedActions && result.executedActions.length > 0 ? 
             ` | Executed: ${result.executedActions.length} actions` : '';
           
-          onSendMessage(`⚡ Immediate Action AGI${agentInfo}: ${result.message}${executionInfo}`);
+          const aiResponse = `⚡ Immediate Action AGI${agentInfo}: ${result.message}${executionInfo}`;
+          
+          // Save AI response to system memory
+          await saveChatMessage(result.agent_used || 'AGI', aiResponse);
+          
+          onSendMessage(aiResponse);
           
           // Clear execution status after showing completion
           setTimeout(() => setExecutingActions([]), 2000);
         } else {
-          onSendMessage(`🚨 System Error: ${result.error || result.message || 'Processing failed'} - Emergency protocols deployed instantly.`);
+          const errorResponse = `🚨 System Error: ${result.error || result.message || 'Processing failed'} - Emergency protocols deployed instantly.`;
+          await saveChatMessage('SystemError', errorResponse);
+          onSendMessage(errorResponse);
         }
         
       } catch (error) {
         console.error('[ChatInterface] Error processing message:', error);
-        onSendMessage('⚡ Emergency Mode: Error detected - deploying 10x fixing agents immediately. System auto-repair in progress.');
+        const emergencyResponse = '⚡ Emergency Mode: Error detected - deploying 10x fixing agents immediately. System auto-repair in progress.';
+        await saveChatMessage('EmergencySystem', emergencyResponse);
+        onSendMessage(emergencyResponse);
       } finally {
         setIsProcessing(false);
         setMessage('');
@@ -69,6 +96,9 @@ const ChatInterface = ({ onSendMessage }: ChatInterfaceProps) => {
           <Brain className="h-5 w-5 text-purple-400" />
           <span className="text-sm text-purple-400 font-medium">
             ⚡ Immediate Action AGI - Sub-Second Response & Execution
+          </span>
+          <span className="text-xs text-green-400 bg-green-900/30 px-2 py-1 rounded">
+            {activeAgentCount} Active Agents
           </span>
         </div>
         
@@ -124,7 +154,7 @@ const ChatInterface = ({ onSendMessage }: ChatInterfaceProps) => {
         )}
         
         <div className="mt-2 text-xs text-gray-400">
-          ⚡ Sub-Second Execution: Request → Analysis → Recommendation → Immediate Action | 1000+ Agents Ready
+          ⚡ Sub-Second Execution: Request → Analysis → Recommendation → Immediate Action | {activeAgentCount} Agents Ready
         </div>
       </CardContent>
     </Card>
