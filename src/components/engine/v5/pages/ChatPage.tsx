@@ -2,29 +2,48 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ChatInterface from '../components/ChatInterface';
-import { MessageSquare, Bot } from 'lucide-react';
+import { MessageSquare, Bot, User } from 'lucide-react';
+
+interface ChatMessage {
+  sender: string;
+  text: string;
+  timestamp: string;
+  isUser?: boolean;
+}
 
 const ChatPage = () => {
-  const [chatHistory, setChatHistory] = useState([
-    { sender: "AGI V5", text: "Welcome to AGI V5! I can help you manage agents, monitor projects, and execute tasks.", timestamp: new Date().toISOString() },
-    { sender: "System", text: "All 19 agents are online and ready for commands.", timestamp: new Date().toISOString() }
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
+    { 
+      sender: "AGI V5", 
+      text: "Welcome to AGI V5! I can help you manage agents, monitor projects, and execute tasks. Ask me anything about the system!", 
+      timestamp: new Date().toISOString(),
+      isUser: false
+    },
+    { 
+      sender: "System", 
+      text: "All 22 agents are online and ready for commands. Try asking about system status, improvements, or planning.", 
+      timestamp: new Date().toISOString(),
+      isUser: false
+    }
   ]);
 
   const handleSendMessage = (message: string) => {
-    const userMessage = {
-      sender: "User",
+    const newMessage: ChatMessage = {
+      sender: message.startsWith('Error:') || message.startsWith('Sorry,') ? "AGI V5" : "User",
       text: message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      isUser: !message.startsWith('Error:') && !message.startsWith('Sorry,') && message !== "User"
     };
 
-    const systemResponse = {
-      sender: "AGI V5",
-      text: `Executing: ${message}. Routing to appropriate agents...`,
-      timestamp: new Date().toISOString()
-    };
-
-    setChatHistory(prev => [...prev, userMessage, systemResponse]);
+    setChatHistory(prev => [...prev, newMessage]);
   };
+
+  const quickCommands = [
+    { label: "What is the system status?", action: () => handleSendMessage("What is the system status?") },
+    { label: "How can the system be improved?", action: () => handleSendMessage("How can the system be improved?") },
+    { label: "Plan a research project", action: () => handleSendMessage("Plan a research project") },
+    { label: "Show agent coordination", action: () => handleSendMessage("Show agent coordination") }
+  ];
 
   return (
     <div className="space-y-6">
@@ -47,30 +66,15 @@ const ChatPage = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <button 
-                onClick={() => handleSendMessage("Start all agents")}
-                className="w-full text-left text-sm text-blue-400 hover:text-blue-300 p-2 rounded hover:bg-slate-700/50"
-              >
-                • Start all agents
-              </button>
-              <button 
-                onClick={() => handleSendMessage("Show system status")}
-                className="w-full text-left text-sm text-blue-400 hover:text-blue-300 p-2 rounded hover:bg-slate-700/50"
-              >
-                • Show system status
-              </button>
-              <button 
-                onClick={() => handleSendMessage("Run research task")}
-                className="w-full text-left text-sm text-blue-400 hover:text-blue-300 p-2 rounded hover:bg-slate-700/50"
-              >
-                • Run research task
-              </button>
-              <button 
-                onClick={() => handleSendMessage("Create new project")}
-                className="w-full text-left text-sm text-blue-400 hover:text-blue-300 p-2 rounded hover:bg-slate-700/50"
-              >
-                • Create new project
-              </button>
+              {quickCommands.map((cmd, index) => (
+                <button 
+                  key={index}
+                  onClick={cmd.action}
+                  className="w-full text-left text-sm text-blue-400 hover:text-blue-300 p-2 rounded hover:bg-slate-700/50 transition-colors"
+                >
+                  • {cmd.label}
+                </button>
+              ))}
             </CardContent>
           </Card>
         </div>
@@ -81,12 +85,27 @@ const ChatPage = () => {
           <CardTitle className="text-white">Chat History</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-64 overflow-y-auto space-y-2">
+          <div className="h-64 overflow-y-auto space-y-3">
             {chatHistory.map((msg, index) => (
-              <div key={index} className="text-sm">
-                <span className="font-semibold text-purple-400">{msg.sender}:</span>
-                <span className="text-white ml-2">{msg.text}</span>
-                <div className="text-xs text-gray-500">{new Date(msg.timestamp).toLocaleTimeString()}</div>
+              <div key={index} className={`flex gap-3 ${msg.isUser ? 'justify-end' : 'justify-start'}`}>
+                <div className={`flex items-start gap-2 max-w-[80%] ${msg.isUser ? 'flex-row-reverse' : 'flex-row'}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    msg.isUser ? 'bg-blue-600' : 'bg-purple-600'
+                  }`}>
+                    {msg.isUser ? <User className="w-4 h-4 text-white" /> : <Bot className="w-4 h-4 text-white" />}
+                  </div>
+                  <div className={`rounded-lg p-3 ${
+                    msg.isUser 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-slate-700 text-white'
+                  }`}>
+                    <div className="text-sm font-semibold mb-1">{msg.sender}</div>
+                    <div className="text-sm">{msg.text}</div>
+                    <div className="text-xs opacity-70 mt-1">
+                      {new Date(msg.timestamp).toLocaleTimeString()}
+                    </div>
+                  </div>
+                </div>
               </div>
             ))}
           </div>

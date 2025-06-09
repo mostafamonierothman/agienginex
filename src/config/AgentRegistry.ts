@@ -17,6 +17,7 @@ import { EnhancedCollaborationAgent, EnhancedCollaborationAgentRunner } from '@/
 import { SystemContextAgent, SystemContextAgentRunner } from '@/agents/SystemContextAgent';
 import { SelfImprovementAgent, SelfImprovementAgentRunner } from '@/agents/SelfImprovementAgent';
 import { ExecutiveAgent, ExecutiveAgentRunner } from '@/agents/ExecutiveAgent';
+import { ChatProcessorAgent, ChatProcessorAgentRunner } from '@/agents/ChatProcessorAgent';
 
 export interface AgentDefinition {
   name: string;
@@ -185,6 +186,16 @@ const agentDefinitions: { [key: string]: AgentDefinition } = {
     version: "V7",
     runner: ExecutiveAgentRunner,
     paramSchema: []
+  },
+  chat_processor_agent: {
+    name: "ChatProcessorAgent",
+    description: "Processes user chat messages and routes to appropriate agents",
+    category: "V7",
+    version: "V7",
+    runner: ChatProcessorAgentRunner,
+    paramSchema: [
+      { name: 'message', placeholder: 'User message', type: 'text' }
+    ]
   }
 };
 

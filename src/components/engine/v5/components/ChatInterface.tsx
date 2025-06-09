@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Send, Mic } from 'lucide-react';
+import { ChatProcessorAgentRunner } from '@/agents/ChatProcessorAgent';
 
 interface ChatInterfaceProps {
   onSendMessage: (message: string) => void;
@@ -11,12 +12,40 @@ interface ChatInterfaceProps {
 
 const ChatInterface = ({ onSendMessage }: ChatInterfaceProps) => {
   const [message, setMessage] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (message.trim()) {
-      onSendMessage(message);
-      setMessage('');
+    if (message.trim() && !isProcessing) {
+      setIsProcessing(true);
+      
+      try {
+        console.log('[ChatInterface] Processing message:', message);
+        
+        // Send to user's callback first
+        onSendMessage(message);
+        
+        // Process through ChatProcessorAgent
+        const result = await ChatProcessorAgentRunner({
+          user_id: 'chat_user',
+          input: { message },
+          timestamp: new Date().toISOString()
+        });
+        
+        if (result.success) {
+          // Send the AI response
+          onSendMessage(result.message || 'No response generated');
+        } else {
+          onSendMessage(`Error: ${result.message}`);
+        }
+        
+      } catch (error) {
+        console.error('[ChatInterface] Error processing message:', error);
+        onSendMessage('Sorry, I encountered an error processing your message.');
+      } finally {
+        setIsProcessing(false);
+        setMessage('');
+      }
     }
   };
 
@@ -27,7 +56,8 @@ const ChatInterface = ({ onSendMessage }: ChatInterfaceProps) => {
           <Input
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Send a command to AGI V5..."
+            placeholder={isProcessing ? "Processing..." : "Send a command to AGI V5..."}
+            disabled={isProcessing}
             className="flex-1 bg-slate-700 border-slate-600 text-white h-11 md:h-10"
           />
           <div className="flex gap-2 md:gap-3">
@@ -35,19 +65,26 @@ const ChatInterface = ({ onSendMessage }: ChatInterfaceProps) => {
               type="button"
               variant="outline"
               className="border-slate-500 text-slate-200 hover:bg-slate-700 h-11 md:h-10 px-3 md:px-4"
+              disabled={isProcessing}
             >
               <Mic className="h-4 w-4" />
               <span className="sr-only">Voice input</span>
             </Button>
             <Button 
               type="submit" 
-              className="bg-purple-600 hover:bg-purple-700 h-11 md:h-10 px-3 md:px-4"
+              disabled={isProcessing || !message.trim()}
+              className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 h-11 md:h-10 px-3 md:px-4"
             >
               <Send className="h-4 w-4" />
               <span className="sr-only">Send message</span>
             </Button>
           </div>
         </form>
+        {isProcessing && (
+          <div className="mt-2 text-sm text-purple-400">
+            🤖 AGI V5 is processing your request...
+          </div>
+        )}
       </CardContent>
     </Card>
   );
