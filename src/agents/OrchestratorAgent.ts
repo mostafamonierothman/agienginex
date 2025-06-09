@@ -54,7 +54,7 @@ export class OrchestratorAgent {
       await sendChatUpdate('🚀 Running parallel agents: ResearchAgent + DataGathering...');
       
       const parallelResults = await Promise.all([
-        new ResearchAgent().runner(context),
+        ResearchAgent(context),
         // Add more parallel agents here as needed
         this.runDataGatheringAgent(context),
         this.runAnalysisAgent(context)
@@ -73,7 +73,7 @@ export class OrchestratorAgent {
       if (missingSkills.length > 0 || goalResponse?.data?.newAgentsNeeded) {
         await sendChatUpdate(`⚠️ Missing skills detected: ${missingSkills.join(', ')}. Triggering FactoryAgent...`);
         
-        await new FactoryAgent().runner({
+        await FactoryAgent({
           ...context,
           input: { 
             ...context.input,
