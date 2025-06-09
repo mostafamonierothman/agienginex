@@ -4,12 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, Bot, User, Zap, Target, DollarSign } from 'lucide-react';
+import { Send, Bot, User, Zap, Target, DollarSign, Settings } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { ChatProcessorAgentRunner } from '@/server/agents/ChatProcessorAgent';
 import { ExecutionAgentRunner } from '@/agents/ExecutionAgent';
 import { MedicalTourismResearchAgentRunner } from '@/agents/MedicalTourismResearchAgent';
 import { trillionPathEngine } from '@/engine/TrillionPathEngine';
+import OpenAIKeyConfig from './OpenAIKeyConfig';
 
 interface ChatMessage {
   id: string;
@@ -20,6 +21,7 @@ interface ChatMessage {
     action?: string;
     revenue?: number;
     success?: boolean;
+    taskType?: string;
   };
 }
 
@@ -32,12 +34,13 @@ const ChatInterface = ({ className }: ChatInterfaceProps) => {
     {
       id: '1',
       type: 'system',
-      content: '🚀 AGI Executive Assistant Ready! I can help you execute real business tasks to reach the trillion-dollar goal. Try: "Find medical tourism opportunities" or "Create a landing page" or "Send cold emails to prospects"',
+      content: '🚀 AGI Executive Assistant Ready! I execute REAL business tasks to generate actual revenue. Try: "Generate leads for medical tourism" or "Create landing page for AGI consultancy" or "Research competitors in healthcare AI"',
       timestamp: new Date(),
     }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -47,20 +50,22 @@ const ChatInterface = ({ className }: ChatInterfaceProps) => {
     }
   }, [messages]);
 
-  const executeBusinessTask = async (task: string): Promise<{success: boolean, result: string, revenue?: number}> => {
+  const executeBusinessTask = async (task: string): Promise<{success: boolean, result: string, revenue?: number, taskType?: string}> => {
     try {
-      // Determine which agent to use based on task content
-      if (task.toLowerCase().includes('medical') || task.toLowerCase().includes('tourism') || task.toLowerCase().includes('research')) {
-        const result = await MedicalTourismResearchAgentRunner({
-          input: { query: task, mode: 'execution' },
-          user_id: 'chat_user'
-        });
-        return {
-          success: result.success,
-          result: result.message,
-          revenue: result.data?.revenue || 0
-        };
-      } else if (task.toLowerCase().includes('execute') || task.toLowerCase().includes('create') || task.toLowerCase().includes('launch')) {
+      // Check if OpenAI is configured for AI responses
+      const hasOpenAIKey = localStorage.getItem('openai_api_key');
+      
+      // Determine if this is a business execution task
+      const isBusinessTask = task.toLowerCase().includes('execute') || 
+                           task.toLowerCase().includes('create') || 
+                           task.toLowerCase().includes('find') ||
+                           task.toLowerCase().includes('generate') ||
+                           task.toLowerCase().includes('send') ||
+                           task.toLowerCase().includes('launch') ||
+                           task.toLowerCase().includes('research');
+
+      if (isBusinessTask) {
+        // Execute real business task
         const result = await ExecutionAgentRunner({
           input: { task, mode: 'real_execution' },
           user_id: 'chat_user'
@@ -68,10 +73,11 @@ const ChatInterface = ({ className }: ChatInterfaceProps) => {
         return {
           success: result.success,
           result: result.message,
-          revenue: result.data?.revenueGenerated || 0
+          revenue: result.data?.revenueGenerated || 0,
+          taskType: result.data?.taskType
         };
-      } else {
-        // Use chat processor for general conversation
+      } else if (hasOpenAIKey) {
+        // Use AI chat processor for conversation
         const result = await ChatProcessorAgentRunner({
           input: { message: task },
           user_id: 'chat_user'
@@ -80,11 +86,16 @@ const ChatInterface = ({ className }: ChatInterfaceProps) => {
           success: result.success,
           result: result.message
         };
+      } else {
+        return {
+          success: false,
+          result: 'Please configure your OpenAI API key in settings to enable AI chat, or ask me to execute a specific business task.'
+        };
       }
     } catch (error) {
       return {
         success: false,
-        result: `Error executing task: ${error instanceof Error ? error.message : 'Unknown error'}`
+        result: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`
       };
     }
   };
@@ -104,14 +115,6 @@ const ChatInterface = ({ className }: ChatInterfaceProps) => {
     setIsLoading(true);
 
     try {
-      // Check if this is a business task or general conversation
-      const isBusinessTask = inputValue.toLowerCase().includes('execute') || 
-                           inputValue.toLowerCase().includes('create') || 
-                           inputValue.toLowerCase().includes('find') ||
-                           inputValue.toLowerCase().includes('send') ||
-                           inputValue.toLowerCase().includes('launch') ||
-                           inputValue.toLowerCase().includes('research');
-
       const result = await executeBusinessTask(inputValue.trim());
 
       const aiMessage: ChatMessage = {
@@ -120,9 +123,10 @@ const ChatInterface = ({ className }: ChatInterfaceProps) => {
         content: result.result,
         timestamp: new Date(),
         metadata: {
-          action: isBusinessTask ? 'business_execution' : 'conversation',
+          action: result.taskType ? 'business_execution' : 'conversation',
           revenue: result.revenue || 0,
-          success: result.success
+          success: result.success,
+          taskType: result.taskType
         }
       };
 
@@ -131,13 +135,13 @@ const ChatInterface = ({ className }: ChatInterfaceProps) => {
       // Show toast for successful business actions with revenue
       if (result.success && result.revenue && result.revenue > 0) {
         toast({
-          title: "💰 Revenue Generated!",
-          description: `Task completed successfully: +$${result.revenue.toLocaleString()}`,
+          title: "💰 Real Revenue Generated!",
+          description: `Task completed: +$${result.revenue.toLocaleString()} in business value`,
         });
-      } else if (result.success && isBusinessTask) {
+      } else if (result.success && result.taskType) {
         toast({
-          title: "✅ Task Completed",
-          description: "Business action executed successfully",
+          title: "✅ Real Business Task Executed",
+          description: "Check execution log for actionable next steps",
         });
       }
 
@@ -145,7 +149,7 @@ const ChatInterface = ({ className }: ChatInterfaceProps) => {
       const errorMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         type: 'ai',
-        content: `❌ Sorry, I encountered an error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        content: `❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
         timestamp: new Date(),
         metadata: {
           success: false
@@ -166,11 +170,11 @@ const ChatInterface = ({ className }: ChatInterfaceProps) => {
   };
 
   const suggestedActions = [
-    "Find medical tourism market opportunities",
-    "Create consultation booking landing page", 
-    "Send outreach emails to potential clients",
-    "Research Swedish healthcare market",
-    "Launch AGI consultancy service"
+    "Generate leads for medical tourism patients",
+    "Create landing page for consultation booking", 
+    "Send outreach emails to healthcare prospects",
+    "Research AI consultancy market opportunities",
+    "Launch content marketing campaign"
   ];
 
   const handleSuggestedAction = (action: string) => {
@@ -180,14 +184,28 @@ const ChatInterface = ({ className }: ChatInterfaceProps) => {
   return (
     <Card className={`flex flex-col h-full ${className}`}>
       <CardHeader className="pb-3">
-        <CardTitle className="text-foreground flex items-center gap-2 text-sm md:text-lg">
-          <Bot className="h-5 w-5 text-primary" />
-          <span>AGI Executive Assistant</span>
-          <span className="text-xs text-muted-foreground ml-auto">Real Task Execution</span>
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-foreground flex items-center gap-2 text-sm md:text-lg">
+            <Bot className="h-5 w-5 text-primary" />
+            <span>AGI Executive Assistant</span>
+            <span className="text-xs text-green-600 ml-2">REAL EXECUTION</span>
+          </CardTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowSettings(!showSettings)}
+          >
+            <Settings className="h-4 w-4" />
+          </Button>
+        </div>
       </CardHeader>
       
       <CardContent className="flex-1 flex flex-col p-3 md:p-6 space-y-4">
+        {/* Settings Panel */}
+        {showSettings && (
+          <OpenAIKeyConfig />
+        )}
+
         {/* Messages Area */}
         <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
           <div className="space-y-3 pr-3">
@@ -221,15 +239,15 @@ const ChatInterface = ({ className }: ChatInterfaceProps) => {
                     <div className="mt-2 pt-2 border-t border-current/20 text-xs opacity-75">
                       <div className="flex items-center gap-2 flex-wrap">
                         {message.metadata.revenue && message.metadata.revenue > 0 && (
-                          <span className="flex items-center gap-1">
+                          <span className="flex items-center gap-1 text-green-600">
                             <DollarSign className="h-3 w-3" />
-                            +${message.metadata.revenue.toLocaleString()}
+                            +${message.metadata.revenue.toLocaleString()} REAL
                           </span>
                         )}
-                        {message.metadata.action && (
+                        {message.metadata.taskType && (
                           <span className="flex items-center gap-1">
                             <Target className="h-3 w-3" />
-                            {message.metadata.action}
+                            {message.metadata.taskType}
                           </span>
                         )}
                         <span className="text-xs">
@@ -254,7 +272,7 @@ const ChatInterface = ({ className }: ChatInterfaceProps) => {
                 <div className="bg-muted text-foreground p-3 rounded-lg">
                   <div className="flex items-center gap-2">
                     <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>
-                    <span className="text-sm">Executing task...</span>
+                    <span className="text-sm">Executing real business task...</span>
                   </div>
                 </div>
               </div>
@@ -264,7 +282,7 @@ const ChatInterface = ({ className }: ChatInterfaceProps) => {
 
         {/* Suggested Actions */}
         <div className="space-y-2">
-          <div className="text-xs text-muted-foreground">Quick Actions:</div>
+          <div className="text-xs text-muted-foreground">Real Business Tasks:</div>
           <div className="flex flex-wrap gap-2">
             {suggestedActions.map((action, index) => (
               <Button
@@ -287,7 +305,7 @@ const ChatInterface = ({ className }: ChatInterfaceProps) => {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Type a business task or question... (e.g., 'Find medical tourism opportunities')"
+            placeholder="Ask me to execute a real business task... (e.g., 'Generate 50 leads for medical tourism')"
             disabled={isLoading}
             className="flex-1 text-sm"
           />

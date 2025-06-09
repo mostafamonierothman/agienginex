@@ -8,47 +8,51 @@ export class LLMExecutiveAgent {
     try {
       const input = context.input || {};
 
-      console.log('[LLMExecutiveAgent] Processing strategic decision with GPT-4o...');
+      console.log('[LLMExecutiveAgent] Processing strategic decision with GPT-4...');
 
-      // Use environment variables without dotenv (works in browser)
-      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+      // Get API key from localStorage or environment
+      const apiKey = localStorage.getItem('openai_api_key') || import.meta.env.VITE_OPENAI_API_KEY;
       
+      if (!apiKey) {
+        return {
+          success: false,
+          message: '❌ OpenAI API key not configured. Please set your API key in the chat settings.',
+          timestamp: new Date().toISOString()
+        };
+      }
+
       const openai = new OpenAI({
         apiKey: apiKey,
         dangerouslyAllowBrowser: true
       });
 
-      if (!apiKey) {
-        throw new Error('OpenAI API key not configured. Please set VITE_OPENAI_API_KEY environment variable.');
-      }
-
-      const prompt = `You are the ExecutiveAgent of AGIengineX, an advanced multi-agent system. Your job is to make strategic decisions and provide executive-level guidance.
+      const prompt = `You are the ExecutiveAgent of AGIengineX, an advanced multi-agent system. Your job is to provide strategic guidance for real business execution.
 
 Context: ${JSON.stringify(input)}
-System Status: Multi-agent AGI system with 22+ agents active
-Goal: Determine the next strategic action for optimal system performance
+User Request: ${input.message || 'Provide strategic guidance'}
 
-Provide a clear, actionable strategic decision:`;
+As an AI executive assistant, analyze this request and provide actionable strategic advice for real business execution. Focus on practical steps that can generate actual results and revenue.`;
 
       const response = await openai.chat.completions.create({
-        model: 'gpt-4o',
+        model: 'gpt-4o-mini',
         messages: [
-          { role: 'system', content: 'You are an expert AGI ExecutiveAgent providing strategic guidance.' },
+          { role: 'system', content: 'You are an expert AGI ExecutiveAgent providing strategic guidance for real business execution.' },
           { role: 'user', content: prompt }
         ],
-        max_tokens: 400
+        max_tokens: 500,
+        temperature: 0.7
       });
 
-      const decision = response.choices[0]?.message?.content || 'No decision returned.';
+      const decision = response.choices[0]?.message?.content || 'No response generated.';
 
       await saveChatMessage('LLMExecutiveAgent', decision);
 
       return {
         success: true,
-        message: `🎯 LLMExecutiveAgent Strategic Decision: ${decision}`,
+        message: decision,
         data: {
           decision,
-          model: 'gpt-4o',
+          model: 'gpt-4o-mini',
           input
         },
         timestamp: new Date().toISOString()
