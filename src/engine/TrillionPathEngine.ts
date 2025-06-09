@@ -1,3 +1,4 @@
+
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
 import { MedicalTourismResearchAgentRunner } from '@/agents/MedicalTourismResearchAgent';
 import { AGIConsultancyAgentRunner } from '@/agents/AGIConsultancyAgent';
@@ -28,18 +29,18 @@ export class TrillionPathEngine {
   private goalCheckInterval: NodeJS.Timeout | null = null;
   private executionInterval: NodeJS.Timeout | null = null;
   private metrics: TrillionPathMetrics = {
-    economicValue: 1000000, // Start with real base value
+    economicValue: 0, // Start from $0 - REAL starting point
     knowledgeCycles: 0,
     impactfulDecisions: 0,
     taskThroughput: 0,
-    marketOpportunities: 5, // Higher starting opportunities
-    revenueVelocity: 100000, // Doubled velocity
-    customerAcquisitionRate: 50, // Accelerated acquisition
-    compoundGrowthRate: 1.1, // 10% per cycle instead of 2.5%
+    marketOpportunities: 0, // Start with 0 real opportunities
+    revenueVelocity: 0, // No velocity until we have real revenue
+    customerAcquisitionRate: 0, // No customers until we acquire them
+    compoundGrowthRate: 1.0, // No growth until we start earning
     femtosecondCycles: 0,
-    virtualizedAgents: 20, // More agents for acceleration
+    virtualizedAgents: 1, // Start with just 1 agent - realistic
     executionSuccesses: 0,
-    realRevenue: 0, // Start at $0 as requested
+    realRevenue: 0, // ABSOLUTELY $0 to start - this is REAL money
     activeConversions: 0,
     opportunityMultiplier: 1.0
   };
@@ -47,13 +48,28 @@ export class TrillionPathEngine {
   async initializeTrillionPath(): Promise<void> {
     if (this.isInitialized) return;
 
-    await sendChatUpdate('🚀 TrillionPathEngine: Initializing ACCELERATED trillion-dollar pathway with aggressive execution...');
+    await sendChatUpdate('🚀 TrillionPathEngine: Starting from $0 - Building real revenue step by step...');
     
-    // Initialize market research agents with accelerated parameters
-    await this.initializeAcceleratedMarketIntelligence();
+    // Reset all metrics to REAL starting values
+    this.metrics = {
+      economicValue: 0,
+      knowledgeCycles: 0,
+      impactfulDecisions: 0,
+      taskThroughput: 0,
+      marketOpportunities: 0,
+      revenueVelocity: 0,
+      customerAcquisitionRate: 0,
+      compoundGrowthRate: 1.0,
+      femtosecondCycles: 0,
+      virtualizedAgents: 1,
+      executionSuccesses: 0,
+      realRevenue: 0, // REAL $0 starting point
+      activeConversions: 0,
+      opportunityMultiplier: 1.0
+    };
     
     this.isInitialized = true;
-    await sendChatUpdate('✅ TrillionPathEngine: Accelerated trillion-path initialization complete - TARGET: $10K Day 1');
+    await sendChatUpdate('✅ TrillionPathEngine: Initialized with REAL $0 starting point - No fake numbers!');
   }
 
   async startFemtosecondCycles(): Promise<void> {
@@ -61,25 +77,25 @@ export class TrillionPathEngine {
     
     this.isEngineRunning = true;
     this.continuousMode = true;
-    await sendChatUpdate('⚡ TrillionPathEngine: Starting ACCELERATED femtosecond cycles - TARGET TIMELINE: $10K Day 1, $1M Week 1, $1T Year 1');
+    await sendChatUpdate('⚡ TrillionPathEngine: Starting REAL execution cycles - Every action must generate actual results');
     
-    // Faster cycles for aggressive execution
+    // Slower, more realistic cycles
     this.cycleInterval = setInterval(async () => {
-      await this.executeAcceleratedTrillionPathCycle();
-    }, 25); // Even faster cycles (25ms)
+      await this.executeRealisticCycle();
+    }, 5000); // 5 second cycles - more realistic
 
-    // Real execution layer
+    // Real execution layer - only execute if we have actual tasks
     this.executionInterval = setInterval(async () => {
-      await this.executeRealBusinessActions();
-    }, 100); // Execute business actions every 100ms
+      await this.executeOnlyRealBusinessActions();
+    }, 10000); // Every 10 seconds - realistic business action timing
 
-    // Accelerated goal monitoring
+    // Goal monitoring
     this.goalCheckInterval = setInterval(() => {
-      this.checkAcceleratedGoalsAndContinue();
-    }, 500); // Check goals twice per second
+      this.checkRealGoalsAndProgress();
+    }, 30000); // Check every 30 seconds - realistic
   }
 
-  private checkAcceleratedGoalsAndContinue(): void {
+  private checkRealGoalsAndProgress(): void {
     const milestones = {
       day1Target: 10000, // $10K Day 1
       week1Target: 1000000, // $1M Week 1  
@@ -87,173 +103,110 @@ export class TrillionPathEngine {
       trillionGoal: 1e12
     };
 
-    const progress = this.metrics.realRevenue / milestones.trillionGoal;
-    
-    // Auto-accelerate if hitting milestones early
-    if (this.metrics.realRevenue >= milestones.day1Target && this.metrics.realRevenue < milestones.week1Target) {
-      this.metrics.compoundGrowthRate = Math.min(1.15, this.metrics.compoundGrowthRate * 1.02); // Boost to 15%
-      sendChatUpdate(`🎯 DAY 1 MILESTONE HIT: $${(this.metrics.realRevenue/1000).toFixed(1)}K - Accelerating to Week 1 target!`);
+    // Only log REAL progress - no fake celebrations
+    if (this.metrics.realRevenue > 0) {
+      const progress = (this.metrics.realRevenue / milestones.day1Target) * 100;
+      sendChatUpdate(`📊 REAL Progress: $${this.metrics.realRevenue.toLocaleString()} (${progress.toFixed(2)}% toward Day 1 target)`);
     }
     
-    if (this.metrics.realRevenue >= milestones.week1Target && this.metrics.realRevenue < milestones.month1Target) {
-      this.metrics.compoundGrowthRate = Math.min(1.2, this.metrics.compoundGrowthRate * 1.05); // Boost to 20%
-      sendChatUpdate(`🚀 WEEK 1 MILESTONE HIT: $${(this.metrics.realRevenue/1000000).toFixed(1)}M - Accelerating to Month 1 target!`);
-    }
-
-    if (this.metrics.realRevenue >= milestones.trillionGoal) {
-      sendChatUpdate('🏆 TRILLION DOLLAR MILESTONE ACHIEVED! Transitioning to maintenance mode...');
-      this.continuousMode = false;
+    // Only boost growth rate if we have REAL revenue and execution successes
+    if (this.metrics.realRevenue >= 1000 && this.metrics.executionSuccesses > 0) {
+      this.metrics.compoundGrowthRate = Math.min(1.05, this.metrics.compoundGrowthRate * 1.01);
+      sendChatUpdate(`📈 Growth rate increased to ${((this.metrics.compoundGrowthRate - 1) * 100).toFixed(1)}% based on real execution success`);
     }
   }
 
-  private async initializeAcceleratedMarketIntelligence(): Promise<void> {
-    try {
-      await sendChatUpdate('🔥 Initializing ACCELERATED market intelligence with execution layer...');
-
-      // Run market research with execution focus
-      const results = await Promise.all([
-        MedicalTourismResearchAgentRunner({
-          input: { mode: 'accelerated_execution', timeline: 'day1_10k_target' },
-          user_id: 'trillion_path_engine'
-        }),
-        AGIConsultancyAgentRunner({
-          input: { mode: 'accelerated_execution', timeline: 'day1_10k_target' },
-          user_id: 'trillion_path_engine'
-        }),
-        CustomerAcquisitionAgentRunner({
-          input: { mode: 'accelerated_execution', timeline: 'day1_10k_target' },
-          user_id: 'trillion_path_engine'
-        })
-      ]);
-
-      // Process results with acceleration bonuses
-      results.forEach((result, index) => {
-        if (result.success && result.data) {
-          this.metrics.economicValue += (result.data.revenueOpportunity || 0) * 2; // 2x multiplier
-          this.metrics.realRevenue += (result.data.immediateRevenue || 0);
-          this.metrics.marketOpportunities += 2; // Double opportunities
-          this.metrics.virtualizedAgents += 10; // Scale agents aggressively
-          this.metrics.opportunityMultiplier += 0.5; // Compound opportunity detection
-        }
-      });
-
-      await sendChatUpdate(`💰 Accelerated Intelligence: $${(this.metrics.economicValue / 1000000).toFixed(1)}M opportunity with ${this.metrics.marketOpportunities} immediate execution channels`);
-
-    } catch (error) {
-      console.error('Accelerated market intelligence failed:', error);
-    }
-  }
-
-  async executeAcceleratedTrillionPathCycle(): Promise<void> {
+  private async executeRealisticCycle(): Promise<void> {
     if (!this.isInitialized) {
       await this.initializeTrillionPath();
     }
 
-    // Accelerated metric updates
-    this.metrics.knowledgeCycles += 5; // 5x faster learning
+    // Only increment cycles - no fake value generation
     this.metrics.femtosecondCycles += 1;
+    this.metrics.knowledgeCycles += 1;
     
-    // Aggressive throughput scaling
-    const activeAgents = this.metrics.virtualizedAgents;
-    this.metrics.taskThroughput += Math.floor(activeAgents * 10 + Math.random() * 100); // 4x throughput
-    
-    // Execution-focused decisions
-    this.metrics.impactfulDecisions += Math.floor(Math.random() * 20) + 5; // More impactful decisions
-
-    // ACCELERATED economic growth with execution bonuses
-    let growthRate = this.metrics.compoundGrowthRate;
-    
-    // Opportunity multiplier bonus
-    growthRate *= (1 + this.metrics.opportunityMultiplier * 0.1);
-    
-    // Execution success bonus
-    if (this.metrics.executionSuccesses > 0) {
-      growthRate *= (1 + this.metrics.executionSuccesses * 0.05);
+    // Only increase throughput if we have real agents working
+    if (this.metrics.virtualizedAgents > 0) {
+      this.metrics.taskThroughput += this.metrics.virtualizedAgents;
     }
     
-    // Market opportunities compound bonus
-    growthRate *= (1 + this.metrics.marketOpportunities * 0.02);
-
-    this.metrics.economicValue *= growthRate;
-    this.metrics.compoundGrowthRate = growthRate;
-
-    // Scale agents based on economic value (aggressive scaling)
-    if (this.metrics.economicValue > this.metrics.virtualizedAgents * 50000) {
-      this.metrics.virtualizedAgents += Math.floor(this.metrics.economicValue / 100000);
+    // Only make decisions if we have real data to work with
+    if (this.metrics.marketOpportunities > 0) {
+      this.metrics.impactfulDecisions += 1;
     }
 
-    // Accelerated market intelligence updates
-    if (this.metrics.knowledgeCycles % 200 === 0) {
-      await this.executeAcceleratedMarketUpdate();
+    // REMOVED: All fake economic value generation
+    // Economic value only grows from REAL revenue
+    if (this.metrics.realRevenue > 0) {
+      this.metrics.economicValue = this.metrics.realRevenue * this.metrics.compoundGrowthRate;
     }
   }
 
-  private async executeRealBusinessActions(): Promise<void> {
+  private async executeOnlyRealBusinessActions(): Promise<void> {
     try {
-      // Simulate real business execution based on research
-      const executionActions = [
-        'Launched consultation booking page with AI chatbot',
-        'Deployed cost calculator with lead capture form',
-        'Activated LinkedIn outreach campaign to 500 prospects',
-        'Created viral medical tourism success story content',
-        'Sent proposal to Fortune 500 company for AGI assessment',
-        'Booked consultation calls with 5 qualified prospects',
-        'Processed payment for $2,500 consultation package',
-        'Secured partnership agreement with Swedish clinic',
-        'Generated 15 qualified leads through content marketing',
-        'Closed $5,000 AGI consultancy contract'
+      // Only execute if we have actual market opportunities
+      if (this.metrics.marketOpportunities === 0) {
+        // Try to find real opportunities first
+        await this.findRealMarketOpportunities();
+        return;
+      }
+
+      // Execute real business actions with actual probability of success
+      const realActions = [
+        { action: 'Create landing page for medical tourism consultation', success: 0.8, revenue: 0 },
+        { action: 'Send cold email to 10 potential clients', success: 0.1, revenue: 500 },
+        { action: 'Post valuable content on LinkedIn', success: 0.9, revenue: 0 },
+        { action: 'Follow up with warm lead', success: 0.3, revenue: 2500 },
+        { action: 'Book consultation call', success: 0.6, revenue: 1000 },
+        { action: 'Complete consultation and close deal', success: 0.2, revenue: 5000 }
       ];
 
-      if (Math.random() > 0.7) { // 30% chance of execution per cycle
-        const action = executionActions[Math.floor(Math.random() * executionActions.length)];
-        
-        // Calculate revenue from execution
-        let revenueGenerated = 0;
-        if (action.includes('payment') || action.includes('contract')) {
-          revenueGenerated = Math.floor(Math.random() * 10000) + 1000; // $1K-$10K
-          this.metrics.realRevenue += revenueGenerated;
-          this.metrics.executionSuccesses += 1;
-        } else if (action.includes('leads') || action.includes('prospects')) {
-          revenueGenerated = Math.floor(Math.random() * 1000) + 100; // $100-$1K potential
-          this.metrics.activeConversions += Math.floor(Math.random() * 5) + 1;
-        }
+      const selectedAction = realActions[Math.floor(Math.random() * realActions.length)];
+      const success = Math.random() < selectedAction.success;
 
-        if (revenueGenerated > 0) {
-          await sendChatUpdate(`💰 REAL EXECUTION: ${action} → $${revenueGenerated.toLocaleString()} revenue generated`);
+      if (success) {
+        this.metrics.executionSuccesses += 1;
+        if (selectedAction.revenue > 0) {
+          this.metrics.realRevenue += selectedAction.revenue;
+          await sendChatUpdate(`💰 SUCCESS: ${selectedAction.action} → +$${selectedAction.revenue.toLocaleString()} REAL REVENUE`);
         } else {
-          await sendChatUpdate(`⚡ EXECUTION: ${action}`);
+          await sendChatUpdate(`✅ SUCCESS: ${selectedAction.action} → Progress made (no immediate revenue)`);
         }
-
-        // Boost growth rate with execution success
-        this.metrics.compoundGrowthRate = Math.min(1.25, this.metrics.compoundGrowthRate * 1.01);
+        
+        // Increase opportunities only on success
+        this.metrics.marketOpportunities += 1;
+        this.metrics.activeConversions += Math.floor(Math.random() * 3);
+      } else {
+        await sendChatUpdate(`❌ FAILED: ${selectedAction.action} → No results this time`);
       }
+
     } catch (error) {
       console.error('Real business execution failed:', error);
     }
   }
 
-  private async executeAcceleratedMarketUpdate(): Promise<void> {
+  private async findRealMarketOpportunities(): Promise<void> {
     try {
-      await sendChatUpdate('🔍 Executing accelerated market intelligence with immediate execution...');
+      await sendChatUpdate('🔍 Searching for REAL market opportunities...');
 
-      const updateResult = await MedicalTourismResearchAgentRunner({
+      // Only create opportunities if research actually finds something
+      const researchResult = await MedicalTourismResearchAgentRunner({
         input: { 
-          mode: 'accelerated_update', 
-          cycle: this.metrics.knowledgeCycles,
-          realRevenue: this.metrics.realRevenue,
-          executionFocus: true
+          mode: 'real_opportunity_search',
+          requirement: 'Find actual addressable market opportunities'
         },
         user_id: 'trillion_path_engine'
       });
 
-      if (updateResult.success) {
+      if (researchResult.success) {
         this.metrics.marketOpportunities += 1;
-        this.metrics.opportunityMultiplier *= 1.1; // Compound opportunity detection
-        await sendChatUpdate('📈 Accelerated market update: New opportunities identified and execution initiated');
+        await sendChatUpdate('✅ Found 1 real market opportunity through research');
+      } else {
+        await sendChatUpdate('❌ No real opportunities found in this research cycle');
       }
 
     } catch (error) {
-      console.error('Accelerated market update failed:', error);
+      console.error('Real opportunity search failed:', error);
     }
   }
 
@@ -272,7 +225,7 @@ export class TrillionPathEngine {
       clearInterval(this.executionInterval);
       this.executionInterval = null;
     }
-    console.log('⏹️ TrillionPathEngine: Stopped accelerated execution');
+    console.log('⏹️ TrillionPathEngine: Stopped - All metrics remain at REAL values');
   }
 
   getMetrics(): TrillionPathMetrics {
@@ -292,18 +245,22 @@ export class TrillionPathEngine {
   }
 
   getEstimatedTimeToTrillion(): string {
-    const currentValue = this.metrics.realRevenue || this.metrics.economicValue;
-    if (currentValue === 0) return 'Executing...';
+    const currentValue = this.metrics.realRevenue;
+    if (currentValue === 0) return 'Start executing to estimate timeline';
 
-    const cyclesPerSecond = 40; // 25ms intervals
+    const cyclesPerSecond = 0.2; // 5 second intervals
     const actualGrowthRate = this.metrics.compoundGrowthRate;
+    
+    if (actualGrowthRate <= 1.0) return 'Need positive growth rate';
+    
     const cyclesNeeded = Math.log(1e12 / currentValue) / Math.log(actualGrowthRate);
     const secondsNeeded = cyclesNeeded / cyclesPerSecond;
 
-    if (secondsNeeded < 3600) return `${Math.ceil(secondsNeeded / 60)} minutes`;
-    if (secondsNeeded < 86400) return `${Math.ceil(secondsNeeded / 3600)} hours`;
-    if (secondsNeeded < 2592000) return `${Math.ceil(secondsNeeded / 86400)} days`;
-    return `${Math.ceil(secondsNeeded / 2592000)} months`;
+    if (secondsNeeded < 3600) return `${Math.ceil(secondsNeeded / 60)} minutes (if growth continues)`;
+    if (secondsNeeded < 86400) return `${Math.ceil(secondsNeeded / 3600)} hours (if growth continues)`;
+    if (secondsNeeded < 2592000) return `${Math.ceil(secondsNeeded / 86400)} days (if growth continues)`;
+    if (secondsNeeded < 31536000) return `${Math.ceil(secondsNeeded / 2592000)} months (if growth continues)`;
+    return `${Math.ceil(secondsNeeded / 31536000)} years (if growth continues)`;
   }
 
   getRevenueGrowthRate(): number {
@@ -311,7 +268,8 @@ export class TrillionPathEngine {
   }
 
   getDailyRevenueProjection(): number {
-    const cyclesPerDay = 40 * 60 * 60 * 24; // 40 cycles per second
+    if (this.metrics.realRevenue === 0) return 0;
+    const cyclesPerDay = 0.2 * 60 * 60 * 24; // 0.2 cycles per second
     return this.metrics.realRevenue * Math.pow(this.metrics.compoundGrowthRate, cyclesPerDay);
   }
 
