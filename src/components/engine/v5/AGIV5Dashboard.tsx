@@ -1,88 +1,81 @@
 
 import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Brain, 
-  MessageSquare, 
-  BarChart3,
-  Target,
-  Zap,
-  Search
-} from 'lucide-react';
+import { Brain, MessageCircle, Database, Users, BarChart3, Settings, Logs, Target, Eye, Tooth } from 'lucide-react';
 
-import DashboardPage from './pages/DashboardPage';
+// Import pages
 import ChatPage from './pages/ChatPage';
-import MarketResearchPage from './pages/MarketResearchPage';
-import TrillionPathPage from './pages/TrillionPathPage';
+import DashboardPage from './pages/DashboardPage';
+import AgentsPage from './pages/AgentsPage';
+import MemoryPage from './pages/MemoryPage';
+import LogsPage from './pages/LogsPage';
+import SettingsPage from './pages/SettingsPage';
+import MedicalTourismAgentsPage from './pages/MedicalTourismAgentsPage';
 
 const AGIV5Dashboard = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('chat');
+
+  const tabs = [
+    { id: 'chat', label: 'Chat', icon: MessageCircle, component: ChatPage },
+    { id: 'medical-agents', label: 'Medical Tourism', icon: Eye, component: MedicalTourismAgentsPage },
+    { id: 'dashboard', label: 'Dashboard', icon: BarChart3, component: DashboardPage },
+    { id: 'agents', label: 'Agents', icon: Users, component: AgentsPage },
+    { id: 'memory', label: 'Memory', icon: Database, component: MemoryPage },
+    { id: 'logs', label: 'Logs', icon: Logs, component: LogsPage },
+    { id: 'settings', label: 'Settings', icon: Settings, component: SettingsPage },
+  ];
+
+  const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component || ChatPage;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      <div className="container mx-auto p-6 space-y-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl flex items-center justify-center">
-              <Brain className="w-7 h-7 text-white" />
+      <div className="container mx-auto p-4 md:p-6 max-w-7xl">
+        <Card className="bg-slate-800/50 border-slate-600/30 backdrop-blur-sm">
+          <CardHeader className="border-b border-slate-600/30 pb-4">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg">
+                  <Brain className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-white text-xl md:text-2xl">AGI V7 Executive Assistant</CardTitle>
+                  <p className="text-gray-300 text-sm">Advanced autonomous intelligence with real business execution</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span className="text-green-400 text-sm font-medium">ONLINE</span>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-white">AGI Operating System</h1>
-              <p className="text-gray-400">Advanced General Intelligence Platform</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <Badge variant="outline" className="text-green-400 border-green-400 bg-green-400/10">
-              <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse" />
-              22 Agents Active
-            </Badge>
-            <Badge variant="outline" className="text-blue-400 border-blue-400 bg-blue-400/10">
-              <Zap className="w-3 h-3 mr-1" />
-              V7.5 Enhanced
-            </Badge>
-          </div>
-        </div>
+          </CardHeader>
 
-        {/* Navigation Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-slate-800/50 p-1">
-            <TabsTrigger value="dashboard" className="flex items-center gap-2 text-sm">
-              <BarChart3 className="w-4 h-4" />
-              <span className="hidden sm:inline">Dashboard</span>
-            </TabsTrigger>
-            <TabsTrigger value="trillion-path" className="flex items-center gap-2 text-sm">
-              <Target className="w-4 h-4" />
-              <span className="hidden sm:inline">Trillion Path</span>
-            </TabsTrigger>
-            <TabsTrigger value="market-research" className="flex items-center gap-2 text-sm">
-              <Search className="w-4 h-4" />
-              <span className="hidden sm:inline">Market Research</span>
-            </TabsTrigger>
-            <TabsTrigger value="chat" className="flex items-center gap-2 text-sm">
-              <MessageSquare className="w-4 h-4" />
-              <span className="hidden sm:inline">Chat</span>
-            </TabsTrigger>
-          </TabsList>
+          <CardContent className="p-0">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="w-full bg-slate-700/50 border-b border-slate-600/30 rounded-none justify-start overflow-x-auto">
+                {tabs.map((tab) => (
+                  <TabsTrigger
+                    key={tab.id}
+                    value={tab.id}
+                    className="flex items-center gap-2 text-gray-300 data-[state=active]:text-white data-[state=active]:bg-slate-600/50 whitespace-nowrap"
+                  >
+                    <tab.icon className="h-4 w-4" />
+                    <span className="hidden sm:inline">{tab.label}</span>
+                  </TabsTrigger>
+                ))}
+              </TabsList>
 
-          <TabsContent value="dashboard" className="mt-6">
-            <DashboardPage />
-          </TabsContent>
-
-          <TabsContent value="trillion-path" className="mt-6">
-            <TrillionPathPage />
-          </TabsContent>
-
-          <TabsContent value="market-research" className="mt-6">
-            <MarketResearchPage />
-          </TabsContent>
-
-          <TabsContent value="chat" className="mt-6">
-            <ChatPage />
-          </TabsContent>
-        </Tabs>
+              {tabs.map((tab) => (
+                <TabsContent key={tab.id} value={tab.id} className="mt-0">
+                  <div className="p-4 md:p-6">
+                    <tab.component />
+                  </div>
+                </TabsContent>
+              ))}
+            </Tabs>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

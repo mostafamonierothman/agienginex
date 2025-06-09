@@ -54,6 +54,7 @@ export class MedicalTourismLeadFactory {
       await sendChatUpdate('👻 All agents have completed their missions and disappeared');
       await sendChatUpdate('🧠 Agent knowledge has been preserved for future missions');
       await sendChatUpdate('📈 Ready for email outreach to generated leads');
+      await sendChatUpdate('🎯 Visit the Medical Tourism page to monitor ongoing agent activities');
 
       // Log completion to supervisor queue
       await this.logToSupervisorQueue('emergency_deployment', 'Emergency lead generation deployment completed', 'completed', 500000, 1000000);

@@ -34,6 +34,7 @@ const DashboardPage = () => {
   const [isDeepLoopRunning, setIsDeepLoopRunning] = useState(false);
   const [logs, setLogs] = useState([]);
   const [agents, setAgents] = useState([]);
+  const [hasAutoStarted, setHasAutoStarted] = useState(false);
   
   const {
     agents: persistedAgents,
@@ -77,11 +78,12 @@ const DashboardPage = () => {
       activeAgents: agentData.length
     }));
 
-    // Auto-start deep loop if it was previously running
-    if (shouldAutoStartDeepLoop() && agentData.length > 0) {
-      console.log('Auto-starting Deep Autonomous Loop...');
+    // Auto-start deep loop if it was previously running (but only once and silently)
+    if (shouldAutoStartDeepLoop() && agentData.length > 0 && !hasAutoStarted) {
+      console.log('Auto-starting Deep Autonomous Loop silently...');
       setIsDeepLoopRunning(true);
       setSystemStatus('DEEP_AUTONOMOUS');
+      setHasAutoStarted(true);
       startDeepAutonomousLoop(
         agentData,
         setAgents,
@@ -95,17 +97,14 @@ const DashboardPage = () => {
           adaptiveSpeed: true
         }
       );
-      toast({
-        title: "🚀 Auto-Resumed Deep Loop",
-        description: "Enhanced autonomous system automatically resumed",
-      });
+      // No toast notification for auto-resume
     }
 
     // Load persisted KPIs if available
     if (persistedKpis && Object.keys(persistedKpis).length > 0) {
       setKpis(prev => ({ ...prev, ...persistedKpis }));
     }
-  }, [persistedKpis]);
+  }, [persistedKpis, hasAutoStarted]);
 
   useEffect(() => {
     const interval = setInterval(() => {

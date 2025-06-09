@@ -5,7 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { FileText, DollarSign, Target, Clock, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
-import { realBusinessExecutor } from '@/agents/RealBusinessExecutor';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ExecutionEntry {
   type: string;
@@ -19,17 +19,42 @@ interface ExecutionEntry {
 
 const ExecutionLog = () => {
   const [executions, setExecutions] = useState<ExecutionEntry[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
   const loadExecutionHistory = async () => {
     try {
       setIsLoading(true);
-      const history = await realBusinessExecutor.getExecutionHistory();
-      setExecutions(history);
+      
+      // Load from supervisor_queue table instead of non-existent execution_history
+      const { data, error } = await supabase
+        .from('supervisor_queue')
+        .select('*')
+        .order('timestamp', { ascending: false })
+        .limit(20);
+
+      if (error) {
+        console.error('Failed to load execution history:', error);
+        setExecutions([]);
+        return;
+      }
+
+      // Transform supervisor_queue data to execution format
+      const transformedData = data?.map(item => ({
+        type: item.action || 'unknown',
+        description: item.output || item.action || 'No description',
+        status: item.status || 'completed',
+        revenue_potential: 0,
+        actual_revenue: 0,
+        timestamp: item.timestamp || new Date().toISOString(),
+        result: item.input ? JSON.parse(item.input || '{}') : null
+      })) || [];
+
+      setExecutions(transformedData);
       setLastRefresh(new Date());
     } catch (error) {
       console.error('Failed to load execution history:', error);
+      setExecutions([]);
     } finally {
       setIsLoading(false);
     }
@@ -38,8 +63,8 @@ const ExecutionLog = () => {
   useEffect(() => {
     loadExecutionHistory();
     
-    // Refresh every 5 seconds to show new executions
-    const interval = setInterval(loadExecutionHistory, 5000);
+    // Refresh every 10 seconds instead of 5 to reduce loading
+    const interval = setInterval(loadExecutionHistory, 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -99,7 +124,7 @@ const ExecutionLog = () => {
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-96">
-          {isLoading ? (
+          {isLoading && executions.length === 0 ? (
             <div className="text-center text-muted-foreground py-8">
               <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
               Loading execution history...
