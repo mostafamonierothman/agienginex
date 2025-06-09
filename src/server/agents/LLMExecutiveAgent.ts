@@ -3,12 +3,17 @@ import OpenAI from 'openai';
 import { AgentContext, AgentResponse } from '../../types/AgentTypes';
 import { saveChatMessage } from '../../utils/saveChatMessage';
 
+// Load environment variables
+import dotenv from 'dotenv';
+dotenv.config();
+
 export class LLMExecutiveAgent {
   async runner(context: AgentContext): Promise<AgentResponse> {
     try {
       const input = context.input || {};
 
       console.log('[LLMExecutiveAgent] Processing strategic decision with GPT-4o...');
+      console.log('[LLMExecutiveAgent] API Key available:', !!process.env.OPENAI_API_KEY);
 
       const openai = new OpenAI({
         apiKey: process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY

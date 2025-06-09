@@ -13,7 +13,7 @@ export const clientAgentRegistry = {
   // Run server-side agents through the service
   async runAgent(agentName: string, context: AgentContext): Promise<AgentResponse> {
     // Check if it's a server-side agent
-    const serverAgents = ['chat_processor_agent', 'llm_executive_agent'];
+    const serverAgents = ['chat_processor_agent', 'llm_executive_agent', 'memory_agent'];
     
     if (serverAgents.includes(agentName)) {
       return await serverAgentService.runAgent(agentName, context);

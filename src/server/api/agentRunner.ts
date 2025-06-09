@@ -2,11 +2,13 @@
 import { AgentContext, AgentResponse } from '../../types/AgentTypes';
 import { ChatProcessorAgentRunner } from '../agents/ChatProcessorAgent';
 import { LLMExecutiveAgentRunner } from '../agents/LLMExecutiveAgent';
+import { MemoryAgentRunner } from '../agents/MemoryAgent';
 
 // Registry of server-side agents
 const serverAgentRegistry = {
   chat_processor_agent: ChatProcessorAgentRunner,
   llm_executive_agent: LLMExecutiveAgentRunner,
+  memory_agent: MemoryAgentRunner,
 };
 
 export async function runServerAgent(agentName: string, context: AgentContext): Promise<AgentResponse> {
