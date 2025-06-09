@@ -48,9 +48,9 @@ const DashboardPage = () => {
 
   const [kpis, setKpis] = useState<KPIState>({
     cycles: 0,
-    activeAgents: 19, // Updated for V7 agents
-    projectsCompleted: 3,
-    totalOperations: 1247,
+    activeAgents: 0,
+    projectsCompleted: 0,
+    totalOperations: 0,
     loopSpeed: 3000,
     handoffs: 0,
     collaborations: 0,
@@ -71,6 +71,12 @@ const DashboardPage = () => {
       runner: agent.runner
     }));
     setAgents(agentData);
+
+    // Update initial KPIs with real data
+    setKpis(prev => ({
+      ...prev,
+      activeAgents: agentData.length
+    }));
 
     // Auto-start deep loop if it was previously running
     if (shouldAutoStartDeepLoop() && agentData.length > 0) {
@@ -115,7 +121,8 @@ const DashboardPage = () => {
           handoffs: deepMetrics.handoffs,
           collaborations: deepMetrics.collaborations,
           optimizations: deepMetrics.optimizations,
-          errors: deepMetrics.errors
+          errors: deepMetrics.errors,
+          totalOperations: prev.totalOperations + (deepMetrics.cycles > prev.cycles ? 1 : 0)
         };
         
         // Persist KPIs
@@ -232,7 +239,7 @@ const DashboardPage = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-white">AGI V7 Memory-Aware Dashboard</h1>
-          <p className="text-gray-300 text-sm">Self-improving autonomous system with {agents.length} agents + memory awareness</p>
+          <p className="text-gray-300 text-sm">Self-improving autonomous system with {kpis.activeAgents} agents + memory awareness</p>
         </div>
         <Badge variant="outline" className={`self-start sm:self-auto ${
           systemStatus === 'DEEP_AUTONOMOUS' 
@@ -257,7 +264,7 @@ const DashboardPage = () => {
           color="blue"
         />
         <KPIWidget 
-          label="V7 Agents" 
+          label="Active Agents" 
           value={kpis.activeAgents} 
           icon={<Zap className="h-4 w-4 md:h-5 md:w-5" />}
           color="purple"
@@ -269,6 +276,69 @@ const DashboardPage = () => {
           color="cyan"
         />
       </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card className="bg-slate-800/50 border-slate-600/30">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-white text-lg flex items-center gap-2">
+              <Database className="h-5 w-5 text-blue-400" />
+              Enhanced Metrics
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <div className="text-gray-300">Collaborations</div>
+                <div className="text-cyan-400 font-bold">{kpis.collaborations}</div>
+              </div>
+              <div>
+                <div className="text-gray-300">Optimizations</div>
+                <div className="text-green-400 font-bold">{kpis.optimizations}</div>
+              </div>
+              <div>
+                <div className="text-gray-300">Loop Speed</div>
+                <div className="text-blue-400 font-bold">{kpis.loopSpeed}ms</div>
+              </div>
+              <div>
+                <div className="text-gray-300">System Errors</div>
+                <div className="text-red-400 font-bold">{kpis.errors}</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <PersistenceStatus
+          isLoading={persistenceLoading}
+          error={null}
+          lastSaved={systemState?.lastUpdate}
+          backend="supabase"
+        />
+      </div>
+
+      <Card className="bg-slate-800/50 border-slate-600/30">
+        <CardHeader className="pb-3 md:pb-6">
+          <CardTitle className="text-white text-lg md:text-xl">Deep Loop Activity</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2 md:space-y-3 max-h-64 overflow-y-auto">
+            {isDeepLoopRunning && (
+              <div className="text-sm md:text-base text-yellow-400 animate-pulse">
+                🤖 Deep Loop Active: Cycle #{kpis.cycles} • {kpis.handoffs} handoffs • {kpis.collaborations} collaborations
+              </div>
+            )}
+            {logs.slice(-5).map((log, index) => (
+              <div key={index} className="text-sm md:text-base text-orange-400">
+                🔄 {log.agent}: {log.action} → {log.result}
+              </div>
+            ))}
+            {logs.length === 0 && (
+              <div className="text-gray-400 text-center py-4">
+                No activity yet. Start the Deep Loop to see real-time agent interactions.
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card className="bg-slate-800/50 border-slate-600/30">
@@ -306,74 +376,11 @@ const DashboardPage = () => {
           </CardContent>
         </Card>
 
-        <PersistenceStatus
-          isLoading={persistenceLoading}
-          error={null}
-          lastSaved={systemState?.lastUpdate}
-          backend="supabase"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="bg-slate-800/50 border-slate-600/30">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-white text-lg flex items-center gap-2">
-              <Database className="h-5 w-5 text-blue-400" />
-              Enhanced Metrics
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <div className="text-gray-300">Collaborations</div>
-                <div className="text-cyan-400 font-bold">{kpis.collaborations}</div>
-              </div>
-              <div>
-                <div className="text-gray-300">Optimizations</div>
-                <div className="text-green-400 font-bold">{kpis.optimizations}</div>
-              </div>
-              <div>
-                <div className="text-gray-300">Loop Speed</div>
-                <div className="text-blue-400 font-bold">{kpis.loopSpeed}ms</div>
-              </div>
-              <div>
-                <div className="text-gray-300">System Errors</div>
-                <div className="text-red-400 font-bold">{kpis.errors}</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         <SystemRecovery
           onExport={exportSystemData}
           onRestore={importSystemData}
         />
       </div>
-
-      <Card className="bg-slate-800/50 border-slate-600/30">
-        <CardHeader className="pb-3 md:pb-6">
-          <CardTitle className="text-white text-lg md:text-xl">Deep Loop Activity</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2 md:space-y-3 max-h-64 overflow-y-auto">
-            {isDeepLoopRunning && (
-              <div className="text-sm md:text-base text-yellow-400 animate-pulse">
-                🤖 Deep Loop Active: Cycle #{kpis.cycles} • {kpis.handoffs} handoffs • {kpis.collaborations} collaborations
-              </div>
-            )}
-            {logs.slice(-5).map((log, index) => (
-              <div key={index} className="text-sm md:text-base text-orange-400">
-                🔄 {log.agent}: {log.action} → {log.result}
-              </div>
-            ))}
-            {logs.length === 0 && (
-              <div className="text-gray-400 text-center py-4">
-                No activity yet. Start the Deep Loop to see real-time agent interactions.
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
