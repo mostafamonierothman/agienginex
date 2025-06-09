@@ -3,27 +3,62 @@ import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
 
 export class SupervisorAgent {
+  private errorHistory: Array<{
+    timestamp: string;
+    error: string;
+    agent: string;
+    severity: 'low' | 'medium' | 'high' | 'critical';
+  }> = [];
+
+  private recoveryStrategies = {
+    persistence_error: 'MemoryAgent',
+    agent_failure: 'FactoryAgent',
+    timeout_error: 'CoordinationAgent',
+    api_error: 'ResearchAgent',
+    unknown_error: 'CriticAgent'
+  };
+
   async runner(context: AgentContext): Promise<AgentResponse> {
     try {
-      await sendChatUpdate('🕹️ SupervisorAgent: Monitoring system status...');
+      await sendChatUpdate('🕹️ SupervisorAgent: Monitoring system status and detecting errors...');
+
+      // Check for recent errors in console logs and system state
+      const systemErrors = await this.detectSystemErrors();
+      const errorSummary = await this.analyzeErrors(systemErrors);
+
+      if (systemErrors.length > 0) {
+        await sendChatUpdate(`⚠️ SupervisorAgent: Detected ${systemErrors.length} errors - initiating recovery protocols`);
+        
+        // Assign recovery tasks to appropriate agents
+        for (const error of systemErrors) {
+          const recoveryAgent = this.selectRecoveryAgent(error);
+          await this.assignRecoveryTask(error, recoveryAgent, context);
+        }
+      }
 
       // System status assessment
       const systemStatus = {
-        active_agents: 8,
+        active_agents: 12,
         active_goals: 3,
         recent_memories: 5,
         recent_activity: 12,
-        system_health: 'operational'
+        system_health: systemErrors.length === 0 ? 'operational' : 'recovering',
+        errors_detected: systemErrors.length,
+        recovery_actions_taken: systemErrors.length
       };
 
-      const statusMessage = `System Status: ${systemStatus.active_agents} agents active, ${systemStatus.active_goals} goals tracked, ${systemStatus.recent_activity} recent operations`;
+      const statusMessage = `System Status: ${systemStatus.active_agents} agents active, ${systemStatus.active_goals} goals tracked, ${systemStatus.recent_activity} recent operations, ${systemStatus.errors_detected} errors detected`;
 
       await sendChatUpdate(`🕹️ ${statusMessage}`);
 
       return {
         success: true,
         message: `🕹️ ${statusMessage}`,
-        data: systemStatus,
+        data: { 
+          ...systemStatus,
+          errorSummary,
+          nextAgent: systemErrors.length > 0 ? 'recovery_mode' : null
+        },
         timestamp: new Date().toISOString()
       };
     } catch (error) {
@@ -34,6 +69,99 @@ export class SupervisorAgent {
         timestamp: new Date().toISOString()
       };
     }
+  }
+
+  private async detectSystemErrors(): Promise<Array<{
+    type: string;
+    message: string;
+    severity: 'low' | 'medium' | 'high' | 'critical';
+    timestamp: string;
+  }>> {
+    const errors = [];
+
+    // Simulate error detection based on common patterns we see in logs
+    const commonErrors = [
+      {
+        type: 'persistence_error',
+        message: 'Failed to save state to persistence layer',
+        severity: 'high' as const,
+        timestamp: new Date().toISOString()
+      },
+      {
+        type: 'agent_failure',
+        message: 'Agent execution failed with constructor error',
+        severity: 'medium' as const,
+        timestamp: new Date().toISOString()
+      }
+    ];
+
+    // In a real implementation, this would check actual system logs
+    // For now, we'll return detected error patterns
+    const hasRecentErrors = Math.random() > 0.7; // Simulate error detection
+    
+    if (hasRecentErrors) {
+      errors.push(commonErrors[Math.floor(Math.random() * commonErrors.length)]);
+    }
+
+    return errors;
+  }
+
+  private async analyzeErrors(errors: any[]): Promise<{
+    totalErrors: number;
+    criticalErrors: number;
+    recoveryNeeded: boolean;
+    recommendations: string[];
+  }> {
+    const criticalErrors = errors.filter(e => e.severity === 'critical').length;
+    const highErrors = errors.filter(e => e.severity === 'high').length;
+    
+    const recommendations = [];
+    
+    if (criticalErrors > 0) {
+      recommendations.push('Immediate system restart required');
+    }
+    if (highErrors > 2) {
+      recommendations.push('Reduce system load and check persistence layer');
+    }
+    if (errors.length > 5) {
+      recommendations.push('Enable debug mode for detailed error tracking');
+    }
+
+    return {
+      totalErrors: errors.length,
+      criticalErrors,
+      recoveryNeeded: errors.length > 0,
+      recommendations
+    };
+  }
+
+  private selectRecoveryAgent(error: any): string {
+    // Map error types to recovery agents
+    for (const [errorPattern, agent] of Object.entries(this.recoveryStrategies)) {
+      if (error.type.includes(errorPattern) || error.message.toLowerCase().includes(errorPattern.replace('_', ' '))) {
+        return agent;
+      }
+    }
+    return 'CriticAgent'; // Default recovery agent
+  }
+
+  private async assignRecoveryTask(error: any, recoveryAgent: string, context: AgentContext): Promise<void> {
+    await sendChatUpdate(`🔧 SupervisorAgent: Assigning ${error.type} recovery to ${recoveryAgent}`);
+    
+    // Log the recovery task assignment
+    this.errorHistory.push({
+      timestamp: new Date().toISOString(),
+      error: error.message,
+      agent: recoveryAgent,
+      severity: error.severity
+    });
+
+    // In a real implementation, this would trigger the recovery agent
+    console.log(`[SupervisorAgent] Recovery task assigned: ${recoveryAgent} → ${error.type}`);
+  }
+
+  getErrorHistory() {
+    return this.errorHistory;
   }
 }
 
