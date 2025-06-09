@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ChatInterface from '../components/ChatInterface';
-import { MessageSquare, Bot, User } from 'lucide-react';
+import { MessageSquare, Bot } from 'lucide-react';
 
 interface ChatMessage {
   sender: string;
@@ -79,38 +79,6 @@ const ChatPage = () => {
           </Card>
         </div>
       </div>
-
-      <Card className="bg-slate-800/50 border-slate-600/30">
-        <CardHeader>
-          <CardTitle className="text-white">Chat History</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-64 overflow-y-auto space-y-3">
-            {chatHistory.map((msg, index) => (
-              <div key={index} className={`flex gap-3 ${msg.isUser ? 'justify-end' : 'justify-start'}`}>
-                <div className={`flex items-start gap-2 max-w-[80%] ${msg.isUser ? 'flex-row-reverse' : 'flex-row'}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    msg.isUser ? 'bg-blue-600' : 'bg-purple-600'
-                  }`}>
-                    {msg.isUser ? <User className="w-4 h-4 text-white" /> : <Bot className="w-4 h-4 text-white" />}
-                  </div>
-                  <div className={`rounded-lg p-3 ${
-                    msg.isUser 
-                      ? 'bg-blue-600 text-white' 
-                      : 'bg-slate-700 text-white'
-                  }`}>
-                    <div className="text-sm font-semibold mb-1">{msg.sender}</div>
-                    <div className="text-sm">{msg.text}</div>
-                    <div className="text-xs opacity-70 mt-1">
-                      {new Date(msg.timestamp).toLocaleTimeString()}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
