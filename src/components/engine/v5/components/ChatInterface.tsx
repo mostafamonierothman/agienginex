@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Send, Mic } from 'lucide-react';
-import { sendChatToAgent } from '@/services/ChatService';
+import { sendChatToAgent } from '@/services/EnhancedChatService';
 
 interface ChatInterfaceProps {
   onSendMessage: (message: string) => void;
@@ -23,21 +23,22 @@ const ChatInterface = ({ onSendMessage }: ChatInterfaceProps) => {
         console.log('[ChatInterface] Processing message:', message);
         
         // Send user message first
-        onSendMessage(message);
+        onSendMessage(`User: ${message}`);
         
-        // Send to Cloudflare Workers API
+        // Send to enhanced chat service
         const result = await sendChatToAgent(message);
         
         if (result.success) {
-          // Send the AI response
-          onSendMessage(result.message || result.result || 'Agent executed successfully');
+          // Send the AI response with agent info
+          const agentInfo = result.agent_used ? ` (${result.agent_used})` : '';
+          onSendMessage(`AGI${agentInfo}: ${result.message}`);
         } else {
           onSendMessage(`Error: ${result.error || result.message || 'Agent execution failed'}`);
         }
         
       } catch (error) {
         console.error('[ChatInterface] Error processing message:', error);
-        onSendMessage('Sorry, I encountered an error processing your message.');
+        onSendMessage('AGI: Sorry, I encountered an error processing your message. The deep loop system is working to resolve any issues.');
       } finally {
         setIsProcessing(false);
         setMessage('');
@@ -52,7 +53,7 @@ const ChatInterface = ({ onSendMessage }: ChatInterfaceProps) => {
           <Input
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder={isProcessing ? "Processing..." : "Send a command to AGI..."}
+            placeholder={isProcessing ? "AGI is processing..." : "Send a command to AGI..."}
             disabled={isProcessing}
             className="flex-1 bg-slate-700 border-slate-600 text-white h-11 md:h-10"
           />
@@ -78,7 +79,7 @@ const ChatInterface = ({ onSendMessage }: ChatInterfaceProps) => {
         </form>
         {isProcessing && (
           <div className="mt-2 text-sm text-purple-400">
-            🤖 AGI is processing your request via Cloudflare Workers...
+            🤖 AGI is processing your request via enhanced system...
           </div>
         )}
       </CardContent>

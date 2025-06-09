@@ -1,9 +1,8 @@
-import { AgentContext, EnhancedAgentResponse } from '@/types/AgentTypes';
+import { AgentContext } from '@/types/AgentTypes';
 import { EnhancedMetaAgent } from '@/agents/EnhancedMetaAgent';
-import { EnhancedGoalAgent } from '@/agents/EnhancedGoalAgent';
-import { EnhancedCollaborationAgent } from '@/agents/EnhancedCollaborationAgent';
-import { SupervisorAgent } from '@/agents/SupervisorAgent';
-import { ErrorRecoveryAgent } from '@/agents/ErrorRecoveryAgent';
+import { DeepLoopErrorRecovery } from '@/services/DeepLoopErrorRecovery';
+import { DeepLoopAgentSelection } from '@/services/DeepLoopAgentSelection';
+import { DeepLoopCollaboration } from '@/services/DeepLoopCollaboration';
 
 let running = false;
 let loopInterval: any = null;
@@ -58,17 +57,14 @@ export const startDeepAutonomousLoop = (
     running = true;
     saveLoopState(true);
 
+    // Initialize services
     const metaAgent = new EnhancedMetaAgent();
-    const goalAgent = new EnhancedGoalAgent();
-    const collaborationAgent = new EnhancedCollaborationAgent();
-    const supervisorAgent = new SupervisorAgent();
-    const errorRecoveryAgent = new ErrorRecoveryAgent();
+    const errorRecovery = new DeepLoopErrorRecovery();
+    const agentSelection = new DeepLoopAgentSelection();
+    const collaboration = new DeepLoopCollaboration();
 
     let currentLoopSpeed = config.loopDelayMs;
     let agentPriority: Record<string, number> = {};
-    let lastHandoffTime = 0;
-    let consecutiveErrors = 0;
-    let errorRecoveryMode = false;
 
     console.log('[DEEP LOOP] Starting enhanced deep autonomous loop with auto-recovery...');
 
@@ -79,64 +75,21 @@ export const startDeepAutonomousLoop = (
 
     loopInterval = setInterval(async () => {
         deepLoopMetrics.cycles += 1;
-        let goalTask: any = null; // Declare goalTask at the beginning of each cycle
 
         try {
             // Enhanced error detection and recovery every 5 cycles
             if (deepLoopMetrics.cycles % 5 === 0 && config.enableAutoRecovery) {
-                console.log('[DEEP LOOP] Running error detection and recovery...');
+                const recoveryResult = await errorRecovery.checkAndRecoverErrors(
+                    deepLoopMetrics.cycles, 
+                    setLogs
+                );
                 
-                try {
-                    const supervisorResponse = await supervisorAgent.runner({
-                        user_id: 'deep_loop_supervisor',
-                        input: { 
-                            cycle: deepLoopMetrics.cycles,
-                            errorRecoveryMode,
-                            consecutiveErrors
-                        }
-                    });
-
-                    if (supervisorResponse.data?.errors_detected > 0) {
-                        errorRecoveryMode = true;
-                        deepLoopMetrics.recoveries += 1;
-                        
-                        setLogs(prev => [...prev, {
-                            agent: 'SupervisorAgent',
-                            action: 'Error Recovery',
-                            result: `Detected ${supervisorResponse.data.errors_detected} errors - initiating recovery`
-                        }]);
-
-                        // Execute error recovery
-                        try {
-                            const recoveryResponse = await errorRecoveryAgent.runner({
-                                user_id: 'deep_loop_recovery',
-                                input: {
-                                    errorType: 'system_error',
-                                    errorDetails: supervisorResponse.data
-                                }
-                            });
-
-                            setLogs(prev => [...prev, {
-                                agent: 'ErrorRecoveryAgent',
-                                action: 'System Recovery',
-                                result: recoveryResponse.message || 'Recovery completed'
-                            }]);
-                        } catch (recoveryError) {
-                            console.error('[DEEP LOOP] Error recovery failed:', recoveryError);
-                        }
-
-                        // Slow down the loop during recovery
-                        currentLoopSpeed = Math.min(currentLoopSpeed * 1.5, 8000);
-                    } else {
-                        errorRecoveryMode = false;
-                        // Gradually speed up after successful recovery
-                        if (consecutiveErrors === 0) {
-                            currentLoopSpeed = Math.max(currentLoopSpeed * 0.95, config.loopDelayMs);
-                        }
-                    }
-                } catch (supervisorError) {
-                    console.error('[DEEP LOOP] Supervisor error:', supervisorError);
-                    errorRecoveryMode = true;
+                if (recoveryResult.newLoopSpeed) {
+                    currentLoopSpeed = recoveryResult.newLoopSpeed;
+                }
+                
+                if (recoveryResult.errorRecoveryMode) {
+                    deepLoopMetrics.recoveries += 1;
                 }
             }
 
@@ -148,7 +101,7 @@ export const startDeepAutonomousLoop = (
                     deepLoopMetrics.optimizations += 1;
 
                     // Adaptive speed based on system performance
-                    if (config.adaptiveSpeed && analysis.metrics.avgSuccessRate && !errorRecoveryMode) {
+                    if (config.adaptiveSpeed && analysis.metrics.avgSuccessRate && !errorRecovery.getErrorRecoveryMode()) {
                         if (analysis.metrics.avgSuccessRate > 85) {
                             currentLoopSpeed = Math.max(1000, currentLoopSpeed * 0.9); // Speed up
                         } else if (analysis.metrics.avgSuccessRate < 60) {
@@ -162,43 +115,13 @@ export const startDeepAutonomousLoop = (
             }
 
             // Goal-driven agent selection with error recovery priority
-            let selectedAgent: any;
-            
-            if (errorRecoveryMode) {
-                // In recovery mode, prioritize stable agents
-                const stableAgents = agents.filter(a => (agentPriority[a.name] || 1) >= 3);
-                selectedAgent = stableAgents.length > 0 ? 
-                    stableAgents[Math.floor(Math.random() * stableAgents.length)] : 
-                    agents[0];
-            } else {
-                goalTask = goalAgent.getNextSubgoal(); // Assign goalTask here
-                
-                if (goalTask) {
-                    // Select agent based on goal requirements
-                    const goalKeywords = goalTask.subgoal.toLowerCase();
-                    if (goalKeywords.includes('research')) {
-                        selectedAgent = agents.find(a => a.name.includes('Research')) || agents[0];
-                    } else if (goalKeywords.includes('learn')) {
-                        selectedAgent = agents.find(a => a.name.includes('Learning')) || agents[0];
-                    } else if (goalKeywords.includes('strategic')) {
-                        selectedAgent = agents.find(a => a.name.includes('Strategic')) || agents[0];
-                    } else {
-                        // Weighted random selection
-                        const weightedAgents = agents.flatMap(agent =>
-                            Array(agentPriority[agent.name] || 1).fill(agent)
-                        );
-                        selectedAgent = weightedAgents[Math.floor(Math.random() * weightedAgents.length)];
-                    }
-                } else {
-                    // Fallback to weighted selection
-                    const weightedAgents = agents.flatMap(agent =>
-                        Array(agentPriority[agent.name] || 1).fill(agent)
-                    );
-                    selectedAgent = weightedAgents[Math.floor(Math.random() * weightedAgents.length)];
-                }
-            }
+            const { selectedAgent, goalTask } = agentSelection.selectAgent(
+                agents, 
+                agentPriority, 
+                errorRecovery.getErrorRecoveryMode()
+            );
 
-            console.log(`[DEEP LOOP] Cycle ${deepLoopMetrics.cycles}: Running ${selectedAgent.name}${errorRecoveryMode ? ' (RECOVERY MODE)' : ''}`);
+            console.log(`[DEEP LOOP] Cycle ${deepLoopMetrics.cycles}: Running ${selectedAgent.name}${errorRecovery.getErrorRecoveryMode() ? ' (RECOVERY MODE)' : ''}`);
 
             selectedAgent.status = "RUNNING";
             setAgents([...agents]);
@@ -207,9 +130,9 @@ export const startDeepAutonomousLoop = (
             const context: AgentContext = {
                 input: { 
                     cycle: deepLoopMetrics.cycles,
-                    errorRecoveryMode,
-                    consecutiveErrors,
-                    priority: errorRecoveryMode ? 'high' : 'normal'
+                    errorRecoveryMode: errorRecovery.getErrorRecoveryMode(),
+                    consecutiveErrors: errorRecovery.getConsecutiveErrors(),
+                    priority: errorRecovery.getErrorRecoveryMode() ? 'high' : 'normal'
                 },
                 user_id: 'deep_loop_system'
             };
@@ -226,19 +149,14 @@ export const startDeepAutonomousLoop = (
 
                 selectedAgent.status = "IDLE";
                 selectedAgent.lastAction = response.message || response.output || 'Completed';
-                consecutiveErrors = 0;
 
             } catch (agentError) {
-                console.error(`[DEEP LOOP] Agent ${selectedAgent.name} error:`, agentError);
+                errorRecovery.handleAgentError(selectedAgent.name, agentError, agentPriority);
                 
                 selectedAgent.status = "ERROR";
                 selectedAgent.lastAction = `Error: ${agentError instanceof Error ? agentError.message : 'Unknown error'}`;
                 
-                consecutiveErrors += 1;
                 deepLoopMetrics.errors += 1;
-                
-                // Reduce agent priority on error
-                agentPriority[selectedAgent.name] = Math.max(1, (agentPriority[selectedAgent.name] || 1) - 2);
                 
                 // Create error response
                 response = {
@@ -246,72 +164,39 @@ export const startDeepAutonomousLoop = (
                     message: `Agent error: ${agentError instanceof Error ? agentError.message : 'Unknown error'}`,
                     timestamp: new Date().toISOString()
                 };
-
-                // Trigger error recovery mode
-                if (consecutiveErrors >= 3) {
-                    errorRecoveryMode = true;
-                    console.log('[DEEP LOOP] Entering error recovery mode due to consecutive failures');
-                }
             }
 
             // Enhanced handoff logic
-            if (config.enableHandoffs && response.nextAgent && Date.now() - lastHandoffTime > 5000) {
-                const nextAgent = agents.find(a => a.name === response.nextAgent);
-                if (nextAgent) {
-                    console.log(`[DEEP LOOP] ${selectedAgent.name} → Handoff to ${response.nextAgent}`);
-                    
-                    const handoff = await collaborationAgent.coordinateAgentHandoff(
-                        selectedAgent.name,
-                        response.nextAgent,
-                        { previousOutput: response.message, goalContext: goalTask || { goal: 'default', subgoal: 'none' } }
-                    );
-
-                    if (handoff.success) {
-                        deepLoopMetrics.handoffs += 1;
-                        lastHandoffTime = Date.now();
-
-                        const nextResponse = await nextAgent.runner({
-                            input: { 
-                                handoffData: handoff.handoffData,
-                                previousAgent: selectedAgent.name,
-                                cycle: deepLoopMetrics.cycles
-                            },
-                            user_id: 'deep_loop_system'
-                        });
-
-                        setLogs(prev => [...prev, {
-                            agent: nextAgent.name,
-                            action: `Handoff from ${selectedAgent.name}`,
-                            result: nextResponse.message || nextResponse.output || 'No response'
-                        }]);
-                    }
+            if (config.enableHandoffs && response.nextAgent) {
+                const handoffSuccessful = await collaboration.handleHandoff(
+                    selectedAgent,
+                    response,
+                    agents,
+                    goalTask,
+                    setLogs
+                );
+                
+                if (handoffSuccessful) {
+                    deepLoopMetrics.handoffs += 1;
                 }
             }
 
             // Collaboration initiation (every 15 cycles)
             if (config.enableCollaborations && deepLoopMetrics.cycles % 15 === 0) {
-                const collaborationResponse = await collaborationAgent.runner({
-                    input: { 
-                        action: 'coordinate',
-                        topic: goalTask ? goalTask.goal : 'System optimization',
-                        cycle: deepLoopMetrics.cycles
-                    },
-                    user_id: 'deep_loop_system'
-                });
-
-                if (collaborationResponse.success) {
+                const collaborationSuccessful = await collaboration.initiateCollaboration(
+                    deepLoopMetrics.cycles,
+                    goalTask,
+                    setLogs
+                );
+                
+                if (collaborationSuccessful) {
                     deepLoopMetrics.collaborations += 1;
-                    setLogs(prev => [...prev, {
-                        agent: 'EnhancedCollaborationAgent',
-                        action: 'Multi-agent collaboration',
-                        result: collaborationResponse.message || 'Collaboration initiated'
-                    }]);
                 }
             }
 
             setLogs(prev => [...prev, {
                 agent: selectedAgent.name,
-                action: errorRecoveryMode ? "Recovery Mode Run" : "Deep Loop Run",
+                action: errorRecovery.getErrorRecoveryMode() ? "Recovery Mode Run" : "Deep Loop Run",
                 result: response.message || response.output || 'No result'
             }]);
 
@@ -324,13 +209,9 @@ export const startDeepAutonomousLoop = (
 
         } catch (err) {
             deepLoopMetrics.errors += 1;
-            consecutiveErrors += 1;
             console.error(`[DEEP LOOP ERROR] Cycle ${deepLoopMetrics.cycles}: ${err}`);
             
             // Enhanced error recovery
-            errorRecoveryMode = true;
-            currentLoopSpeed = Math.min(currentLoopSpeed * 1.5, 10000);
-
             const errorAgent = agents.find(a => a.status === "RUNNING");
             if (errorAgent) {
                 errorAgent.status = "ERROR";
@@ -357,7 +238,7 @@ export const startDeepAutonomousLoop = (
             collaborations: deepLoopMetrics.collaborations,
             optimizations: deepLoopMetrics.optimizations,
             lastAgent: agents.find(a => a.status === "RUNNING")?.name || 'None',
-            errorRecoveryMode
+            errorRecoveryMode: errorRecovery.getErrorRecoveryMode()
         }));
 
         saveLoopState(true);
