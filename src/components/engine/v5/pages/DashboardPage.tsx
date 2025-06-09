@@ -11,7 +11,6 @@ import KPIWidget from '../components/KPIWidget';
 import AutonomousLoopController from '../components/AutonomousLoopController';
 import PersistenceStatus from '../components/PersistenceStatus';
 import SystemRecovery from '../components/SystemRecovery';
-import SystemContextPanel from '@/components/SystemContextPanel';
 
 interface SystemState {
   isRunning: boolean;
@@ -270,9 +269,6 @@ const DashboardPage = () => {
           color="cyan"
         />
       </div>
-
-      {/* NEW: System Memory Panel */}
-      <SystemContextPanel />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card className="bg-slate-800/50 border-slate-600/30">
