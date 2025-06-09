@@ -15,7 +15,7 @@ export class ChatProcessorAgent {
       await saveChatMessage('User', userMessage);
 
       // Forward the message to LLMExecutiveAgent for GPT-4o processing
-      const llmResponse = await agentRegistry.llm_executive_agent.runner({
+      const llmResponse = await agentRegistry.runAgent('llm_executive_agent', {
         user_id: context.user_id || 'chat_user',
         input: {
           goal: 'Respond to user chat message',
