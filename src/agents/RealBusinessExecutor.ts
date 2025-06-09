@@ -19,27 +19,24 @@ export class RealBusinessExecutor {
 
   async executeBusinessTask(taskType: string, parameters: any): Promise<AgentResponse> {
     try {
-      await sendChatUpdate(`⚡ Executing real business task: ${taskType}`);
+      await sendChatUpdate(`⚡ Executing REAL business task: ${taskType}`);
+      await sendChatUpdate(`🔗 Connecting to Hunter API for lead generation...`);
+      await sendChatUpdate(`📧 Connecting to Resend for email delivery...`);
 
-      let result: any = {};
-      let actualRevenue = 0;
+      // Call the real business executor edge function
+      const { data, error } = await supabase.functions.invoke('real-business-executor', {
+        body: { taskType, parameters }
+      });
 
-      switch (taskType.toLowerCase()) {
-        case 'lead_generation':
-          result = await this.executeLeadGeneration(parameters);
-          break;
-        case 'email_outreach':
-          result = await this.executeEmailOutreach(parameters);
-          break;
-        case 'landing_page':
-          result = await this.createLandingPage(parameters);
-          break;
-        case 'market_research':
-          result = await this.conductMarketResearch(parameters);
-          break;
-        default:
-          throw new Error(`Unknown task type: ${taskType}`);
+      if (error) {
+        throw new Error(`Edge function error: ${error.message}`);
       }
+
+      if (!data.success) {
+        throw new Error(data.message || 'Unknown error from edge function');
+      }
+
+      const result = data.data;
 
       // Create execution entry
       const execution = {
@@ -58,11 +55,19 @@ export class RealBusinessExecutor {
         this.executionHistory = this.executionHistory.slice(0, 50);
       }
 
-      // Try to log to database, but don't fail if it doesn't work
+      // Try to log to database
       try {
         await this.logBusinessExecution(execution);
       } catch (dbError) {
         console.warn('Database logging failed, using in-memory storage:', dbError);
+      }
+
+      // Show real metrics
+      if (result.leads_generated > 0) {
+        await sendChatUpdate(`✅ REAL LEADS GENERATED: ${result.leads_generated} contacts added to CRM`);
+      }
+      if (result.emails_sent > 0) {
+        await sendChatUpdate(`📧 REAL EMAILS SENT: ${result.emails_sent} outreach emails delivered`);
       }
 
       return {
@@ -73,6 +78,7 @@ export class RealBusinessExecutor {
           result,
           actualRevenue: result.actual_revenue || 0,
           leadsGenerated: result.leads_generated || 0,
+          emailsSent: result.emails_sent || 0,
           nextSteps: result.next_steps || []
         },
         timestamp: new Date().toISOString()
@@ -80,6 +86,7 @@ export class RealBusinessExecutor {
 
     } catch (error) {
       console.error('Real business execution error:', error);
+      await sendChatUpdate(`❌ Real business execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       
       // Log failed execution
       const failedExecution = {
@@ -96,72 +103,10 @@ export class RealBusinessExecutor {
       
       return {
         success: false,
-        message: `❌ Business execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `❌ Real business execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
         timestamp: new Date().toISOString()
       };
     }
-  }
-
-  private async executeLeadGeneration(params: any) {
-    const { target_market = 'general market', budget = 100 } = params;
-    
-    // Real lead generation logic would integrate with actual platforms
-    // For now, we'll create actionable steps that can be executed
-    const steps = [
-      `Research ${target_market} market on LinkedIn`,
-      `Create targeted lead list using Apollo.io or similar`,
-      `Set up email sequences in Mailchimp/ConvertKit`,
-      `Launch Google Ads campaign with $${budget} budget`
-    ];
-
-    return {
-      description: `Lead generation campaign for ${target_market}`,
-      leads_generated: 0, // Will be updated as real leads come in
-      actual_revenue: 0, // Will be updated when leads convert
-      revenue_potential: budget * 10, // Conservative 10x ROI estimate
-      steps_executed: steps,
-      next_steps: ['Monitor campaign performance', 'Follow up with generated leads']
-    };
-  }
-
-  private async executeEmailOutreach(params: any) {
-    const { recipients, template, subject } = params;
-    
-    // Real email outreach would integrate with email services
-    // This creates actionable steps for manual execution
-    return {
-      description: `Email outreach to ${recipients?.length || 50} prospects`,
-      emails_sent: recipients?.length || 50,
-      actual_revenue: 0, // Will be updated based on responses
-      revenue_potential: (recipients?.length || 50) * 500, // $500 average customer value
-      next_steps: ['Track email opens', 'Follow up on responses', 'Schedule calls with interested prospects']
-    };
-  }
-
-  private async createLandingPage(params: any) {
-    const { service = 'consultation services', target_audience = 'potential clients' } = params;
-    
-    // Real landing page creation steps
-    return {
-      description: `Landing page for ${service} targeting ${target_audience}`,
-      page_created: true,
-      actual_revenue: 0, // Will be updated as conversions happen
-      revenue_potential: 5000, // Based on conversion estimates
-      next_steps: ['Set up analytics tracking', 'Launch ad campaigns', 'A/B test page elements']
-    };
-  }
-
-  private async conductMarketResearch(params: any) {
-    const { topic = 'market opportunities', depth = 'basic' } = params;
-    
-    return {
-      description: `Market research on ${topic}`,
-      research_completed: true,
-      market_size_estimate: 'To be determined through research',
-      actual_revenue: 0,
-      revenue_potential: 0, // Research enables future revenue
-      next_steps: ['Analyze competitor pricing', 'Identify market gaps', 'Develop go-to-market strategy']
-    };
   }
 
   private async logBusinessExecution(execution: any) {
@@ -229,6 +174,49 @@ export class RealBusinessExecutor {
     } catch (error) {
       console.error('Failed to get execution history:', error);
       return this.executionHistory;
+    }
+  }
+
+  // New method to get leads from CRM
+  async getGeneratedLeads(limit: number = 50) {
+    try {
+      const { data, error } = await supabase
+        .from('leads')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Failed to get leads:', error);
+      return [];
+    }
+  }
+
+  // New method to get email campaign results
+  async getEmailCampaigns(limit: number = 10) {
+    try {
+      const { data, error } = await supabase
+        .from('email_campaigns')
+        .select(`
+          *,
+          email_logs (
+            id,
+            email,
+            status,
+            sent_at,
+            opened_at
+          )
+        `)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Failed to get email campaigns:', error);
+      return [];
     }
   }
 }

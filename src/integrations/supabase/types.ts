@@ -111,6 +111,194 @@ export type Database = {
         }
         Relationships: []
       }
+      email_campaigns: {
+        Row: {
+          created_at: string
+          emails_opened: number | null
+          emails_sent: number | null
+          id: string
+          name: string
+          replies_received: number | null
+          status: string
+          subject: string
+          target_industry: string | null
+          template: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          emails_opened?: number | null
+          emails_sent?: number | null
+          id?: string
+          name: string
+          replies_received?: number | null
+          status?: string
+          subject: string
+          target_industry?: string | null
+          template: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          emails_opened?: number | null
+          emails_sent?: number | null
+          id?: string
+          name?: string
+          replies_received?: number | null
+          status?: string
+          subject?: string
+          target_industry?: string | null
+          template?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      email_logs: {
+        Row: {
+          campaign_id: string | null
+          content: string
+          email: string
+          id: string
+          lead_id: string | null
+          opened_at: string | null
+          replied_at: string | null
+          resend_email_id: string | null
+          sent_at: string
+          status: string
+          subject: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          content: string
+          email: string
+          id?: string
+          lead_id?: string | null
+          opened_at?: string | null
+          replied_at?: string | null
+          resend_email_id?: string | null
+          sent_at?: string
+          status?: string
+          subject: string
+        }
+        Update: {
+          campaign_id?: string | null
+          content?: string
+          email?: string
+          id?: string
+          lead_id?: string | null
+          opened_at?: string | null
+          replied_at?: string | null
+          resend_email_id?: string | null
+          sent_at?: string
+          status?: string
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_logs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "email_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_logs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      follow_ups: {
+        Row: {
+          completed_at: string | null
+          content: string
+          created_at: string
+          id: string
+          lead_id: string | null
+          scheduled_for: string | null
+          type: string
+        }
+        Insert: {
+          completed_at?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          scheduled_for?: string | null
+          type: string
+        }
+        Update: {
+          completed_at?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          scheduled_for?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follow_ups_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          company: string | null
+          created_at: string
+          email: string
+          first_name: string | null
+          id: string
+          industry: string | null
+          job_title: string | null
+          last_name: string | null
+          linkedin_url: string | null
+          location: string | null
+          phone: string | null
+          source: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          email: string
+          first_name?: string | null
+          id?: string
+          industry?: string | null
+          job_title?: string | null
+          last_name?: string | null
+          linkedin_url?: string | null
+          location?: string | null
+          phone?: string | null
+          source: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          email?: string
+          first_name?: string | null
+          id?: string
+          industry?: string | null
+          job_title?: string | null
+          last_name?: string | null
+          linkedin_url?: string | null
+          location?: string | null
+          phone?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       secrets: {
         Row: {
           created_at: string
