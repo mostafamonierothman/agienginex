@@ -1,4 +1,5 @@
 
+
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { ResearchAgent } from '@/agents/ResearchAgent';
 import { LearningAgentV2 } from '@/agents/LearningAgentV2';
@@ -18,8 +19,6 @@ import { EnhancedCollaborationAgent, EnhancedCollaborationAgentRunner } from '@/
 import { SystemContextAgent, SystemContextAgentRunner } from '@/agents/SystemContextAgent';
 import { SelfImprovementAgent, SelfImprovementAgentRunner } from '@/agents/SelfImprovementAgent';
 import { ExecutiveAgent, ExecutiveAgentRunner } from '@/agents/ExecutiveAgent';
-import { ChatProcessorAgentRunner } from '../server/agents/ChatProcessorAgent';
-import { LLMExecutiveAgentRunner } from '../server/agents/LLMExecutiveAgent';
 import { LLMLearningAgent, LLMLearningAgentRunner } from '@/agents/LLMLearningAgent';
 
 export interface AgentDefinition {
@@ -189,27 +188,6 @@ const agentDefinitions: { [key: string]: AgentDefinition } = {
     version: "V7",
     runner: ExecutiveAgentRunner,
     paramSchema: []
-  },
-  chat_processor_agent: {
-    name: "ChatProcessorAgent",
-    description: "Processes user chat messages and routes to appropriate agents",
-    category: "V7",
-    version: "V7",
-    runner: ChatProcessorAgentRunner,
-    paramSchema: [
-      { name: 'message', placeholder: 'User message', type: 'text' }
-    ]
-  },
-  llm_executive_agent: {
-    name: "LLMExecutiveAgent",
-    description: "Advanced strategic decision-making using GPT-4o intelligence",
-    category: "V7",
-    version: "V7.5",
-    runner: LLMExecutiveAgentRunner,
-    paramSchema: [
-      { name: 'goal', placeholder: 'Strategic goal', type: 'text' },
-      { name: 'context', placeholder: 'Additional context', type: 'text' }
-    ]
   },
   llm_learning_agent: {
     name: "LLMLearningAgent", 

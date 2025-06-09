@@ -1,5 +1,5 @@
 
-import { Configuration, OpenAIApi } from 'openai';
+import OpenAI from 'openai';
 import { AgentContext, AgentResponse } from '../../types/AgentTypes';
 import { saveChatMessage } from '../../utils/saveChatMessage';
 
@@ -10,16 +10,13 @@ export class LLMExecutiveAgent {
 
       console.log('[LLMExecutiveAgent] Processing strategic decision with GPT-4o...');
 
-      // ✅ Safe fallback — will work with GitHub OPENAI_API_KEY or VITE_OPENAI_API_KEY
-      const configuration = new Configuration({
+      const openai = new OpenAI({
         apiKey: process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY
       });
 
-      if (!configuration.apiKey) {
+      if (!openai.apiKey) {
         throw new Error('OpenAI API key not configured. Please set OPENAI_API_KEY or VITE_OPENAI_API_KEY.');
       }
-
-      const openai = new OpenAIApi(configuration);
 
       const prompt = `You are the ExecutiveAgent of AGIengineX, an advanced multi-agent system. Your job is to make strategic decisions and provide executive-level guidance.
 
@@ -29,7 +26,7 @@ Goal: Determine the next strategic action for optimal system performance
 
 Provide a clear, actionable strategic decision:`;
 
-      const response = await openai.createChatCompletion({
+      const response = await openai.chat.completions.create({
         model: 'gpt-4o',
         messages: [
           { role: 'system', content: 'You are an expert AGI ExecutiveAgent providing strategic guidance.' },
@@ -38,7 +35,7 @@ Provide a clear, actionable strategic decision:`;
         max_tokens: 400
       });
 
-      const decision = response.data.choices[0]?.message?.content || 'No decision returned.';
+      const decision = response.choices[0]?.message?.content || 'No decision returned.';
 
       await saveChatMessage('LLMExecutiveAgent', decision);
 
@@ -57,7 +54,8 @@ Provide a clear, actionable strategic decision:`;
       console.error('[LLMExecutiveAgent] Error:', error);
       return {
         success: false,
-        message: `❌ LLMExecutiveAgent error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `❌ LLMExecutiveAgent error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        timestamp: new Date().toISOString()
       };
     }
   }
