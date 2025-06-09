@@ -1,24 +1,12 @@
-
 # wrangler.toml
 
 name = "agienginex"
+account_id = "YOUR_CLOUDFLARE_ACCOUNT_ID"  # 👈 you must fill this!
+workers_dev = true
 main = "server/index.ts"
 compatibility_date = "2024-06-01"
 
 [vars]
-OPENAI_API_KEY = ""
-SUPABASE_URL = ""
-SUPABASE_KEY = ""
-
-[[routes]]
-pattern = "agienginex.*.workers.dev/*"
-custom_domain = false
-
-[build]
-command = ""
-
-[env.production]
-name = "agienginex"
-
-[env.staging]
-name = "agienginex-staging"
+OPENAI_API_KEY = "${OPENAI_API_KEY}"
+SUPABASE_URL = "${SUPABASE_URL}"
+SUPABASE_KEY = "${SUPABASE_KEY}"
