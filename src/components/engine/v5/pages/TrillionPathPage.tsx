@@ -1,12 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Brain, Zap, Target, TrendingUp, Activity, Play, Square } from 'lucide-react';
+import { Brain, Zap, Target, TrendingUp, Activity, Play, Square, Clock } from 'lucide-react';
 import { trillionPathEngine, TrillionPathMetrics } from '@/engine/TrillionPathEngine';
+import { femtosecondSupervisor } from '@/engine/FemtosecondSupervisor';
 
 const TrillionPathPage = () => {
   const [isRunning, setIsRunning] = useState(false);
+  const [isSupervisorRunning, setIsSupervisorRunning] = useState(false);
   const [metrics, setMetrics] = useState<TrillionPathMetrics>({
     economicValue: 0,
     knowledgeCycles: 0,
@@ -16,14 +17,46 @@ const TrillionPathPage = () => {
     virtualizedAgents: 0,
     taskThroughput: 0
   });
+  const [supervisorStatus, setSupervisorStatus] = useState({
+    isRunning: false,
+    cycleCount: 0,
+    performanceMetrics: {
+      avgCycleTime: 0,
+      successRate: 100,
+      errorCount: 0,
+      optimizationCount: 0
+    }
+  });
 
   useEffect(() => {
+    // Auto-start 24/7 operation on component mount
+    const autoStart24_7 = localStorage.getItem('trillion_path_24_7') === 'true';
+    if (autoStart24_7) {
+      console.log('🚀 Auto-starting 24/7 Trillion Path operation...');
+      handleStart24_7();
+    }
+
     const interval = setInterval(() => {
       setMetrics(trillionPathEngine.getMetrics());
+      setSupervisorStatus(femtosecondSupervisor.getStatus());
     }, 100); // Update every 100ms for real-time feel
 
     return () => clearInterval(interval);
   }, []);
+
+  // Keep system running even if browser tab is inactive
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden && isSupervisorRunning) {
+        console.log('💡 Tab hidden but maintaining 24/7 operation...');
+      } else if (!document.hidden && isSupervisorRunning) {
+        console.log('👁️ Tab visible - 24/7 operation continues...');
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [isSupervisorRunning]);
 
   const handleStart = async () => {
     try {
@@ -35,9 +68,32 @@ const TrillionPathPage = () => {
     }
   };
 
+  const handleStart24_7 = async () => {
+    try {
+      // Start the trillion path engine
+      await trillionPathEngine.initializeTrillionPath();
+      await trillionPathEngine.startFemtosecondCycles();
+      setIsRunning(true);
+
+      // Start the femtosecond supervisor for 24/7 operation
+      await femtosecondSupervisor.startFemtosecondSupervision();
+      setIsSupervisorRunning(true);
+
+      // Store 24/7 preference
+      localStorage.setItem('trillion_path_24_7', 'true');
+
+      console.log('🌟 24/7 Trillion Path operation initiated!');
+    } catch (error) {
+      console.error('Failed to start 24/7 operation:', error);
+    }
+  };
+
   const handleStop = () => {
     trillionPathEngine.stop();
+    femtosecondSupervisor.stop();
     setIsRunning(false);
+    setIsSupervisorRunning(false);
+    localStorage.setItem('trillion_path_24_7', 'false');
   };
 
   const formatValue = (value: number): string => {
@@ -56,6 +112,16 @@ const TrillionPathPage = () => {
     return 'text-gray-400';
   };
 
+  const getTimeToGoal = (currentValue: number, targetValue: number, growthRate: number): string => {
+    if (currentValue === 0 || growthRate <= 1) return 'Calculating...';
+    const cyclesNeeded = Math.log(targetValue / currentValue) / Math.log(growthRate);
+    const hoursNeeded = cyclesNeeded * (supervisorStatus.performanceMetrics.avgCycleTime / 1000) / 3600;
+    
+    if (hoursNeeded < 24) return `${hoursNeeded.toFixed(1)} hours`;
+    if (hoursNeeded < 24 * 365) return `${(hoursNeeded / 24).toFixed(1)} days`;
+    return `${(hoursNeeded / (24 * 365)).toFixed(1)} years`;
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -63,30 +129,72 @@ const TrillionPathPage = () => {
           <h1 className="text-3xl font-bold text-white flex items-center gap-2">
             <Target className="h-8 w-8 text-purple-400" />
             Trillion Path AGI Engine
+            {isSupervisorRunning && <Clock className="h-6 w-6 text-green-400 animate-pulse" />}
           </h1>
           <p className="text-gray-300">
-            Orchestrating toward 10^12 outcomes through femtosecond optimization cycles
+            {isSupervisorRunning ? '🔄 Running 24/7 until trillion-scale outcomes achieved' : 'Ready for continuous trillion-path optimization'}
           </p>
         </div>
         <div className="flex gap-2">
           <Button
-            onClick={handleStart}
-            disabled={isRunning}
+            onClick={handleStart24_7}
+            disabled={isSupervisorRunning}
             className="bg-purple-600 hover:bg-purple-700"
           >
             <Play className="h-4 w-4 mr-2" />
-            Start Trillion Path
+            Start 24/7 Operation
+          </Button>
+          <Button
+            onClick={handleStart}
+            disabled={isRunning}
+            variant="outline"
+            className="border-blue-500 text-blue-400 hover:bg-blue-500/10"
+          >
+            <Play className="h-4 w-4 mr-2" />
+            Start Engine Only
           </Button>
           <Button
             onClick={handleStop}
-            disabled={!isRunning}
+            disabled={!isRunning && !isSupervisorRunning}
             variant="destructive"
           >
             <Square className="h-4 w-4 mr-2" />
-            Stop Engine
+            Stop All
           </Button>
         </div>
       </div>
+
+      {/* 24/7 Operation Status */}
+      {isSupervisorRunning && (
+        <Card className="bg-gradient-to-r from-purple-900/50 to-blue-900/50 border-purple-500/30">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-white flex items-center gap-2">
+              <Clock className="h-5 w-5 text-green-400 animate-pulse" />
+              24/7 Continuous Operation Active
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <div className="text-gray-300">Supervisor Cycles</div>
+                <div className="text-purple-400 font-bold">{supervisorStatus.cycleCount}</div>
+              </div>
+              <div>
+                <div className="text-gray-300">Avg Cycle Time</div>
+                <div className="text-blue-400 font-bold">{supervisorStatus.performanceMetrics.avgCycleTime.toFixed(2)}ms</div>
+              </div>
+              <div>
+                <div className="text-gray-300">Success Rate</div>
+                <div className="text-green-400 font-bold">{supervisorStatus.performanceMetrics.successRate.toFixed(1)}%</div>
+              </div>
+              <div>
+                <div className="text-gray-300">Optimizations</div>
+                <div className="text-cyan-400 font-bold">{supervisorStatus.performanceMetrics.optimizationCount}</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Trillion Path Progress */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -104,6 +212,9 @@ const TrillionPathPage = () => {
               </div>
               <div className="text-sm text-gray-400">
                 Target: 1T • Progress: {((metrics.economicValue / 1e12) * 100).toFixed(6)}%
+              </div>
+              <div className="text-xs text-gray-500">
+                ETA: {getTimeToGoal(metrics.economicValue, 1e12, metrics.compoundGrowthRate)}
               </div>
               <div className="w-full bg-gray-700 rounded-full h-2">
                 <div 
@@ -130,6 +241,9 @@ const TrillionPathPage = () => {
               <div className="text-sm text-gray-400">
                 Target: 1T • Progress: {((metrics.knowledgeCycles / 1e12) * 100).toFixed(6)}%
               </div>
+              <div className="text-xs text-gray-500">
+                ETA: {getTimeToGoal(metrics.knowledgeCycles, 1e12, metrics.compoundGrowthRate)}
+              </div>
               <div className="w-full bg-gray-700 rounded-full h-2">
                 <div 
                   className="bg-blue-400 h-2 rounded-full transition-all duration-300"
@@ -154,6 +268,9 @@ const TrillionPathPage = () => {
               </div>
               <div className="text-sm text-gray-400">
                 Target: 1T • Progress: {((metrics.impactfulDecisions / 1e12) * 100).toFixed(6)}%
+              </div>
+              <div className="text-xs text-gray-500">
+                ETA: {getTimeToGoal(metrics.impactfulDecisions, 1e12, metrics.compoundGrowthRate)}
               </div>
               <div className="w-full bg-gray-700 rounded-full h-2">
                 <div 
@@ -223,7 +340,7 @@ const TrillionPathPage = () => {
           <CardTitle className="text-white flex items-center gap-2">
             <Activity className="h-5 w-5 text-purple-400" />
             AGI System Status
-            {isRunning && <span className="text-green-400 text-sm animate-pulse">● RUNNING</span>}
+            {isSupervisorRunning && <span className="text-green-400 text-sm animate-pulse">● 24/7 OPERATION</span>}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -242,9 +359,9 @@ const TrillionPathPage = () => {
                   <span className="text-green-400">{((metrics.compoundGrowthRate - 1) * 100).toFixed(3)}%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-300">System Status:</span>
-                  <span className={isRunning ? 'text-green-400' : 'text-red-400'}>
-                    {isRunning ? 'Optimizing toward AGI' : 'Waiting for activation'}
+                  <span className="text-gray-300">Operation Mode:</span>
+                  <span className={isSupervisorRunning ? 'text-green-400' : 'text-yellow-400'}>
+                    {isSupervisorRunning ? '24/7 Continuous' : 'Manual Control'}
                   </span>
                 </div>
               </div>

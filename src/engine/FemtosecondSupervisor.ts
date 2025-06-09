@@ -1,4 +1,3 @@
-
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { trillionPathEngine } from '@/engine/TrillionPathEngine';
 import { SupervisorAgentRunner } from '@/agents/SupervisorAgent';
@@ -7,10 +6,12 @@ import { SelfImprovementAgentRunner } from '@/agents/SelfImprovementAgent';
 import { EnhancedGoalAgentRunner } from '@/agents/EnhancedGoalAgent';
 import { FactoryAgent } from '@/agents/FactoryAgent';
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
+import { TrillionPathPersistence } from '@/services/TrillionPathPersistence';
 
 export class FemtosecondSupervisor {
   private isRunning = false;
   private cycleCount = 0;
+  private startTime = 0;
   private performanceMetrics = {
     avgCycleTime: 0,
     successRate: 100,
@@ -22,15 +23,87 @@ export class FemtosecondSupervisor {
     if (this.isRunning) return;
     
     this.isRunning = true;
+    this.startTime = Date.now();
     console.log('⚡ [FEMTOSECOND SUPERVISOR] Starting ultra-fast AGI supervision...');
     
-    await sendChatUpdate('🚀 FemtosecondSupervisor: Initiating trillion-path supervision with sub-millisecond cycles');
+    // Save state for 24/7 persistence
+    TrillionPathPersistence.saveState({
+      isRunning: true,
+      startTime: new Date().toISOString(),
+      lastUpdate: new Date().toISOString(),
+      totalRuntime: 0,
+      autoRestart: true
+    });
+    
+    // Start heartbeat
+    TrillionPathPersistence.startHeartbeat();
+    
+    // Register service worker for background operation
+    if ('serviceWorker' in navigator) {
+      try {
+        const registration = await navigator.serviceWorker.register('/trillion-path-worker.js');
+        console.log('🔧 Service Worker registered for 24/7 operation');
+        
+        // Send start message to service worker
+        if (registration.active) {
+          registration.active.postMessage({
+            type: 'START_TRILLION_PATH',
+            data: { startTime: this.startTime }
+          });
+        }
+      } catch (error) {
+        console.warn('Service Worker registration failed:', error);
+      }
+    }
+    
+    await sendChatUpdate('🚀 FemtosecondSupervisor: Initiating 24/7 trillion-path supervision with sub-millisecond cycles');
     
     // Initialize trillion path engine
     await trillionPathEngine.initializeTrillionPath();
     
     // Start supervision cycles
     this.runSupervisionCycle();
+    
+    // Setup auto-recovery on page load
+    this.setupAutoRecovery();
+  }
+
+  private setupAutoRecovery(): void {
+    // Handle page visibility changes
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && this.isRunning) {
+        console.log('🌙 [24/7] Page hidden, maintaining background operation...');
+        TrillionPathPersistence.saveState({
+          isRunning: this.isRunning,
+          startTime: new Date(this.startTime).toISOString(),
+          lastUpdate: new Date().toISOString(),
+          totalRuntime: Date.now() - this.startTime,
+          autoRestart: true
+        });
+      } else if (!document.hidden && this.isRunning) {
+        console.log('👁️ [24/7] Page visible, continuing trillion-path operation...');
+      }
+    });
+
+    // Handle beforeunload to save state
+    window.addEventListener('beforeunload', () => {
+      if (this.isRunning) {
+        TrillionPathPersistence.saveState({
+          isRunning: this.isRunning,
+          startTime: new Date(this.startTime).toISOString(),
+          lastUpdate: new Date().toISOString(),
+          totalRuntime: Date.now() - this.startTime,
+          autoRestart: true
+        });
+      }
+    });
+
+    // Auto-recovery check on startup
+    const savedState = TrillionPathPersistence.loadState();
+    if (savedState && savedState.autoRestart && !this.isRunning) {
+      console.log('🔄 [AUTO-RECOVERY] Resuming 24/7 operation from saved state...');
+      setTimeout(() => this.startFemtosecondSupervision(), 1000);
+    }
   }
 
   private runSupervisionCycle(): void {
@@ -41,6 +114,17 @@ export class FemtosecondSupervisor {
     
     requestAnimationFrame(async () => {
       try {
+        // Update persistence state every 100 cycles
+        if (this.cycleCount % 100 === 0) {
+          TrillionPathPersistence.saveState({
+            isRunning: this.isRunning,
+            startTime: new Date(this.startTime).toISOString(),
+            lastUpdate: new Date().toISOString(),
+            totalRuntime: Date.now() - this.startTime,
+            autoRestart: true
+          });
+        }
+        
         // 1. Executive Decision Making (every cycle)
         if (this.cycleCount % 1 === 0) {
           await this.executeExecutiveDecisions();
@@ -72,6 +156,12 @@ export class FemtosecondSupervisor {
         
         // Adaptive speed optimization
         await this.optimizeSpeed();
+        
+        // 24/7 health check and progress update
+        if (this.cycleCount % 1000 === 0) {
+          const runtime = TrillionPathPersistence.formatRuntime(Date.now() - this.startTime);
+          await sendChatUpdate(`⏰ 24/7 Operation Status: ${this.cycleCount} cycles completed in ${runtime} | Target: Trillion-scale outcomes`);
+        }
         
         // Continue cycle
         this.runSupervisionCycle();
@@ -282,7 +372,27 @@ export class FemtosecondSupervisor {
 
   stop(): void {
     this.isRunning = false;
-    console.log('⏹️ [FEMTOSECOND SUPERVISOR] Stopped');
+    
+    // Stop heartbeat
+    TrillionPathPersistence.stopHeartbeat();
+    
+    // Update persistence state
+    TrillionPathPersistence.saveState({
+      isRunning: false,
+      startTime: new Date(this.startTime).toISOString(),
+      lastUpdate: new Date().toISOString(),
+      totalRuntime: Date.now() - this.startTime,
+      autoRestart: false
+    });
+    
+    // Notify service worker
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'STOP_TRILLION_PATH'
+      });
+    }
+    
+    console.log('⏹️ [FEMTOSECOND SUPERVISOR] Stopped 24/7 operation');
   }
 
   getStatus() {
@@ -290,9 +400,28 @@ export class FemtosecondSupervisor {
       isRunning: this.isRunning,
       cycleCount: this.cycleCount,
       performanceMetrics: { ...this.performanceMetrics },
-      trillionPathMetrics: trillionPathEngine.getMetrics()
+      trillionPathMetrics: trillionPathEngine.getMetrics(),
+      runtime: this.isRunning ? Date.now() - this.startTime : 0,
+      runtimeFormatted: TrillionPathPersistence.formatRuntime(this.isRunning ? Date.now() - this.startTime : 0)
     };
   }
+}
+
+// Auto-start recovery on module load
+const checkAutoStart = () => {
+  const savedState = TrillionPathPersistence.loadState();
+  if (savedState && savedState.autoRestart && TrillionPathPersistence.shouldAutoRestart()) {
+    console.log('🔄 [AUTO-START] Detected previous 24/7 operation, attempting recovery...');
+    // Auto-start after a brief delay to ensure system is ready
+    setTimeout(() => {
+      femtosecondSupervisor.startFemtosecondSupervision();
+    }, 2000);
+  }
+};
+
+// Check for auto-start when module loads
+if (typeof window !== 'undefined') {
+  checkAutoStart();
 }
 
 export const femtosecondSupervisor = new FemtosecondSupervisor();
