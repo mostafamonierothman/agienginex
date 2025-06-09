@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +12,7 @@ import {
 import DashboardPage from './pages/DashboardPage';
 import ChatPage from './pages/ChatPage';
 import ProjectsPage from './pages/ProjectsPage';
+import TrillionPathPage from './pages/TrillionPathPage';
 
 const AGIV5Dashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -46,10 +46,14 @@ const AGIV5Dashboard = () => {
 
         {/* Navigation Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-slate-800/50 p-1">
+          <TabsList className="grid w-full grid-cols-4 bg-slate-800/50 p-1">
             <TabsTrigger value="dashboard" className="flex items-center gap-2 text-sm">
               <BarChart3 className="w-4 h-4" />
               <span className="hidden sm:inline">Dashboard</span>
+            </TabsTrigger>
+            <TabsTrigger value="trillion-path" className="flex items-center gap-2 text-sm">
+              <Target className="w-4 h-4" />
+              <span className="hidden sm:inline">Trillion Path</span>
             </TabsTrigger>
             <TabsTrigger value="chat" className="flex items-center gap-2 text-sm">
               <MessageSquare className="w-4 h-4" />
@@ -63,6 +67,10 @@ const AGIV5Dashboard = () => {
 
           <TabsContent value="dashboard" className="mt-6">
             <DashboardPage />
+          </TabsContent>
+
+          <TabsContent value="trillion-path" className="mt-6">
+            <TrillionPathPage />
           </TabsContent>
 
           <TabsContent value="chat" className="mt-6">
