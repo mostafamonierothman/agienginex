@@ -20,41 +20,40 @@ export class SupervisorAgent {
 
   async runner(context: AgentContext): Promise<AgentResponse> {
     try {
-      await sendChatUpdate('🕹️ SupervisorAgent: Monitoring system status and detecting medical tourism deployment...');
+      await sendChatUpdate('🕹️ SupervisorAgent: Monitoring real lead generation deployment...');
 
-      // Check for medical tourism agent deployment
-      const medicalTourismStatus = await this.checkMedicalTourismDeployment();
+      // Check for real medical tourism agent deployment and activity
+      const realMissionStatus = await this.checkRealMedicalTourismActivity();
       
-      // Check for recent errors in console logs and system state
+      // Check for system errors
       const systemErrors = await this.detectSystemErrors();
       const errorSummary = await this.analyzeErrors(systemErrors);
 
       if (systemErrors.length > 0) {
         await sendChatUpdate(`⚠️ SupervisorAgent: Detected ${systemErrors.length} errors - initiating recovery protocols`);
         
-        // Assign recovery tasks to appropriate agents
         for (const error of systemErrors) {
           const recoveryAgent = this.selectRecoveryAgent(error);
           await this.assignRecoveryTask(error, recoveryAgent, context);
         }
       }
 
-      // Enhanced system status assessment including medical tourism
+      // Enhanced status with real lead generation data
       const systemStatus = {
-        active_agents: 12 + (medicalTourismStatus.deployed_agents || 0),
+        active_agents: 12 + (realMissionStatus.deployed_agents || 0),
         active_goals: 3,
         recent_memories: 5,
         recent_activity: 12,
         system_health: systemErrors.length === 0 ? 'operational' : 'recovering',
         errors_detected: systemErrors.length,
         recovery_actions_taken: systemErrors.length,
-        medical_tourism_mission: medicalTourismStatus
+        real_lead_generation: realMissionStatus
       };
 
-      let statusMessage = `System Status: ${systemStatus.active_agents} agents active, ${systemStatus.active_goals} goals tracked`;
+      let statusMessage = `System Status: ${systemStatus.active_agents} agents active`;
       
-      if (medicalTourismStatus.deployed_agents > 0) {
-        statusMessage += `, Medical Tourism: ${medicalTourismStatus.deployed_agents} agents deployed, ${medicalTourismStatus.leads_generated} leads generated`;
+      if (realMissionStatus.deployed_agents > 0) {
+        statusMessage += `, Real Lead Gen: ${realMissionStatus.deployed_agents} agents, ${realMissionStatus.total_leads} actual leads in database`;
       }
 
       await sendChatUpdate(`🕹️ ${statusMessage}`);
@@ -79,50 +78,80 @@ export class SupervisorAgent {
     }
   }
 
-  private async checkMedicalTourismDeployment(): Promise<{
+  private async checkRealMedicalTourismActivity(): Promise<{
     deployed_agents: number;
-    leads_generated: number;
+    completed_agents: number;
+    total_leads: number;
+    eye_surgery_leads: number;
+    dental_leads: number;
     mission_status: string;
   }> {
     try {
-      // Check for deployed medical tourism agents
-      const { data: agentLogs, error: agentError } = await supabase
+      // Check for deployed real agents
+      const { data: deployedAgents, error: deployError } = await supabase
         .from('supervisor_queue')
         .select('*')
         .eq('action', 'agent_deployed')
         .eq('user_id', 'demo_user');
 
-      // Check for generated leads
+      // Check for completed agents
+      const { data: completedAgents, error: completeError } = await supabase
+        .from('supervisor_queue')
+        .select('*')
+        .eq('action', 'lead_generation_complete')
+        .eq('user_id', 'demo_user');
+
+      // Check for actual leads in database
       const { data: leads, error: leadsError } = await supabase
         .from('leads')
         .select('id, industry')
-        .in('industry', ['eye surgery', 'dental procedures']);
+        .eq('source', 'lead_generation_agent');
 
-      if (agentError || leadsError) {
-        console.error('Error checking medical tourism status:', agentError || leadsError);
-        return { deployed_agents: 0, leads_generated: 0, mission_status: 'unknown' };
+      if (deployError || completeError || leadsError) {
+        console.error('Error checking real mission status:', deployError || completeError || leadsError);
+        return { 
+          deployed_agents: 0, 
+          completed_agents: 0, 
+          total_leads: 0, 
+          eye_surgery_leads: 0,
+          dental_leads: 0,
+          mission_status: 'error' 
+        };
       }
 
-      const deployedAgents = agentLogs?.length || 0;
-      const leadsGenerated = leads?.length || 0;
+      const deployedCount = deployedAgents?.length || 0;
+      const completedCount = completedAgents?.length || 0;
+      const totalLeads = leads?.length || 0;
+      const eyeLeads = leads?.filter(l => l.industry === 'eye surgery').length || 0;
+      const dentalLeads = leads?.filter(l => l.industry === 'dental procedures').length || 0;
       
       let missionStatus = 'not_started';
-      if (deployedAgents > 0 && leadsGenerated > 0) {
-        missionStatus = 'active_generating_leads';
-      } else if (deployedAgents > 0) {
-        missionStatus = 'agents_deployed_no_leads';
+      if (deployedCount > 0 && totalLeads > 0) {
+        missionStatus = 'active_generating_real_leads';
+      } else if (deployedCount > 0) {
+        missionStatus = 'agents_deployed_working';
       }
 
-      console.log(`Medical Tourism Status: ${deployedAgents} agents, ${leadsGenerated} leads, status: ${missionStatus}`);
+      console.log(`Real Mission Status: ${deployedCount} deployed, ${completedCount} completed, ${totalLeads} real leads`);
 
       return {
-        deployed_agents: deployedAgents,
-        leads_generated: leadsGenerated,
+        deployed_agents: deployedCount,
+        completed_agents: completedCount,
+        total_leads: totalLeads,
+        eye_surgery_leads: eyeLeads,
+        dental_leads: dentalLeads,
         mission_status: missionStatus
       };
     } catch (error) {
-      console.error('Failed to check medical tourism deployment:', error);
-      return { deployed_agents: 0, leads_generated: 0, mission_status: 'error' };
+      console.error('Failed to check real medical tourism activity:', error);
+      return { 
+        deployed_agents: 0, 
+        completed_agents: 0, 
+        total_leads: 0, 
+        eye_surgery_leads: 0,
+        dental_leads: 0,
+        mission_status: 'error' 
+      };
     }
   }
 
