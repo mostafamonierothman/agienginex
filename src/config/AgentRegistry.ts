@@ -1,3 +1,4 @@
+
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { ResearchAgent } from '@/agents/ResearchAgent';
 import { LearningAgentV2 } from '@/agents/LearningAgentV2';
@@ -17,8 +18,8 @@ import { EnhancedCollaborationAgent, EnhancedCollaborationAgentRunner } from '@/
 import { SystemContextAgent, SystemContextAgentRunner } from '@/agents/SystemContextAgent';
 import { SelfImprovementAgent, SelfImprovementAgentRunner } from '@/agents/SelfImprovementAgent';
 import { ExecutiveAgent, ExecutiveAgentRunner } from '@/agents/ExecutiveAgent';
-import { ChatProcessorAgent, ChatProcessorAgentRunner } from '@/agents/ChatProcessorAgent';
-import { LLMExecutiveAgent, LLMExecutiveAgentRunner } from '@/agents/LLMExecutiveAgent';
+import { ChatProcessorAgentRunner } from '../server/agents/ChatProcessorAgent';
+import { LLMExecutiveAgentRunner } from '../server/agents/LLMExecutiveAgent';
 import { LLMLearningAgent, LLMLearningAgentRunner } from '@/agents/LLMLearningAgent';
 
 export interface AgentDefinition {
