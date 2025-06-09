@@ -1,4 +1,3 @@
-
 import { FactoryAgent } from '@/agents/FactoryAgent';
 import { ResearchAgent } from '@/agents/ResearchAgent';
 import { LearningAgentV2 } from '@/agents/LearningAgentV2';
@@ -6,7 +5,7 @@ import { CriticAgent } from '@/agents/CriticAgent';
 import { SupervisorAgent } from '@/agents/SupervisorAgent';
 import { LLMAgent } from '@/agents/LLMAgent';
 import { CoordinationAgent } from '@/agents/CoordinationAgent';
-import { MemoryAgent } from '@/agents/MemoryAgent';
+import { MemoryAgentRunner } from '@/agents/MemoryAgent';
 import { StrategicAgent } from '@/agents/StrategicAgent';
 import { OpportunityAgent } from '@/agents/OpportunityAgent';
 import { EvolutionAgent } from '@/agents/EvolutionAgent';
@@ -59,7 +58,7 @@ export class ParallelFarm {
         this.runAgentSafely('ResearchAgent', ResearchAgent, context),
         this.runAgentSafely('OpportunityAgent', OpportunityAgent, context),
         this.runAgentSafely('LearningAgentV2', LearningAgentV2, context),
-        this.runAgentSafely('MemoryAgent', MemoryAgent, context),
+        this.runAgentSafely('MemoryAgent', MemoryAgentRunner, context),
         this.runAgentSafely('LLMAgent', LLMAgent, { ...context, input: { auto_select: true, complexity: 'medium' } }),
         this.runAgentSafely('EvolutionAgent', EvolutionAgent, context),
         this.runAgentSafely('CollaborationAgent', CollaborationAgent, context),

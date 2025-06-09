@@ -1,4 +1,3 @@
-
 import { FactoryAgent } from '@/agents/FactoryAgent';
 import { ResearchAgent } from '@/agents/ResearchAgent';
 import { LearningAgentV2 } from '@/agents/LearningAgentV2';
@@ -6,7 +5,7 @@ import { CriticAgent } from '@/agents/CriticAgent';
 import { SupervisorAgent } from '@/agents/SupervisorAgent';
 import { LLMAgent } from '@/agents/LLMAgent';
 import { CoordinationAgent } from '@/agents/CoordinationAgent';
-import { MemoryAgent } from '@/agents/MemoryAgent';
+import { MemoryAgentRunner } from '@/agents/MemoryAgent';
 import { StrategicAgent } from '@/agents/StrategicAgent';
 import { OpportunityAgent } from '@/agents/OpportunityAgent';
 import { EvolutionAgent } from '@/agents/EvolutionAgent';
@@ -70,7 +69,7 @@ export class EnhancedAutonomousLoop {
         { name: 'ResearchAgent', runner: ResearchAgent },
         { name: 'OpportunityAgent', runner: OpportunityAgent },
         { name: 'LearningAgentV2', runner: LearningAgentV2 },
-        { name: 'MemoryAgent', runner: MemoryAgent },
+        { name: 'MemoryAgent', runner: MemoryAgentRunner },
         { name: 'LLMAgent', runner: LLMAgent },
         { name: 'EvolutionAgent', runner: EvolutionAgent },
         { name: 'CollaborationAgent', runner: CollaborationAgent },

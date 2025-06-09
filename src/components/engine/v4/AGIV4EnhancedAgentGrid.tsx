@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +13,17 @@ const AGIV4EnhancedAgentGrid = () => {
   const [systemStatus, setSystemStatus] = useState({ isRunning: false, cycleCount: 0, totalAgents: 20 });
 
   useEffect(() => {
-    setAgents(agentRegistry.getAllAgents());
+    // Map AgentDefinition to RegisteredAgent
+    const mappedAgents: RegisteredAgent[] = agentRegistry.getAllAgents().map(agent => ({
+      name: agent.name,
+      status: 'idle',
+      lastAction: 'none',
+      category: agent.category,
+      description: agent.description,
+      version: agent.version,
+      runner: agent.runner
+    }));
+    setAgents(mappedAgents);
     
     // Update system status every 2 seconds
     const interval = setInterval(() => {

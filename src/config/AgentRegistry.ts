@@ -248,6 +248,12 @@ const getRandomAgent = () => {
   return agentDefinitions[randomKey];
 };
 
+// Helper function to run a random agent
+const runRandomAgent = async (context: AgentContext): Promise<AgentResponse> => {
+  const randomAgent = getRandomAgent();
+  return await randomAgent.runner(context);
+};
+
 // Export the registry object with all methods
 export const agentRegistry = {
   ...agentDefinitions,
@@ -256,7 +262,8 @@ export const agentRegistry = {
   getAgentByName,
   getSystemStatus,
   runAgent,
-  getRandomAgent
+  getRandomAgent,
+  runRandomAgent
 };
 
 // Export types needed by other components
