@@ -38,7 +38,6 @@ ${contextResponse.data?.contextSummary || 'No context available'}
         success: true,
         message: `🎯 ExecutiveAgent: ${llmResponse}`,
         data: { plan: llmResponse, goal },
-        output: llmResponse,
         timestamp: new Date().toISOString()
       };
     } catch (error) {

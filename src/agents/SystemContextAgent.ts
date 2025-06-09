@@ -42,7 +42,6 @@ ${liveChatMessages.map(m => `${m.timestamp}: ${m.agent} - ${m.message.substring(
         success: true,
         message: `🧠 SystemContextAgent: Loaded context with ${chatHistory?.length || 0} chat messages and ${systemActivity?.length || 0} system activities`,
         data: { contextSummary },
-        output: contextSummary,
         timestamp: new Date().toISOString()
       };
     } catch (error) {

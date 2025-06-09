@@ -36,7 +36,6 @@ ${contextResponse.data?.contextSummary || 'No context available'}
         success: true,
         message: `🔧 SelfImprovementAgent: ${llmResponse}`,
         data: { improvements: llmResponse },
-        output: llmResponse,
         timestamp: new Date().toISOString()
       };
     } catch (error) {
