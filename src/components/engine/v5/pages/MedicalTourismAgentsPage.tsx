@@ -7,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { Eye, Heart, Users, Target, Clock, CheckCircle, Activity, AlertCircle, Zap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { ExecutionAgentRunner } from '@/agents/ExecutionAgent';
+import { MedicalTourismLeadFactoryRunner } from '@/agents/MedicalTourismLeadFactory';
 import { toast } from '@/hooks/use-toast';
 
 interface AgentStatus {
@@ -121,27 +121,38 @@ const MedicalTourismAgentsPage = () => {
 
   useEffect(() => {
     loadAgentStatus();
-    const interval = setInterval(loadAgentStatus, 5000);
+    const interval = setInterval(loadAgentStatus, 10000); // Reduced from 5s to 10s
     return () => clearInterval(interval);
   }, []);
 
   const deployAgents = async () => {
     setIsLoading(true);
     try {
-      const result = await ExecutionAgentRunner({
+      toast({
+        title: "🚨 Emergency Deployment Starting",
+        description: "50 specialized agents deploying for medical tourism leads...",
+      });
+
+      // Call the MedicalTourismLeadFactory directly instead of ExecutionAgent
+      const result = await MedicalTourismLeadFactoryRunner({
         input: { 
-          task: "Generate 50 agents to find medical tourism leads for 100,000 total leads targeting Europe", 
-          mode: 'real_execution' 
-        },
-        user_id: 'medical_tourism_monitor'
+          emergencyMode: true,
+          targetLeads: 100000,
+          agentCount: 50,
+          specialties: ['eye_surgery', 'dental_procedures'],
+          targetRegion: 'Europe'
+        }
       });
 
       if (result.success) {
         toast({
-          title: "🚨 Emergency Deployment Started",
-          description: "50 specialized agents are being deployed for medical tourism lead generation",
+          title: "✅ Deployment Complete",
+          description: "50 agents deployed successfully. Leads generating in background.",
         });
-        setMissionStatus('deploying');
+        setMissionStatus('active');
+        
+        // Refresh agent status immediately
+        setTimeout(loadAgentStatus, 2000);
       } else {
         toast({
           title: "❌ Deployment Failed",
@@ -150,6 +161,7 @@ const MedicalTourismAgentsPage = () => {
         });
       }
     } catch (error) {
+      console.error('Deployment error:', error);
       toast({
         title: "❌ Deployment Error",
         description: error instanceof Error ? error.message : 'Unknown error',

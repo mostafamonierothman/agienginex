@@ -26,12 +26,12 @@ const ExecutionLog = () => {
     try {
       setIsLoading(true);
       
-      // Load from supervisor_queue table instead of non-existent execution_history
+      // Load from supervisor_queue table - only recent entries to avoid loading issues
       const { data, error } = await supabase
         .from('supervisor_queue')
         .select('*')
         .order('timestamp', { ascending: false })
-        .limit(20);
+        .limit(10); // Reduced limit to avoid loading issues
 
       if (error) {
         console.error('Failed to load execution history:', error);
@@ -40,15 +40,24 @@ const ExecutionLog = () => {
       }
 
       // Transform supervisor_queue data to execution format
-      const transformedData = data?.map(item => ({
-        type: item.action || 'unknown',
-        description: item.output || item.action || 'No description',
-        status: item.status || 'completed',
-        revenue_potential: 0,
-        actual_revenue: 0,
-        timestamp: item.timestamp || new Date().toISOString(),
-        result: item.input ? JSON.parse(item.input || '{}') : null
-      })) || [];
+      const transformedData = data?.map(item => {
+        let parsedInput = {};
+        try {
+          parsedInput = JSON.parse(item.input || '{}');
+        } catch (e) {
+          parsedInput = {};
+        }
+
+        return {
+          type: item.action || 'unknown',
+          description: item.output || item.action || 'No description',
+          status: item.status || 'completed',
+          revenue_potential: (parsedInput as any).revenue_potential || 0,
+          actual_revenue: (parsedInput as any).actual_revenue || 0,
+          timestamp: item.timestamp || new Date().toISOString(),
+          result: parsedInput
+        };
+      }) || [];
 
       setExecutions(transformedData);
       setLastRefresh(new Date());
@@ -63,8 +72,8 @@ const ExecutionLog = () => {
   useEffect(() => {
     loadExecutionHistory();
     
-    // Refresh every 10 seconds instead of 5 to reduce loading
-    const interval = setInterval(loadExecutionHistory, 10000);
+    // Refresh every 15 seconds to reduce server load
+    const interval = setInterval(loadExecutionHistory, 15000);
     return () => clearInterval(interval);
   }, []);
 
@@ -106,7 +115,7 @@ const ExecutionLog = () => {
             <FileText className="h-5 w-5 text-blue-400" />
             Real Business Execution Log
             <Badge variant="outline" className="text-blue-400 border-blue-400">
-              {executions.length} tasks
+              {executions.length} recent
             </Badge>
           </CardTitle>
           <Button
@@ -127,13 +136,13 @@ const ExecutionLog = () => {
           {isLoading && executions.length === 0 ? (
             <div className="text-center text-muted-foreground py-8">
               <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
-              Loading execution history...
+              Loading recent executions...
             </div>
           ) : executions.length === 0 ? (
             <div className="text-center text-muted-foreground py-8">
               <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No business tasks executed yet.</p>
-              <p className="text-sm mt-1">Start executing real business tasks to see them here!</p>
+              <p>No recent business tasks found.</p>
+              <p className="text-sm mt-1">Execute tasks to see them here!</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -176,20 +185,6 @@ const ExecutionLog = () => {
                       </span>
                     </div>
                   </div>
-
-                  {execution.result && execution.result.next_steps && (
-                    <div className="mt-3 pt-2 border-t border-border/50">
-                      <div className="text-xs text-muted-foreground mb-1">Next Steps:</div>
-                      <ul className="text-xs text-foreground space-y-1">
-                        {execution.result.next_steps.slice(0, 3).map((step: string, stepIndex: number) => (
-                          <li key={stepIndex} className="flex items-start gap-1">
-                            <span className="text-primary">•</span>
-                            <span>{step}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
