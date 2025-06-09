@@ -1,4 +1,3 @@
-
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
 import { realBusinessExecutor } from '@/agents/RealBusinessExecutor';
@@ -9,6 +8,35 @@ export class ExecutionAgent {
       const { task, mode } = context.input || {};
       
       await sendChatUpdate('⚡ ExecutionAgent: Analyzing task for REAL business execution...');
+
+      // Check for emergency medical tourism lead generation request
+      if (task?.toLowerCase().includes('50 agents') && 
+          (task?.toLowerCase().includes('medical tourism') || 
+           task?.toLowerCase().includes('lasek') || 
+           task?.toLowerCase().includes('veneers'))) {
+        
+        await sendChatUpdate('🚨 EMERGENCY MEDICAL TOURISM DEPLOYMENT DETECTED');
+        
+        // Import and run emergency deployer
+        const { EmergencyAgentDeployerRunner } = await import('./EmergencyAgentDeployer');
+        const deploymentResult = await EmergencyAgentDeployerRunner({
+          input: {
+            targetLeads: 100000,
+            agentCount: 50,
+            specialties: ['eye_surgery', 'dental_procedures'],
+            targetRegion: 'Europe',
+            emergencyMode: true
+          }
+        });
+        
+        if (deploymentResult.success) {
+          await sendChatUpdate('✅ Emergency deployment completed - 50 agents deployed');
+          await sendChatUpdate('📊 Targeting 100,000 European medical tourism leads');
+          await sendChatUpdate('🎯 Ready for email outreach to first 50 leads in database');
+        }
+        
+        return deploymentResult;
+      }
 
       // Determine task type and parameters
       const taskType = this.determineTaskType(task);

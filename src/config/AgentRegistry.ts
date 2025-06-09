@@ -1,5 +1,3 @@
-
-
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { ResearchAgent } from '@/agents/ResearchAgent';
 import { LearningAgentV2 } from '@/agents/LearningAgentV2';
@@ -20,6 +18,8 @@ import { SystemContextAgent, SystemContextAgentRunner } from '@/agents/SystemCon
 import { SelfImprovementAgent, SelfImprovementAgentRunner } from '@/agents/SelfImprovementAgent';
 import { ExecutiveAgent, ExecutiveAgentRunner } from '@/agents/ExecutiveAgent';
 import { LLMLearningAgent, LLMLearningAgentRunner } from '@/agents/LLMLearningAgent';
+import { MedicalTourismLeadFactoryRunner } from '@/agents/MedicalTourismLeadFactory';
+import { EmergencyAgentDeployerRunner } from '@/agents/EmergencyAgentDeployer';
 
 export interface AgentDefinition {
   name: string;
@@ -198,6 +198,22 @@ const agentDefinitions: { [key: string]: AgentDefinition } = {
     paramSchema: [
       { name: 'agentResults', placeholder: 'Performance data', type: 'text' }
     ]
+  },
+  medical_tourism_lead_factory: {
+    name: "MedicalTourismLeadFactory",
+    description: "Emergency deployment of 50 agents for medical tourism lead generation",
+    category: "Emergency",
+    version: "V8",
+    runner: MedicalTourismLeadFactoryRunner,
+    paramSchema: []
+  },
+  emergency_agent_deployer: {
+    name: "EmergencyAgentDeployer", 
+    description: "Deploys emergency squads of specialized agents for critical tasks",
+    category: "Emergency",
+    version: "V8",
+    runner: EmergencyAgentDeployerRunner,
+    paramSchema: []
   }
 };
 
@@ -205,11 +221,12 @@ const agentList: AgentDefinition[] = Object.values(agentDefinitions);
 
 const agentCategories = [
   "Core",
-  "Coordination",
+  "Coordination", 
   "Strategic",
   "Tool",
   "Enhanced",
-  "V7"
+  "V7",
+  "Emergency"
 ];
 
 const getAgentsByCategory = (category: string) => {
@@ -232,6 +249,7 @@ const getSystemStatus = () => {
   const toolAgents = getAgentsByCategory("Tool").length;
   const enhancedAgents = getAgentsByCategory("Enhanced").length;
   const v7Agents = getAgentsByCategory("V7").length;
+  const emergencyAgents = getAgentsByCategory("Emergency").length;
 
   return {
     totalAgents,
@@ -241,6 +259,7 @@ const getSystemStatus = () => {
     toolAgents,
     enhancedAgents,
     v7Agents,
+    emergencyAgents,
     version: 'V7'
   };
 };
