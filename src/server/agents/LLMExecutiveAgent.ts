@@ -3,24 +3,23 @@ import OpenAI from 'openai';
 import { AgentContext, AgentResponse } from '../../types/AgentTypes';
 import { saveChatMessage } from '../../utils/saveChatMessage';
 
-// Load environment variables
-import dotenv from 'dotenv';
-dotenv.config();
-
 export class LLMExecutiveAgent {
   async runner(context: AgentContext): Promise<AgentResponse> {
     try {
       const input = context.input || {};
 
       console.log('[LLMExecutiveAgent] Processing strategic decision with GPT-4o...');
-      console.log('[LLMExecutiveAgent] API Key available:', !!process.env.OPENAI_API_KEY);
 
+      // Use environment variables without dotenv (works in browser)
+      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+      
       const openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY
+        apiKey: apiKey,
+        dangerouslyAllowBrowser: true
       });
 
-      if (!openai.apiKey) {
-        throw new Error('OpenAI API key not configured. Please set OPENAI_API_KEY or VITE_OPENAI_API_KEY.');
+      if (!apiKey) {
+        throw new Error('OpenAI API key not configured. Please set VITE_OPENAI_API_KEY environment variable.');
       }
 
       const prompt = `You are the ExecutiveAgent of AGIengineX, an advanced multi-agent system. Your job is to make strategic decisions and provide executive-level guidance.
