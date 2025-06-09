@@ -39,7 +39,7 @@ export class TrillionPathEngine {
     femtosecondCycles: 0,
     virtualizedAgents: 20, // More agents for acceleration
     executionSuccesses: 0,
-    realRevenue: 0,
+    realRevenue: 0, // Start at $0 as requested
     activeConversions: 0,
     opportunityMultiplier: 1.0
   };

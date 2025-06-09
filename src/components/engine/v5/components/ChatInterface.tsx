@@ -90,74 +90,80 @@ const ChatInterface = ({ onSendMessage }: ChatInterfaceProps) => {
   };
 
   return (
-    <Card className="bg-slate-800/50 border-slate-600/30">
-      <CardContent className="p-3 md:p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <Brain className="h-5 w-5 text-purple-400" />
-          <span className="text-sm text-purple-400 font-medium">
-            ⚡ Immediate Action AGI - Sub-Second Response & Execution
-          </span>
-          <span className="text-xs text-green-400 bg-green-900/30 px-2 py-1 rounded">
-            {activeAgentCount} Active Agents
-          </span>
-        </div>
-        
-        {executingActions.length > 0 && (
-          <div className="mb-3 p-2 bg-purple-900/30 rounded border border-purple-500/30">
-            <div className="flex items-center gap-2 mb-1">
-              <Zap className="h-4 w-4 text-yellow-400 animate-pulse" />
-              <span className="text-xs text-yellow-400 font-medium">EXECUTING ACTIONS</span>
-            </div>
-            {executingActions.map((action, index) => (
-              <div key={index} className="text-xs text-gray-300 flex items-center gap-1">
-                <Target className="h-3 w-3 text-green-400" />
-                {action}
+    <div className="w-full max-w-full">
+      <Card className="bg-card border-border">
+        <CardContent className="p-3 md:p-4">
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
+            <Brain className="h-5 w-5 text-primary flex-shrink-0" />
+            <span className="text-xs md:text-sm text-primary font-medium break-words">
+              ⚡ Immediate Action AGI - Sub-Second Response & Execution
+            </span>
+            <span className="text-xs text-green-400 bg-green-900/30 px-2 py-1 rounded flex-shrink-0">
+              {activeAgentCount} Active Agents
+            </span>
+          </div>
+          
+          {executingActions.length > 0 && (
+            <div className="mb-3 p-2 bg-purple-900/30 rounded border border-purple-500/30">
+              <div className="flex items-center gap-2 mb-1">
+                <Zap className="h-4 w-4 text-yellow-400 animate-pulse flex-shrink-0" />
+                <span className="text-xs text-yellow-400 font-medium">EXECUTING ACTIONS</span>
               </div>
-            ))}
+              <div className="space-y-1">
+                {executingActions.map((action, index) => (
+                  <div key={index} className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Target className="h-3 w-3 text-green-400 flex-shrink-0" />
+                    <span className="break-words">{action}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Input
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder={isProcessing ? "⚡ Executing immediate actions..." : "Request income generation, error elimination, or agent scaling..."}
+                disabled={isProcessing}
+                className="flex-1 bg-background border-border text-foreground text-sm md:text-base min-h-[44px]"
+              />
+              <div className="flex gap-2 sm:gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-border text-foreground hover:bg-muted min-h-[44px] px-3"
+                  disabled={isProcessing}
+                >
+                  <Mic className="h-4 w-4" />
+                  <span className="sr-only">Voice input</span>
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={isProcessing || !message.trim()}
+                  className="bg-primary hover:bg-primary/90 disabled:bg-primary/50 min-h-[44px] px-4"
+                >
+                  <Send className="h-4 w-4" />
+                  <span className="sr-only">Send message</span>
+                </Button>
+              </div>
+            </div>
+          </form>
+          
+          {isProcessing && (
+            <div className="mt-2 text-xs md:text-sm text-primary flex items-center gap-2">
+              <Zap className="h-4 w-4 animate-pulse flex-shrink-0" />
+              <span className="break-words">⚡ Immediate Action Mode: Analyzing → Recommending → Executing within 1 second...</span>
+            </div>
+          )}
+          
+          <div className="mt-2 text-xs text-muted-foreground break-words">
+            ⚡ Sub-Second Execution: Request → Analysis → Recommendation → Immediate Action | {activeAgentCount} Agents Ready
           </div>
-        )}
-        
-        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 md:gap-3">
-          <Input
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder={isProcessing ? "⚡ Executing immediate actions..." : "Request income generation, error elimination, or agent scaling..."}
-            disabled={isProcessing}
-            className="flex-1 bg-slate-700 border-slate-600 text-white h-11 md:h-10"
-          />
-          <div className="flex gap-2 md:gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              className="border-slate-500 text-slate-200 hover:bg-slate-700 h-11 md:h-10 px-3 md:px-4"
-              disabled={isProcessing}
-            >
-              <Mic className="h-4 w-4" />
-              <span className="sr-only">Voice input</span>
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={isProcessing || !message.trim()}
-              className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 h-11 md:h-10 px-3 md:px-4"
-            >
-              <Send className="h-4 w-4" />
-              <span className="sr-only">Send message</span>
-            </Button>
-          </div>
-        </form>
-        
-        {isProcessing && (
-          <div className="mt-2 text-sm text-purple-400 flex items-center gap-2">
-            <Zap className="h-4 w-4 animate-pulse" />
-            ⚡ Immediate Action Mode: Analyzing → Recommending → Executing within 1 second...
-          </div>
-        )}
-        
-        <div className="mt-2 text-xs text-gray-400">
-          ⚡ Sub-Second Execution: Request → Analysis → Recommendation → Immediate Action | {activeAgentCount} Agents Ready
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
