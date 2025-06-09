@@ -18,6 +18,8 @@ import { SystemContextAgent, SystemContextAgentRunner } from '@/agents/SystemCon
 import { SelfImprovementAgent, SelfImprovementAgentRunner } from '@/agents/SelfImprovementAgent';
 import { ExecutiveAgent, ExecutiveAgentRunner } from '@/agents/ExecutiveAgent';
 import { ChatProcessorAgent, ChatProcessorAgentRunner } from '@/agents/ChatProcessorAgent';
+import { LLMExecutiveAgent, LLMExecutiveAgentRunner } from '@/agents/LLMExecutiveAgent';
+import { LLMLearningAgent, LLMLearningAgentRunner } from '@/agents/LLMLearningAgent';
 
 export interface AgentDefinition {
   name: string;
@@ -195,6 +197,27 @@ const agentDefinitions: { [key: string]: AgentDefinition } = {
     runner: ChatProcessorAgentRunner,
     paramSchema: [
       { name: 'message', placeholder: 'User message', type: 'text' }
+    ]
+  },
+  llm_executive_agent: {
+    name: "LLMExecutiveAgent",
+    description: "Advanced strategic decision-making using GPT-4o intelligence",
+    category: "V7",
+    version: "V7.5",
+    runner: LLMExecutiveAgentRunner,
+    paramSchema: [
+      { name: 'goal', placeholder: 'Strategic goal', type: 'text' },
+      { name: 'context', placeholder: 'Additional context', type: 'text' }
+    ]
+  },
+  llm_learning_agent: {
+    name: "LLMLearningAgent", 
+    description: "Performance analysis and system optimization using GPT-4o",
+    category: "V7",
+    version: "V7.5",
+    runner: LLMLearningAgentRunner,
+    paramSchema: [
+      { name: 'agentResults', placeholder: 'Performance data', type: 'text' }
     ]
   }
 };
