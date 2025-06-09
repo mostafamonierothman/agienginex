@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Brain, MessageCircle, Database, Users, BarChart3, Settings, Logs, Target, Eye, Tooth } from 'lucide-react';
+import { Brain, MessageCircle, Database, Users, BarChart3, Settings, Logs, Target, Eye, Heart } from 'lucide-react';
 
 // Import pages
 import ChatPage from './pages/ChatPage';

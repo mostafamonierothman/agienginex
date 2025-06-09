@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
-import { Eye, Tooth, Users, Target, Clock, CheckCircle, Activity, AlertCircle, Zap } from 'lucide-react';
+import { Eye, Heart, Users, Target, Clock, CheckCircle, Activity, AlertCircle, Zap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { ExecutionAgentRunner } from '@/agents/ExecutionAgent';
 import { toast } from '@/hooks/use-toast';
@@ -161,7 +161,7 @@ const MedicalTourismAgentsPage = () => {
   };
 
   const getSpecialtyIcon = (specialty: string) => {
-    return specialty === 'eye_surgery' ? <Eye className="h-4 w-4" /> : <Tooth className="h-4 w-4" />;
+    return specialty === 'eye_surgery' ? <Eye className="h-4 w-4" /> : <Heart className="h-4 w-4" />;
   };
 
   const getStatusIcon = (status: string) => {
@@ -319,7 +319,7 @@ const MedicalTourismAgentsPage = () => {
         <Card className="bg-slate-800/50 border-slate-600/30">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
-              <Tooth className="h-5 w-5 text-green-400" />
+              <Heart className="h-5 w-5 text-green-400" />
               Dental Procedure Specialists ({dentalAgents.length}/25)
             </CardTitle>
           </CardHeader>
@@ -352,7 +352,7 @@ const MedicalTourismAgentsPage = () => {
                 ))}
                 {dentalAgents.length === 0 && (
                   <div className="text-center text-gray-400 py-8">
-                    <Tooth className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <Heart className="h-8 w-8 mx-auto mb-2 opacity-50" />
                     <p>No dental agents deployed yet</p>
                   </div>
                 )}
