@@ -27,16 +27,7 @@ const EngineXDashboard = () => {
           lastUpdate={lastUpdate}
         />
 
-        <DashboardTabs
-          engineState={engineState}
-          apiUrl={apiUrl}
-          setApiUrl={setApiUrl}
-          apiKey={apiKey}
-          setApiKey={setApiKey}
-          taskName={taskName}
-          setTaskName={setTaskName}
-          triggerTask={triggerTask}
-        />
+        <DashboardTabs />
       </div>
     </div>
   );

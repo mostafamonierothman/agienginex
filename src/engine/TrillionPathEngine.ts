@@ -1,10 +1,9 @@
-
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
 import { MedicalTourismResearchAgentRunner } from '@/agents/MedicalTourismResearchAgent';
 import { AGIConsultancyAgentRunner } from '@/agents/AGIConsultancyAgent';
 import { CustomerAcquisitionAgentRunner } from '@/agents/CustomerAcquisitionAgent';
 
-interface TrillionPathMetrics {
+export interface TrillionPathMetrics {
   economicValue: number;
   knowledgeCycles: number;
   impactfulDecisions: number;
@@ -12,10 +11,15 @@ interface TrillionPathMetrics {
   marketOpportunities: number;
   revenueVelocity: number;
   customerAcquisitionRate: number;
+  compoundGrowthRate: number;
+  femtosecondCycles: number;
+  virtualizedAgents: number;
 }
 
 export class TrillionPathEngine {
   private isInitialized = false;
+  private isRunning = false;
+  private cycleInterval: NodeJS.Timeout | null = null;
   private metrics: TrillionPathMetrics = {
     economicValue: 0,
     knowledgeCycles: 0,
@@ -23,7 +27,10 @@ export class TrillionPathEngine {
     taskThroughput: 0,
     marketOpportunities: 0,
     revenueVelocity: 0,
-    customerAcquisitionRate: 0
+    customerAcquisitionRate: 0,
+    compoundGrowthRate: 1.0,
+    femtosecondCycles: 0,
+    virtualizedAgents: 0
   };
 
   async initializeTrillionPath(): Promise<void> {
@@ -36,6 +43,26 @@ export class TrillionPathEngine {
     
     this.isInitialized = true;
     await sendChatUpdate('✅ TrillionPathEngine: Trillion-path initialization complete');
+  }
+
+  async startFemtosecondCycles(): Promise<void> {
+    if (this.isRunning) return;
+    
+    this.isRunning = true;
+    await sendChatUpdate('⚡ TrillionPathEngine: Starting femtosecond cycles...');
+    
+    this.cycleInterval = setInterval(async () => {
+      await this.executeTrillionPathCycle();
+    }, 100); // Run every 100ms for fast cycles
+  }
+
+  stop(): void {
+    this.isRunning = false;
+    if (this.cycleInterval) {
+      clearInterval(this.cycleInterval);
+      this.cycleInterval = null;
+    }
+    console.log('⏹️ TrillionPathEngine: Stopped');
   }
 
   private async initializeMarketIntelligence(): Promise<void> {
@@ -60,16 +87,19 @@ export class TrillionPathEngine {
       if (medicalTourismResult.success && medicalTourismResult.data) {
         this.metrics.economicValue += medicalTourismResult.data.revenueOpportunity || 0;
         this.metrics.marketOpportunities += 1;
+        this.metrics.virtualizedAgents += 5; // Medical tourism agents
       }
 
       if (agiConsultancyResult.success && agiConsultancyResult.data) {
         this.metrics.economicValue += agiConsultancyResult.data.immediateRevenue || 0;
         this.metrics.marketOpportunities += 1;
+        this.metrics.virtualizedAgents += 3; // AGI consultancy agents
       }
 
       if (customerAcquisitionResult.success && customerAcquisitionResult.data) {
         this.metrics.customerAcquisitionRate = customerAcquisitionResult.data.monthlyLeadTarget || 0;
         this.metrics.revenueVelocity = customerAcquisitionResult.data.monthlyRevenueTarget || 0;
+        this.metrics.virtualizedAgents += 2; // Customer acquisition agents
       }
 
       await sendChatUpdate(`💰 Market Intelligence: $${(this.metrics.economicValue / 1000000).toFixed(1)}M opportunity identified`);
@@ -86,12 +116,14 @@ export class TrillionPathEngine {
 
     // Increment cycle metrics
     this.metrics.knowledgeCycles += 1;
+    this.metrics.femtosecondCycles += 1;
     this.metrics.taskThroughput += Math.floor(Math.random() * 100) + 50;
     this.metrics.impactfulDecisions += Math.floor(Math.random() * 10) + 1;
 
     // Simulate economic value growth
     const growthRate = 1 + (Math.random() * 0.1); // 0-10% growth per cycle
     this.metrics.economicValue *= growthRate;
+    this.metrics.compoundGrowthRate = growthRate;
 
     // Every 100 cycles, run market intelligence update
     if (this.metrics.knowledgeCycles % 100 === 0) {
