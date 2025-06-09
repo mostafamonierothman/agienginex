@@ -182,8 +182,8 @@ const ChatInterface = ({ className }: ChatInterfaceProps) => {
   };
 
   return (
-    <Card className={`flex flex-col h-full ${className}`}>
-      <CardHeader className="pb-3">
+    <Card className={`flex flex-col ${className}`}>
+      <CardHeader className="pb-3 flex-shrink-0">
         <div className="flex items-center justify-between">
           <CardTitle className="text-foreground flex items-center gap-2 text-sm md:text-lg">
             <Bot className="h-5 w-5 text-primary" />
@@ -200,88 +200,92 @@ const ChatInterface = ({ className }: ChatInterfaceProps) => {
         </div>
       </CardHeader>
       
-      <CardContent className="flex-1 flex flex-col p-3 md:p-6 space-y-4">
+      <CardContent className="flex-1 flex flex-col p-3 md:p-6 space-y-4 min-h-0 overflow-hidden">
         {/* Settings Panel */}
         {showSettings && (
-          <OpenAIKeyConfig />
+          <div className="flex-shrink-0">
+            <OpenAIKeyConfig />
+          </div>
         )}
 
         {/* Messages Area */}
-        <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
-          <div className="space-y-3 pr-3">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex gap-2 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                {message.type !== 'user' && (
-                  <div className="flex-shrink-0">
-                    {message.type === 'system' ? (
-                      <Zap className="h-6 w-6 text-orange-400 mt-1" />
-                    ) : (
-                      <Bot className="h-6 w-6 text-primary mt-1" />
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <ScrollArea className="h-full" ref={scrollAreaRef}>
+            <div className="space-y-3 pr-3">
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex gap-2 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  {message.type !== 'user' && (
+                    <div className="flex-shrink-0">
+                      {message.type === 'system' ? (
+                        <Zap className="h-6 w-6 text-orange-400 mt-1" />
+                      ) : (
+                        <Bot className="h-6 w-6 text-primary mt-1" />
+                      )}
+                    </div>
+                  )}
+                  
+                  <div
+                    className={`max-w-[85%] sm:max-w-[70%] p-3 rounded-lg text-sm break-words ${
+                      message.type === 'user'
+                        ? 'bg-primary text-primary-foreground ml-auto'
+                        : message.type === 'system'
+                        ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200 border border-orange-200 dark:border-orange-800'
+                        : 'bg-muted text-foreground'
+                    }`}
+                  >
+                    <div className="whitespace-pre-wrap break-words overflow-wrap-anywhere">{message.content}</div>
+                    
+                    {message.metadata && (
+                      <div className="mt-2 pt-2 border-t border-current/20 text-xs opacity-75">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {message.metadata.revenue && message.metadata.revenue > 0 && (
+                            <span className="flex items-center gap-1 text-green-600">
+                              <DollarSign className="h-3 w-3" />
+                              +${message.metadata.revenue.toLocaleString()} REAL
+                            </span>
+                          )}
+                          {message.metadata.taskType && (
+                            <span className="flex items-center gap-1">
+                              <Target className="h-3 w-3" />
+                              {message.metadata.taskType}
+                            </span>
+                          )}
+                          <span className="text-xs">
+                            {message.timestamp.toLocaleTimeString()}
+                          </span>
+                        </div>
+                      </div>
                     )}
                   </div>
-                )}
-                
-                <div
-                  className={`max-w-[85%] sm:max-w-[70%] p-3 rounded-lg text-sm ${
-                    message.type === 'user'
-                      ? 'bg-primary text-primary-foreground ml-auto'
-                      : message.type === 'system'
-                      ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200 border border-orange-200 dark:border-orange-800'
-                      : 'bg-muted text-foreground'
-                  }`}
-                >
-                  <div className="whitespace-pre-wrap break-words">{message.content}</div>
                   
-                  {message.metadata && (
-                    <div className="mt-2 pt-2 border-t border-current/20 text-xs opacity-75">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {message.metadata.revenue && message.metadata.revenue > 0 && (
-                          <span className="flex items-center gap-1 text-green-600">
-                            <DollarSign className="h-3 w-3" />
-                            +${message.metadata.revenue.toLocaleString()} REAL
-                          </span>
-                        )}
-                        {message.metadata.taskType && (
-                          <span className="flex items-center gap-1">
-                            <Target className="h-3 w-3" />
-                            {message.metadata.taskType}
-                          </span>
-                        )}
-                        <span className="text-xs">
-                          {message.timestamp.toLocaleTimeString()}
-                        </span>
-                      </div>
+                  {message.type === 'user' && (
+                    <div className="flex-shrink-0">
+                      <User className="h-6 w-6 text-primary mt-1" />
                     </div>
                   )}
                 </div>
-                
-                {message.type === 'user' && (
-                  <div className="flex-shrink-0">
-                    <User className="h-6 w-6 text-primary mt-1" />
-                  </div>
-                )}
-              </div>
-            ))}
-            
-            {isLoading && (
-              <div className="flex gap-2 justify-start">
-                <Bot className="h-6 w-6 text-primary mt-1" />
-                <div className="bg-muted text-foreground p-3 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>
-                    <span className="text-sm">Executing real business task...</span>
+              ))}
+              
+              {isLoading && (
+                <div className="flex gap-2 justify-start">
+                  <Bot className="h-6 w-6 text-primary mt-1" />
+                  <div className="bg-muted text-foreground p-3 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>
+                      <span className="text-sm">Executing real business task...</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
-        </ScrollArea>
+              )}
+            </div>
+          </ScrollArea>
+        </div>
 
         {/* Suggested Actions */}
-        <div className="space-y-2">
+        <div className="space-y-2 flex-shrink-0">
           <div className="text-xs text-muted-foreground">Real Business Tasks:</div>
           <div className="flex flex-wrap gap-2">
             {suggestedActions.map((action, index) => (
@@ -300,7 +304,7 @@ const ChatInterface = ({ className }: ChatInterfaceProps) => {
         </div>
 
         {/* Input Area */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-shrink-0">
           <Input
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
