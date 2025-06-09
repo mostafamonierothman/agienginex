@@ -18,7 +18,8 @@ Goal: Determine the next strategic action for optimal system performance
 
 Provide a clear, actionable strategic decision:`;
 
-      const decision = await llmService.fetchLLMResponse(prompt, 'gpt-4o');
+      const decisionResponse = await llmService.fetchLLMResponse(prompt, 'gpt-4o');
+      const decision = decisionResponse.content;
 
       await saveChatMessage('LLMExecutiveAgent', decision);
 

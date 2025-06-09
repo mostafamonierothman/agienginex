@@ -1,3 +1,4 @@
+
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { llmService } from '@/utils/llm';
 import { saveChatMessage } from '@/utils/saveChatMessage';
@@ -38,7 +39,8 @@ Tasks:
 
 Provide detailed analysis and actionable recommendations:`;
 
-      const analysis = await llmService.fetchLLMResponse(prompt, 'gpt-4o');
+      const analysisResponse = await llmService.fetchLLMResponse(prompt, 'gpt-4o');
+      const analysis = analysisResponse.content;
 
       await saveChatMessage('LLMLearningAgent', analysis);
 
