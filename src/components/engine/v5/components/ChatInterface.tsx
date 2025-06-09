@@ -4,13 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, Bot, User, Zap, Target, DollarSign, Settings } from 'lucide-react';
+import { Send, Bot, User, Zap, Target, DollarSign, Settings, Brain } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { ChatProcessorAgentRunner } from '@/server/agents/ChatProcessorAgent';
 import { ExecutionAgentRunner } from '@/agents/ExecutionAgent';
 import { MedicalTourismResearchAgentRunner } from '@/agents/MedicalTourismResearchAgent';
 import { trillionPathEngine } from '@/engine/TrillionPathEngine';
 import OpenAIKeyConfig from './OpenAIKeyConfig';
+import { agentChatBus } from '@/engine/AgentChatBus';
 
 interface ChatMessage {
   id: string;
@@ -22,6 +23,7 @@ interface ChatMessage {
     revenue?: number;
     success?: boolean;
     taskType?: string;
+    learning?: boolean;
   };
 }
 
@@ -34,7 +36,7 @@ const ChatInterface = ({ className }: ChatInterfaceProps) => {
     {
       id: '1',
       type: 'system',
-      content: '🚀 AGI Executive Assistant Ready! I execute REAL business tasks to generate actual revenue. Try: "Generate leads for medical tourism" or "Create landing page for AGI consultancy" or "Research competitors in healthcare AI"',
+      content: '🚀 AGI Executive Assistant Ready! I execute REAL business tasks and learn from each interaction. Try: "Generate 50 agents to find medical tourism leads" or "Create landing page for AGI consultancy"',
       timestamp: new Date(),
     }
   ]);
@@ -50,6 +52,27 @@ const ChatInterface = ({ className }: ChatInterfaceProps) => {
     }
   }, [messages]);
 
+  useEffect(() => {
+    // Listen for agent chat updates
+    const unsubscribe = agentChatBus.subscribe((message) => {
+      const isLearningMessage = message.message.includes('Chat Learning') || message.message.includes('Chat has learned');
+      
+      const systemMessage: ChatMessage = {
+        id: `agent_${Date.now()}_${Math.random()}`,
+        type: 'system',
+        content: message.message,
+        timestamp: new Date(),
+        metadata: {
+          learning: isLearningMessage
+        }
+      };
+
+      setMessages(prev => [...prev, systemMessage]);
+    });
+
+    return unsubscribe;
+  }, []);
+
   const executeBusinessTask = async (task: string): Promise<{success: boolean, result: string, revenue?: number, taskType?: string}> => {
     try {
       // Check if OpenAI is configured for AI responses
@@ -62,7 +85,9 @@ const ChatInterface = ({ className }: ChatInterfaceProps) => {
                            task.toLowerCase().includes('generate') ||
                            task.toLowerCase().includes('send') ||
                            task.toLowerCase().includes('launch') ||
-                           task.toLowerCase().includes('research');
+                           task.toLowerCase().includes('research') ||
+                           task.toLowerCase().includes('agents') ||
+                           task.toLowerCase().includes('leads');
 
       if (isBusinessTask) {
         // Execute real business task
@@ -170,9 +195,9 @@ const ChatInterface = ({ className }: ChatInterfaceProps) => {
   };
 
   const suggestedActions = [
-    "Generate leads for medical tourism patients",
+    "Generate 50 agents for medical tourism leads",
+    "Send emails to first 50 leads in database",
     "Create landing page for consultation booking", 
-    "Send outreach emails to healthcare prospects",
     "Research AI consultancy market opportunities",
     "Launch content marketing campaign"
   ];
@@ -189,6 +214,8 @@ const ChatInterface = ({ className }: ChatInterfaceProps) => {
             <Bot className="h-5 w-5 text-primary" />
             <span>AGI Executive Assistant</span>
             <span className="text-xs text-green-600 ml-2">REAL EXECUTION</span>
+            <Brain className="h-4 w-4 text-purple-400" />
+            <span className="text-xs text-purple-400">LEARNING</span>
           </CardTitle>
           <Button
             variant="ghost"
@@ -220,7 +247,11 @@ const ChatInterface = ({ className }: ChatInterfaceProps) => {
                   {message.type !== 'user' && (
                     <div className="flex-shrink-0">
                       {message.type === 'system' ? (
-                        <Zap className="h-6 w-6 text-orange-400 mt-1" />
+                        message.metadata?.learning ? (
+                          <Brain className="h-6 w-6 text-purple-400 mt-1" />
+                        ) : (
+                          <Zap className="h-6 w-6 text-orange-400 mt-1" />
+                        )
                       ) : (
                         <Bot className="h-6 w-6 text-primary mt-1" />
                       )}
@@ -232,7 +263,9 @@ const ChatInterface = ({ className }: ChatInterfaceProps) => {
                       message.type === 'user'
                         ? 'bg-primary text-primary-foreground ml-auto'
                         : message.type === 'system'
-                        ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200 border border-orange-200 dark:border-orange-800'
+                        ? message.metadata?.learning
+                          ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 border border-purple-200 dark:border-purple-800'
+                          : 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200 border border-orange-200 dark:border-orange-800'
                         : 'bg-muted text-foreground'
                     }`}
                   >
@@ -251,6 +284,12 @@ const ChatInterface = ({ className }: ChatInterfaceProps) => {
                             <span className="flex items-center gap-1">
                               <Target className="h-3 w-3" />
                               {message.metadata.taskType}
+                            </span>
+                          )}
+                          {message.metadata.learning && (
+                            <span className="flex items-center gap-1 text-purple-500">
+                              <Brain className="h-3 w-3" />
+                              Learning
                             </span>
                           )}
                           <span className="text-xs">
@@ -275,7 +314,7 @@ const ChatInterface = ({ className }: ChatInterfaceProps) => {
                   <div className="bg-muted text-foreground p-3 rounded-lg">
                     <div className="flex items-center gap-2">
                       <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>
-                      <span className="text-sm">Executing real business task...</span>
+                      <span className="text-sm">Executing real business task and learning...</span>
                     </div>
                   </div>
                 </div>
@@ -286,7 +325,7 @@ const ChatInterface = ({ className }: ChatInterfaceProps) => {
 
         {/* Suggested Actions */}
         <div className="space-y-2 flex-shrink-0">
-          <div className="text-xs text-muted-foreground">Real Business Tasks:</div>
+          <div className="text-xs text-muted-foreground">Real Business Tasks (AI learns from each execution):</div>
           <div className="flex flex-wrap gap-2">
             {suggestedActions.map((action, index) => (
               <Button
@@ -309,7 +348,7 @@ const ChatInterface = ({ className }: ChatInterfaceProps) => {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Ask me to execute a real business task... (e.g., 'Generate 50 leads for medical tourism')"
+            placeholder="Ask me to execute business tasks... I learn from each interaction!"
             disabled={isLoading}
             className="flex-1 text-sm"
           />

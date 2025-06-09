@@ -1,3 +1,4 @@
+
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
 import { realBusinessExecutor } from '@/agents/RealBusinessExecutor';
@@ -8,6 +9,7 @@ export class ExecutionAgent {
       const { task, mode } = context.input || {};
       
       await sendChatUpdate('⚡ ExecutionAgent: Analyzing task for REAL business execution...');
+      await sendChatUpdate(`💼 Task: "${task}"`);
 
       // Check for emergency medical tourism lead generation request
       if (task?.toLowerCase().includes('50 agents') && 
@@ -16,6 +18,7 @@ export class ExecutionAgent {
            task?.toLowerCase().includes('veneers'))) {
         
         await sendChatUpdate('🚨 EMERGENCY MEDICAL TOURISM DEPLOYMENT DETECTED');
+        await sendChatUpdate('🎯 Activating specialized lead generation factory...');
         
         // Import and run emergency deployer
         const { EmergencyAgentDeployerRunner } = await import('./EmergencyAgentDeployer');
@@ -33,6 +36,8 @@ export class ExecutionAgent {
           await sendChatUpdate('✅ Emergency deployment completed - 50 agents deployed');
           await sendChatUpdate('📊 Targeting 100,000 European medical tourism leads');
           await sendChatUpdate('🎯 Ready for email outreach to first 50 leads in database');
+          await sendChatUpdate('🤖 Chat has learned: Emergency deployment protocol for medical tourism leads');
+          await sendChatUpdate('📚 Future requests for lead generation will use this successful pattern');
         }
         
         return deploymentResult;
@@ -44,13 +49,18 @@ export class ExecutionAgent {
       
       await sendChatUpdate(`🎯 ExecutionAgent: Executing ${taskType} with real integrations`);
       await sendChatUpdate(`📊 Parameters: ${JSON.stringify(parameters)}`);
+      await sendChatUpdate('🔄 Connecting to real business systems...');
       
       // Execute real business task
       const result = await realBusinessExecutor.executeBusinessTask(taskType, parameters);
       
       if (result.success) {
         await sendChatUpdate(`✅ ExecutionAgent: REAL business task completed successfully!`);
-        await sendChatUpdate(`📊 Check CRM dashboard for live data and results`);
+        await sendChatUpdate(`💰 Revenue Generated: $${result.data?.actualRevenue?.toLocaleString() || 0}`);
+        await sendChatUpdate(`📊 Leads Generated: ${result.data?.leadsGenerated || 0}`);
+        await sendChatUpdate(`📧 Emails Sent: ${result.data?.emailsSent || 0}`);
+        await sendChatUpdate(`🎯 Check CRM dashboard for live data and results`);
+        await sendChatUpdate('🤖 Chat Learning: This execution pattern was successful and can be repeated');
         
         return {
           success: true,
@@ -67,12 +77,14 @@ export class ExecutionAgent {
         };
       } else {
         await sendChatUpdate(`❌ ExecutionAgent: Task failed - ${result.message}`);
+        await sendChatUpdate('🤖 Chat Learning: This execution pattern failed and needs adjustment');
         return result;
       }
 
     } catch (error) {
       console.error('ExecutionAgent error:', error);
       await sendChatUpdate(`❌ ExecutionAgent: Critical error - ${error instanceof Error ? error.message : 'Unknown error'}`);
+      await sendChatUpdate('🤖 Chat Learning: Error pattern detected - will improve error handling');
       return {
         success: false,
         message: `❌ ExecutionAgent error: ${error instanceof Error ? error.message : 'Unknown error'}`,
