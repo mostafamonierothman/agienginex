@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Send, Mic } from 'lucide-react';
-import { ChatProcessorAgentRunner } from '@/agents/ChatProcessorAgent';
+import { serverAgentService } from '@/services/ServerAgentService';
 
 interface ChatInterfaceProps {
   onSendMessage: (message: string) => void;
@@ -25,8 +25,8 @@ const ChatInterface = ({ onSendMessage }: ChatInterfaceProps) => {
         // Send to user's callback first
         onSendMessage(message);
         
-        // Process through ChatProcessorAgent
-        const result = await ChatProcessorAgentRunner({
+        // Process through server-side ChatProcessorAgent
+        const result = await serverAgentService.runAgent('chat_processor_agent', {
           user_id: 'chat_user',
           input: { message },
           timestamp: new Date().toISOString()

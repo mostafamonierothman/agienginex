@@ -1,6 +1,7 @@
+
 import { Configuration, OpenAIApi } from 'openai';
-import { AgentContext, AgentResponse } from '@/types/AgentTypes';
-import { saveChatMessage } from '@/utils/saveChatMessage';
+import { AgentContext, AgentResponse } from '../../types/AgentTypes';
+import { saveChatMessage } from '../../utils/saveChatMessage';
 
 export class LLMExecutiveAgent {
   async runner(context: AgentContext): Promise<AgentResponse> {

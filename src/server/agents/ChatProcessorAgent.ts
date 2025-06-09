@@ -1,7 +1,7 @@
 
-import { AgentContext, AgentResponse } from '@/types/AgentTypes';
-import { agentRegistry } from '@/config/AgentRegistry';
-import { saveChatMessage } from '@/utils/saveChatMessage';
+import { AgentContext, AgentResponse } from '../../types/AgentTypes';
+import { saveChatMessage } from '../../utils/saveChatMessage';
+import { LLMExecutiveAgentRunner } from './LLMExecutiveAgent';
 
 export class ChatProcessorAgent {
   async runner(context: AgentContext): Promise<AgentResponse> {
@@ -15,7 +15,7 @@ export class ChatProcessorAgent {
       await saveChatMessage('User', userMessage);
 
       // Forward the message to LLMExecutiveAgent for GPT-4o processing
-      const llmResponse = await agentRegistry.runAgent('llm_executive_agent', {
+      const llmResponse = await LLMExecutiveAgentRunner({
         user_id: context.user_id || 'chat_user',
         input: {
           goal: 'Respond to user chat message',
