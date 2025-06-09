@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -357,11 +358,12 @@ const TrillionPathPage = () => {
                       {metrics.realRevenue < 10000 ? '$10K Day 1' : 
                        metrics.realRevenue < 1000000 ? '$1M Week 1' : 
                        metrics.realRevenue < 100000000 ? '$100M Month 1' : '$1T Year 1'}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center p-2 bg-muted/30 rounded">
-                  <span className="text-muted-foreground">Daily Projection:</span>
-                  <span className="text-cyan-400 font-medium">${formatValue(trillionPathEngine.getDailyRevenueProjection())}</span>
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 bg-muted/30 rounded">
+                    <span className="text-muted-foreground">Daily Projection:</span>
+                    <span className="text-cyan-400 font-medium">${formatValue(trillionPathEngine.getDailyRevenueProjection())}</span>
+                  </div>
                 </div>
               </div>
             </div>
