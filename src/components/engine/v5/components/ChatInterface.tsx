@@ -56,7 +56,7 @@ const ChatInterface = ({ onSendMessage }: ChatInterfaceProps) => {
           <Input
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder={isProcessing ? "Processing..." : "Send a command to AGI V5..."}
+            placeholder={isProcessing ? "Processing..." : "Send a command to AGI..."}
             disabled={isProcessing}
             className="flex-1 bg-slate-700 border-slate-600 text-white h-11 md:h-10"
           />
@@ -82,7 +82,7 @@ const ChatInterface = ({ onSendMessage }: ChatInterfaceProps) => {
         </form>
         {isProcessing && (
           <div className="mt-2 text-sm text-purple-400">
-            🤖 AGI V5 is processing your request...
+            🤖 AGI is processing your request...
           </div>
         )}
       </CardContent>

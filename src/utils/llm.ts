@@ -1,4 +1,3 @@
-
 interface LLMResponse {
   content: string;
   model: string;
@@ -19,6 +18,12 @@ export class LLMService {
       LLMService.instance = new LLMService();
     }
     return LLMService.instance;
+  }
+
+  constructor() {
+    // Load API keys from environment variables with Vite fallback
+    this.openaiKey = import.meta.env.VITE_OPENAI_API_KEY || '';
+    this.anthropicKey = import.meta.env.VITE_ANTHROPIC_API_KEY || '';
   }
 
   setOpenAIKey(key: string): void {
@@ -45,7 +50,7 @@ export class LLMService {
 
   private async callOpenAI(prompt: string, model: string): Promise<LLMResponse> {
     if (!this.openaiKey) {
-      throw new Error('OpenAI API key not configured');
+      throw new Error('OpenAI API key not configured. Please set VITE_OPENAI_API_KEY environment variable.');
     }
 
     try {
