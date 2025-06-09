@@ -9,7 +9,6 @@ import { startDeepAutonomousLoop, stopDeepAutonomousLoop, shouldAutoStartDeepLoo
 import { useAGIStatePersistence } from '@/hooks/usePersistence';
 import KPIWidget from '../components/KPIWidget';
 import AutonomousLoopController from '../components/AutonomousLoopController';
-import PersistenceStatus from '../components/PersistenceStatus';
 import SystemRecovery from '../components/SystemRecovery';
 
 interface SystemState {
@@ -277,43 +276,34 @@ const DashboardPage = () => {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="bg-slate-800/50 border-slate-600/30">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-white text-lg flex items-center gap-2">
-              <Database className="h-5 w-5 text-blue-400" />
-              Enhanced Metrics
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <div className="text-gray-300">Collaborations</div>
-                <div className="text-cyan-400 font-bold">{kpis.collaborations}</div>
-              </div>
-              <div>
-                <div className="text-gray-300">Optimizations</div>
-                <div className="text-green-400 font-bold">{kpis.optimizations}</div>
-              </div>
-              <div>
-                <div className="text-gray-300">Loop Speed</div>
-                <div className="text-blue-400 font-bold">{kpis.loopSpeed}ms</div>
-              </div>
-              <div>
-                <div className="text-gray-300">System Errors</div>
-                <div className="text-red-400 font-bold">{kpis.errors}</div>
-              </div>
+      <Card className="bg-slate-800/50 border-slate-600/30">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-white text-lg flex items-center gap-2">
+            <Database className="h-5 w-5 text-blue-400" />
+            Enhanced Metrics
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <div className="text-gray-300">Collaborations</div>
+              <div className="text-cyan-400 font-bold">{kpis.collaborations}</div>
             </div>
-          </CardContent>
-        </Card>
-
-        <PersistenceStatus
-          isLoading={persistenceLoading}
-          error={null}
-          lastSaved={systemState?.lastUpdate}
-          backend="supabase"
-        />
-      </div>
+            <div>
+              <div className="text-gray-300">Optimizations</div>
+              <div className="text-green-400 font-bold">{kpis.optimizations}</div>
+            </div>
+            <div>
+              <div className="text-gray-300">Loop Speed</div>
+              <div className="text-blue-400 font-bold">{kpis.loopSpeed}ms</div>
+            </div>
+            <div>
+              <div className="text-gray-300">System Errors</div>
+              <div className="text-red-400 font-bold">{kpis.errors}</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card className="bg-slate-800/50 border-slate-600/30">
         <CardHeader className="pb-3 md:pb-6">
