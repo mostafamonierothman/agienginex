@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Send, Mic } from 'lucide-react';
-import { serverAgentService } from '@/services/ServerAgentService';
+import { sendChatToAgent } from '@/services/ChatService';
 
 interface ChatInterfaceProps {
   onSendMessage: (message: string) => void;
@@ -22,21 +22,17 @@ const ChatInterface = ({ onSendMessage }: ChatInterfaceProps) => {
       try {
         console.log('[ChatInterface] Processing message:', message);
         
-        // Send to user's callback first
+        // Send user message first
         onSendMessage(message);
         
-        // Process through server-side ChatProcessorAgent
-        const result = await serverAgentService.runAgent('chat_processor_agent', {
-          user_id: 'chat_user',
-          input: { message },
-          timestamp: new Date().toISOString()
-        });
+        // Send to Cloudflare Workers API
+        const result = await sendChatToAgent(message);
         
         if (result.success) {
           // Send the AI response
-          onSendMessage(result.message || 'No response generated');
+          onSendMessage(result.message || result.result || 'Agent executed successfully');
         } else {
-          onSendMessage(`Error: ${result.message}`);
+          onSendMessage(`Error: ${result.error || result.message || 'Agent execution failed'}`);
         }
         
       } catch (error) {
@@ -82,7 +78,7 @@ const ChatInterface = ({ onSendMessage }: ChatInterfaceProps) => {
         </form>
         {isProcessing && (
           <div className="mt-2 text-sm text-purple-400">
-            🤖 AGI is processing your request...
+            🤖 AGI is processing your request via Cloudflare Workers...
           </div>
         )}
       </CardContent>
