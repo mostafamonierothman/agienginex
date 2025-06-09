@@ -1,4 +1,3 @@
-
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,8 +23,8 @@ export class MedicalTourismLeadFactory {
       await sendChatUpdate('🚨 EMERGENCY DEPLOYMENT: Medical Tourism Lead Generation Factory activated');
       await sendChatUpdate('⚡ Deploying 50 specialized agents for European medical tourism leads...');
 
-      // Log to execution history
-      await this.logToExecutionHistory('emergency_deployment', 'Deploying 50 medical tourism lead generation agents', 'in_progress');
+      // Log to supervisor queue
+      await this.logToSupervisorQueue('emergency_deployment', 'Deploying 50 medical tourism lead generation agents', 'in_progress');
 
       // Eye surgery specialists (25 agents)
       const eyeSurgeryAgents = this.createEyeSurgeryAgents(25);
@@ -54,8 +53,8 @@ export class MedicalTourismLeadFactory {
       await sendChatUpdate('🧠 Agent knowledge has been preserved for future missions');
       await sendChatUpdate('📈 Ready for email outreach to generated leads');
 
-      // Log completion to execution history
-      await this.logToExecutionHistory('emergency_deployment', 'Emergency lead generation deployment completed', 'completed', 500000, 1000000);
+      // Log completion to supervisor queue
+      await this.logToSupervisorQueue('emergency_deployment', 'Emergency lead generation deployment completed', 'completed', 500000, 1000000);
 
       return {
         success: true,
@@ -75,7 +74,7 @@ export class MedicalTourismLeadFactory {
 
     } catch (error) {
       await sendChatUpdate(`❌ Emergency deployment failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      await this.logToExecutionHistory('emergency_deployment', 'Emergency deployment failed', 'failed');
+      await this.logToSupervisorQueue('emergency_deployment', 'Emergency deployment failed', 'failed');
       return {
         success: false,
         message: `❌ Factory deployment error: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -84,30 +83,32 @@ export class MedicalTourismLeadFactory {
     }
   }
 
-  private async logToExecutionHistory(type: string, description: string, status: string, revenuePotential = 0, actualRevenue = 0) {
+  private async logToSupervisorQueue(action: string, description: string, status: string, revenuePotential = 0, actualRevenue = 0) {
     try {
       const { error } = await supabase
-        .from('execution_history')
+        .from('supervisor_queue')
         .insert({
-          type,
-          description,
-          status,
-          revenue_potential: revenuePotential,
-          actual_revenue: actualRevenue,
-          timestamp: new Date().toISOString(),
-          result: {
-            agent_deployment: true,
+          user_id: 'medical_tourism_factory',
+          agent_name: 'medical_tourism_lead_factory',
+          action,
+          input: JSON.stringify({
+            description,
+            revenue_potential: revenuePotential,
+            actual_revenue: actualRevenue,
             specialties: ['eye_surgery', 'dental_procedures'],
             target_region: 'Europe',
             target_leads: 100000
-          }
+          }),
+          status,
+          output: description,
+          timestamp: new Date().toISOString()
         });
 
       if (error) {
-        console.error('Failed to log to execution history:', error);
+        console.error('Failed to log to supervisor queue:', error);
       }
     } catch (error) {
-      console.error('Error logging to execution history:', error);
+      console.error('Error logging to supervisor queue:', error);
     }
   }
 
