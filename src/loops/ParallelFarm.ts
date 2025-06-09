@@ -1,3 +1,4 @@
+
 import { FactoryAgent } from '@/agents/FactoryAgent';
 import { ResearchAgent } from '@/agents/ResearchAgent';
 import { LearningAgentV2 } from '@/agents/LearningAgentV2';
@@ -52,11 +53,11 @@ export class ParallelFarm {
     try {
       // Run all 12 agents in parallel for maximum efficiency
       const agentPromises = [
-        this.runAgentSafely('SupervisorAgent', SupervisorAgent, context),
+        this.runAgentSafely('SupervisorAgent', (ctx) => new SupervisorAgent().runner(ctx), context),
         this.runAgentSafely('CoordinationAgent', CoordinationAgent, context),
         this.runAgentSafely('StrategicAgent', StrategicAgent, context),
         this.runAgentSafely('ResearchAgent', ResearchAgent, context),
-        this.runAgentSafely('OpportunityAgent', OpportunityAgent, context),
+        this.runAgentSafely('OpportunityAgent', (ctx) => new OpportunityAgent().runner(ctx), context),
         this.runAgentSafely('LearningAgentV2', LearningAgentV2, context),
         this.runAgentSafely('MemoryAgent', MemoryAgentRunner, context),
         this.runAgentSafely('LLMAgent', LLMAgent, { ...context, input: { auto_select: true, complexity: 'medium' } }),

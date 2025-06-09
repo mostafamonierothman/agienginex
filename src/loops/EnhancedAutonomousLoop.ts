@@ -1,3 +1,4 @@
+
 import { FactoryAgent } from '@/agents/FactoryAgent';
 import { ResearchAgent } from '@/agents/ResearchAgent';
 import { LearningAgentV2 } from '@/agents/LearningAgentV2';
@@ -63,29 +64,29 @@ export class EnhancedAutonomousLoop {
     try {
       // Core Agents (12 original)
       const coreAgents = [
-        { name: 'SupervisorAgent', runner: SupervisorAgent },
-        { name: 'CoordinationAgent', runner: CoordinationAgent },
-        { name: 'StrategicAgent', runner: StrategicAgent },
-        { name: 'ResearchAgent', runner: ResearchAgent },
-        { name: 'OpportunityAgent', runner: OpportunityAgent },
-        { name: 'LearningAgentV2', runner: LearningAgentV2 },
-        { name: 'MemoryAgent', runner: MemoryAgentRunner },
-        { name: 'LLMAgent', runner: LLMAgent },
-        { name: 'EvolutionAgent', runner: EvolutionAgent },
-        { name: 'CollaborationAgent', runner: CollaborationAgent },
-        { name: 'FactoryAgent', runner: FactoryAgent },
-        { name: 'CriticAgent', runner: CriticAgent }
+        { name: 'SupervisorAgent', runner: () => new SupervisorAgent().runner(context) },
+        { name: 'CoordinationAgent', runner: () => CoordinationAgent(context) },
+        { name: 'StrategicAgent', runner: () => StrategicAgent(context) },
+        { name: 'ResearchAgent', runner: () => ResearchAgent(context) },
+        { name: 'OpportunityAgent', runner: () => new OpportunityAgent().runner(context) },
+        { name: 'LearningAgentV2', runner: () => LearningAgentV2(context) },
+        { name: 'MemoryAgent', runner: () => MemoryAgentRunner(context) },
+        { name: 'LLMAgent', runner: () => LLMAgent(context) },
+        { name: 'EvolutionAgent', runner: () => EvolutionAgent(context) },
+        { name: 'CollaborationAgent', runner: () => CollaborationAgent(context) },
+        { name: 'FactoryAgent', runner: () => FactoryAgent(context) },
+        { name: 'CriticAgent', runner: () => CriticAgent(context) }
       ];
 
       // Enhanced Agents (7 new)
       const enhancedAgents = [
-        { name: 'BrowserAgent', runner: BrowserAgentRunner },
-        { name: 'APIConnectorAgent', runner: APIConnectorAgentRunner },
-        { name: 'GoalAgent', runner: GoalAgentRunner },
-        { name: 'MetaAgent', runner: MetaAgentRunner },
-        { name: 'SecurityAgent', runner: SecurityAgentRunner },
-        { name: 'TimelineAgent', runner: TimelineAgentRunner },
-        { name: 'CreativityAgent', runner: CreativityAgentRunner }
+        { name: 'BrowserAgent', runner: () => BrowserAgentRunner(context) },
+        { name: 'APIConnectorAgent', runner: () => APIConnectorAgentRunner(context) },
+        { name: 'GoalAgent', runner: () => GoalAgentRunner(context) },
+        { name: 'MetaAgent', runner: () => MetaAgentRunner(context) },
+        { name: 'SecurityAgent', runner: () => SecurityAgentRunner(context) },
+        { name: 'TimelineAgent', runner: () => TimelineAgentRunner(context) },
+        { name: 'CreativityAgent', runner: () => CreativityAgentRunner(context) }
       ];
 
       // Combine all agents
@@ -95,7 +96,7 @@ export class EnhancedAutonomousLoop {
       for (const { name, runner } of allAgents) {
         try {
           console.log(`🤖 [V4.5] Running ${name}...`);
-          const result = await runner(context);
+          const result = await runner();
           
           if (result.success) {
             console.log(`✅ [V4.5] ${name}: ${result.message}`);

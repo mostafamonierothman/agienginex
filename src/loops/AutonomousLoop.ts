@@ -1,3 +1,4 @@
+
 import { FactoryAgent } from '@/agents/FactoryAgent';
 import { ResearchAgent } from '@/agents/ResearchAgent';
 import { LearningAgentV2 } from '@/agents/LearningAgentV2';
@@ -52,24 +53,24 @@ export class AutonomousLoop {
     try {
       // Run all 12 agents in sequence for coordinated execution
       const agentRunners = [
-        { name: 'SupervisorAgent', runner: SupervisorAgent },
-        { name: 'CoordinationAgent', runner: CoordinationAgent },
-        { name: 'StrategicAgent', runner: StrategicAgent },
-        { name: 'ResearchAgent', runner: ResearchAgent },
-        { name: 'OpportunityAgent', runner: OpportunityAgent },
-        { name: 'LearningAgentV2', runner: LearningAgentV2 },
-        { name: 'MemoryAgent', runner: MemoryAgentRunner },
-        { name: 'LLMAgent', runner: LLMAgent },
-        { name: 'EvolutionAgent', runner: EvolutionAgent },
-        { name: 'CollaborationAgent', runner: CollaborationAgent },
-        { name: 'FactoryAgent', runner: FactoryAgent },
-        { name: 'CriticAgent', runner: CriticAgent }
+        { name: 'SupervisorAgent', runner: () => new SupervisorAgent().runner(context) },
+        { name: 'CoordinationAgent', runner: () => CoordinationAgent(context) },
+        { name: 'StrategicAgent', runner: () => StrategicAgent(context) },
+        { name: 'ResearchAgent', runner: () => ResearchAgent(context) },
+        { name: 'OpportunityAgent', runner: () => new OpportunityAgent().runner(context) },
+        { name: 'LearningAgentV2', runner: () => LearningAgentV2(context) },
+        { name: 'MemoryAgent', runner: () => MemoryAgentRunner(context) },
+        { name: 'LLMAgent', runner: () => LLMAgent(context) },
+        { name: 'EvolutionAgent', runner: () => EvolutionAgent(context) },
+        { name: 'CollaborationAgent', runner: () => CollaborationAgent(context) },
+        { name: 'FactoryAgent', runner: () => FactoryAgent(context) },
+        { name: 'CriticAgent', runner: () => CriticAgent(context) }
       ];
 
       for (const { name, runner } of agentRunners) {
         try {
           console.log(`🤖 Running ${name}...`);
-          const result = await runner(context);
+          const result = await runner();
           
           if (result.success) {
             console.log(`✅ ${name}: ${result.message}`);
