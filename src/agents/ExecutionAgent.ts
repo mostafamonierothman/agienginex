@@ -14,11 +14,14 @@ export class ExecutionAgent {
       const taskType = this.determineTaskType(task);
       const parameters = this.extractTaskParameters(task, context.input);
       
+      await sendChatUpdate(`🎯 ExecutionAgent: Executing ${taskType} with parameters: ${JSON.stringify(parameters)}`);
+      
       // Execute real business task
       const result = await realBusinessExecutor.executeBusinessTask(taskType, parameters);
       
       if (result.success) {
-        await sendChatUpdate(`✅ Real business execution completed: ${result.message}`);
+        await sendChatUpdate(`✅ ExecutionAgent: Task completed successfully - ${result.message}`);
+        await sendChatUpdate(`📊 ExecutionAgent: Check execution log for detailed results and next steps`);
         
         return {
           success: true,
@@ -33,11 +36,13 @@ export class ExecutionAgent {
           timestamp: new Date().toISOString()
         };
       } else {
+        await sendChatUpdate(`❌ ExecutionAgent: Task failed - ${result.message}`);
         return result;
       }
 
     } catch (error) {
       console.error('ExecutionAgent error:', error);
+      await sendChatUpdate(`❌ ExecutionAgent: Critical error - ${error instanceof Error ? error.message : 'Unknown error'}`);
       return {
         success: false,
         message: `❌ ExecutionAgent error: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -72,6 +77,9 @@ export class ExecutionAgent {
     } else if (task?.includes('AGI') || task?.includes('consultancy')) {
       params.target_market = 'enterprise AI/AGI';
       params.service = 'AGI consultancy';
+    } else if (task?.includes('50 leads')) {
+      params.target_market = 'medical tourism';
+      params.lead_count = 50;
     }
     
     // Add any additional parameters from input

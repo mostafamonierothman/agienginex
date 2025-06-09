@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { FileText, DollarSign, Target, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { FileText, DollarSign, Target, Clock, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 import { realBusinessExecutor } from '@/agents/RealBusinessExecutor';
 
 interface ExecutionEntry {
@@ -19,25 +20,32 @@ interface ExecutionEntry {
 const ExecutionLog = () => {
   const [executions, setExecutions] = useState<ExecutionEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+
+  const loadExecutionHistory = async () => {
+    try {
+      setIsLoading(true);
+      const history = await realBusinessExecutor.getExecutionHistory();
+      setExecutions(history);
+      setLastRefresh(new Date());
+    } catch (error) {
+      console.error('Failed to load execution history:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadExecutionHistory = async () => {
-      try {
-        const history = await realBusinessExecutor.getExecutionHistory();
-        setExecutions(history);
-      } catch (error) {
-        console.error('Failed to load execution history:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     loadExecutionHistory();
     
-    // Refresh every 10 seconds to show new executions
-    const interval = setInterval(loadExecutionHistory, 10000);
+    // Refresh every 5 seconds to show new executions
+    const interval = setInterval(loadExecutionHistory, 5000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleManualRefresh = () => {
+    loadExecutionHistory();
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -68,13 +76,26 @@ const ExecutionLog = () => {
   return (
     <Card className="bg-card border-border">
       <CardHeader className="pb-3">
-        <CardTitle className="text-foreground flex items-center gap-2 text-lg">
-          <FileText className="h-5 w-5 text-blue-400" />
-          Real Business Execution Log
-          <Badge variant="outline" className="text-blue-400 border-blue-400">
-            {executions.length} tasks
-          </Badge>
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-foreground flex items-center gap-2 text-lg">
+            <FileText className="h-5 w-5 text-blue-400" />
+            Real Business Execution Log
+            <Badge variant="outline" className="text-blue-400 border-blue-400">
+              {executions.length} tasks
+            </Badge>
+          </CardTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleManualRefresh}
+            disabled={isLoading}
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
+        <div className="text-xs text-muted-foreground">
+          Last updated: {lastRefresh.toLocaleTimeString()}
+        </div>
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-96">
