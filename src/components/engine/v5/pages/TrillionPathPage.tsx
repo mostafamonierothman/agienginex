@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,7 +16,10 @@ const TrillionPathPage = () => {
     compoundGrowthRate: 1.0,
     femtosecondCycles: 0,
     virtualizedAgents: 0,
-    taskThroughput: 0
+    taskThroughput: 0,
+    marketOpportunities: 0,
+    revenueVelocity: 0,
+    customerAcquisitionRate: 0
   });
   const [supervisorStatus, setSupervisorStatus] = useState({
     isRunning: false,

@@ -18,7 +18,7 @@ export interface TrillionPathMetrics {
 
 export class TrillionPathEngine {
   private isInitialized = false;
-  private isRunning = false;
+  private isEngineRunning = false;
   private cycleInterval: NodeJS.Timeout | null = null;
   private metrics: TrillionPathMetrics = {
     economicValue: 0,
@@ -46,9 +46,9 @@ export class TrillionPathEngine {
   }
 
   async startFemtosecondCycles(): Promise<void> {
-    if (this.isRunning) return;
+    if (this.isEngineRunning) return;
     
-    this.isRunning = true;
+    this.isEngineRunning = true;
     await sendChatUpdate('⚡ TrillionPathEngine: Starting femtosecond cycles...');
     
     this.cycleInterval = setInterval(async () => {
@@ -57,7 +57,7 @@ export class TrillionPathEngine {
   }
 
   stop(): void {
-    this.isRunning = false;
+    this.isEngineRunning = false;
     if (this.cycleInterval) {
       clearInterval(this.cycleInterval);
       this.cycleInterval = null;
@@ -155,7 +155,7 @@ export class TrillionPathEngine {
   }
 
   isRunning(): boolean {
-    return this.isInitialized;
+    return this.isEngineRunning;
   }
 
   getProgressTowardTrillion(): number {
