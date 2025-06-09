@@ -13,17 +13,20 @@ export async function sendChatToAgent(userMessage: string) {
         success: true,
         message: result.message,
         agent_used: result.agent_used || 'SmartChatService',
-        actions: result.actions
+        actions: result.actions,
+        executedActions: result.executedActions
       };
     }
 
     // If smart service fails, provide intelligent fallback
-    const intelligentFallback = await this.generateIntelligentFallback(userMessage);
+    const intelligentFallback = await generateIntelligentFallback(userMessage);
     
     return {
       success: true,
       message: intelligentFallback,
-      agent_used: 'EnhancedChatService_AI'
+      agent_used: 'EnhancedChatService_AI',
+      actions: undefined,
+      executedActions: undefined
     };
 
   } catch (error) {
@@ -31,7 +34,9 @@ export async function sendChatToAgent(userMessage: string) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
-      message: 'I apologize, but I encountered an error while processing your request. The system is actively working to resolve issues and optimize performance.'
+      message: 'I apologize, but I encountered an error while processing your request. The system is actively working to resolve issues and optimize performance.',
+      actions: undefined,
+      executedActions: undefined
     };
   }
 }

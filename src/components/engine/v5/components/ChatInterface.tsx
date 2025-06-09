@@ -41,7 +41,7 @@ const ChatInterface = ({ onSendMessage }: ChatInterfaceProps) => {
           
           // Send the AI response with execution details
           const agentInfo = result.agent_used ? ` (${result.agent_used})` : '';
-          const executionInfo = result.executedActions ? 
+          const executionInfo = result.executedActions && result.executedActions.length > 0 ? 
             ` | Executed: ${result.executedActions.length} actions` : '';
           
           onSendMessage(`⚡ Immediate Action AGI${agentInfo}: ${result.message}${executionInfo}`);
