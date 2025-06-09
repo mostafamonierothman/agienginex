@@ -11,6 +11,7 @@ import KPIWidget from '../components/KPIWidget';
 import AutonomousLoopController from '../components/AutonomousLoopController';
 import PersistenceStatus from '../components/PersistenceStatus';
 import SystemRecovery from '../components/SystemRecovery';
+import SystemContextPanel from '@/components/SystemContextPanel';
 
 interface SystemState {
   isRunning: boolean;
@@ -48,7 +49,7 @@ const DashboardPage = () => {
 
   const [kpis, setKpis] = useState<KPIState>({
     cycles: 0,
-    activeAgents: 23,
+    activeAgents: 19, // Updated for V7 agents
     projectsCompleted: 3,
     totalOperations: 1247,
     loopSpeed: 3000,
@@ -212,7 +213,7 @@ const DashboardPage = () => {
       kpis: persistedKpis,
       systemState,
       timestamp: new Date().toISOString(),
-      version: 'V6'
+      version: 'V7'
     };
   };
 
@@ -231,8 +232,8 @@ const DashboardPage = () => {
     <div className="space-y-4 md:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-white">AGI V6 Deep Dashboard</h1>
-          <p className="text-gray-300 text-sm">Enhanced autonomous system with {agents.length} agents</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-white">AGI V7 Memory-Aware Dashboard</h1>
+          <p className="text-gray-300 text-sm">Self-improving autonomous system with {agents.length} agents + memory awareness</p>
         </div>
         <Badge variant="outline" className={`self-start sm:self-auto ${
           systemStatus === 'DEEP_AUTONOMOUS' 
@@ -257,7 +258,7 @@ const DashboardPage = () => {
           color="blue"
         />
         <KPIWidget 
-          label="Enhanced Agents" 
+          label="V7 Agents" 
           value={kpis.activeAgents} 
           icon={<Zap className="h-4 w-4 md:h-5 md:w-5" />}
           color="purple"
@@ -269,6 +270,9 @@ const DashboardPage = () => {
           color="cyan"
         />
       </div>
+
+      {/* NEW: System Memory Panel */}
+      <SystemContextPanel />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card className="bg-slate-800/50 border-slate-600/30">

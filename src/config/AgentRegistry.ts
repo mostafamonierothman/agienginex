@@ -1,4 +1,3 @@
-
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { ResearchAgent } from '@/agents/ResearchAgent';
 import { LearningAgentV2 } from '@/agents/LearningAgentV2';
@@ -15,6 +14,9 @@ import { GoalAgent, GoalAgentRunner } from '@/agents/GoalAgent';
 import { EnhancedMetaAgent, EnhancedMetaAgentRunner } from '@/agents/EnhancedMetaAgent';
 import { EnhancedGoalAgent, EnhancedGoalAgentRunner } from '@/agents/EnhancedGoalAgent';
 import { EnhancedCollaborationAgent, EnhancedCollaborationAgentRunner } from '@/agents/EnhancedCollaborationAgent';
+import { SystemContextAgent, SystemContextAgentRunner } from '@/agents/SystemContextAgent';
+import { SelfImprovementAgent, SelfImprovementAgentRunner } from '@/agents/SelfImprovementAgent';
+import { ExecutiveAgent, ExecutiveAgentRunner } from '@/agents/ExecutiveAgent';
 
 export interface AgentDefinition {
   name: string;
@@ -159,6 +161,30 @@ const agentDefinitions: { [key: string]: AgentDefinition } = {
     version: "V6",
     runner: EnhancedCollaborationAgentRunner,
     paramSchema: []
+  },
+  system_context_agent: {
+    name: "SystemContextAgent",
+    description: "Loads and analyzes system context including chat history and activity",
+    category: "V7",
+    version: "V7",
+    runner: SystemContextAgentRunner,
+    paramSchema: []
+  },
+  self_improvement_agent: {
+    name: "SelfImprovementAgent",
+    description: "Analyzes system and chat to suggest improvements",
+    category: "V7",
+    version: "V7",
+    runner: SelfImprovementAgentRunner,
+    paramSchema: []
+  },
+  executive_agent: {
+    name: "ExecutiveAgent",
+    description: "Memory-aware executive planning and agent coordination",
+    category: "V7",
+    version: "V7",
+    runner: ExecutiveAgentRunner,
+    paramSchema: []
   }
 };
 
@@ -169,7 +195,8 @@ const agentCategories = [
   "Coordination",
   "Strategic",
   "Tool",
-  "Enhanced"
+  "Enhanced",
+  "V7"
 ];
 
 const getAgentsByCategory = (category: string) => {
@@ -191,6 +218,7 @@ const getSystemStatus = () => {
   const coordinationAgents = getAgentsByCategory("Coordination").length;
   const toolAgents = getAgentsByCategory("Tool").length;
   const enhancedAgents = getAgentsByCategory("Enhanced").length;
+  const v7Agents = getAgentsByCategory("V7").length;
 
   return {
     totalAgents,
@@ -199,7 +227,8 @@ const getSystemStatus = () => {
     coordinationAgents,
     toolAgents,
     enhancedAgents,
-    version: 'V6'
+    v7Agents,
+    version: 'V7'
   };
 };
 
