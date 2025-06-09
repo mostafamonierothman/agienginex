@@ -1,10 +1,12 @@
-
 export interface TrillionPathState {
   isRunning: boolean;
   startTime: string;
   lastUpdate: string;
   totalRuntime: number;
   autoRestart: boolean;
+  enhancedAGI?: boolean;
+  agiCycleCount?: number;
+  autonomyRatio?: number;
 }
 
 export class TrillionPathPersistence {
