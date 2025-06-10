@@ -1,44 +1,35 @@
+
 export default {
   async fetch(request: Request, env: any): Promise<Response> {
-    const { pathname } = new URL(request.url);
+    const url = new URL(request.url);
 
-    if (request.method === 'POST' && pathname === '/run_agent') {
+    if (request.method === 'POST' && url.pathname === '/run_agent') {
       try {
-        const { message } = await request.json();
+        const { agent, input } = await request.json();
 
-        const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${env.OPENAI_API_KEY}`,
-          },
-          body: JSON.stringify({
-            model: 'gpt-4',
-            messages: [
-              { role: 'system', content: 'You are a helpful AGI assistant.' },
-              { role: 'user', content: message }
-            ]
+        // Fallback if no message is included
+        const content = input?.message || input?.goal || 'Hello!';
+        
+        return new Response(
+          JSON.stringify({
+            response: {
+              role: 'assistant',
+              content: `✅ Agent "${agent}" received input: "${content}"`,
+            },
           }),
-        });
-
-        const data = await openaiResponse.json();
-        const content = data.choices?.[0]?.message?.content || 'No response received from OpenAI.';
-
-        return new Response(
-          JSON.stringify({ role: 'assistant', content }),
-          { status: 200, headers: { 'Content-Type': 'application/json' } }
+          { headers: { 'Content-Type': 'application/json' } }
         );
-      } catch (err) {
+      } catch (err: any) {
         return new Response(
-          JSON.stringify({ role: 'assistant', content: '⚠️ Error occurred in AGIengineX worker.' }),
+          JSON.stringify({
+            role: 'assistant',
+            content: `❌ Failed to process input: ${err.message}`,
+          }),
           { status: 500, headers: { 'Content-Type': 'application/json' } }
         );
       }
     }
 
-    return new Response('🧠 AGIengineX is running.', {
-      status: 200,
-      headers: { 'Content-Type': 'text/plain' },
-    });
-  }
+    return new Response('Not Found', { status: 404 });
+  },
 };
