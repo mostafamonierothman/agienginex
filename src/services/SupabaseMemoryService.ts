@@ -1,22 +1,14 @@
+import { createClient } from '@supabase/supabase-js';
 
-import { supabase } from '@/integrations/supabase/client';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://your-project.supabase.co';
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'your-anon-key';
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export class SupabaseMemoryService {
   static async saveMemory(sessionId: string, content: any) {
     try {
-      const { error } = await supabase
-        .from('agent_memory')
-        .insert({
-          user_id: sessionId,
-          agent_name: content.agent || 'system',
-          memory_key: sessionId,
-          memory_value: JSON.stringify(content),
-          timestamp: new Date().toISOString()
-        });
-      
-      if (error) {
-        console.error('[SupabaseMemoryService] Save error:', error);
-      }
+      await supabase.from('memory').insert([{ key: sessionId, data: content, timestamp: new Date() }]);
     } catch (e) {
       console.error('[SupabaseMemoryService] Save error:', e);
     }
@@ -24,50 +16,15 @@ export class SupabaseMemoryService {
 
   static async loadMemory(sessionId: string) {
     try {
-      const { data, error } = await supabase
-        .from('agent_memory')
+      const { data } = await supabase.from('memory')
         .select('*')
-        .eq('memory_key', sessionId)
+        .eq('key', sessionId)
         .order('timestamp', { ascending: false })
-        .limit(10);
-      
-      if (error) {
-        console.error('[SupabaseMemoryService] Load error:', error);
-        return null;
-      }
-      
-      return data?.map(item => {
-        try {
-          return JSON.parse(item.memory_value);
-        } catch {
-          return { content: item.memory_value };
-        }
-      }) || null;
+        .limit(1);
+      return data?.[0]?.data || null;
     } catch (e) {
       console.error('[SupabaseMemoryService] Load error:', e);
       return null;
-    }
-  }
-
-  static async saveExecutionLog(agentName: string, action: string, result: any) {
-    try {
-      const { error } = await supabase
-        .from('supervisor_queue')
-        .insert({
-          user_id: 'dashboard_user',
-          agent_name: agentName,
-          action: action,
-          input: JSON.stringify(result.input || {}),
-          status: result.success ? 'completed' : 'failed',
-          output: result.message || JSON.stringify(result),
-          timestamp: new Date().toISOString()
-        });
-      
-      if (error) {
-        console.error('[SupabaseMemoryService] Execution log error:', error);
-      }
-    } catch (e) {
-      console.error('[SupabaseMemoryService] Execution log error:', e);
     }
   }
 }
