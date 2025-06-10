@@ -1,3 +1,4 @@
+'use client';
 
 import React, { useState } from 'react';
 import { routeChatMessage } from '@/engine/routeChatMessage';
@@ -20,10 +21,12 @@ export const ChatInterface = () => {
         input: { message: input, sessionId: 'user-session-1' }
       });
 
+      // Corrected to use `content` instead of `message`
       const assistantMessage = {
         role: response.role || 'assistant',
-        content: response.content || response.message || 'No response'
+        content: response.content || 'No response'
       };
+
       setMessages(prev => [...prev, assistantMessage]);
     } catch (err) {
       setMessages(prev => [...prev, { role: 'system', content: 'Error reaching agent.' }]);
