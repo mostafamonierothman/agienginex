@@ -1,21 +1,11 @@
-# wrangler.toml
-
 name = "agienginex"
-
-# 👇 You MUST fill this with your real Cloudflare Account ID (from Overview or Workers & Pages)
 account_id = "2baa26ea950e3c3f7b1a814cdd6e8c71"
-
-# Deploy to workers.dev subdomain (default Cloudflare domain)
 workers_dev = true
-
-# Entry point for the Worker
 main = "server/index.ts"
-
-# Compatibility date — set to recent stable version
 compatibility_date = "2024-06-01"
 
-# Environment variables (linked to your GitHub Secrets — already configured!)
+# ✅ Injected real values directly (REPLACE THESE with your actual secrets)
 [vars]
-OPENAI_API_KEY = "${OPENAI_API_KEY}"
-SUPABASE_URL = "${SUPABASE_URL}"
-SUPABASE_KEY = "${SUPABASE_KEY}"
+OPENAI_API_KEY = "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+SUPABASE_URL = "https://xyzcompany.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
