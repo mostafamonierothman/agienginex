@@ -20,6 +20,11 @@ import { ExecutiveAgent, ExecutiveAgentRunner } from '@/agents/ExecutiveAgent';
 import { LLMLearningAgent, LLMLearningAgentRunner } from '@/agents/LLMLearningAgent';
 import { MedicalTourismLeadFactoryRunner } from '@/agents/MedicalTourismLeadFactory';
 import { EmergencyAgentDeployerRunner } from '@/agents/EmergencyAgentDeployer';
+import { LeadGenerationMasterAgentRunner } from '@/agents/LeadGenerationMasterAgent';
+import { AGOCoreLoopAgentRunner } from '@/agents/AGOCoreLoopAgent';
+import { ReflectionAgentRunner } from '@/agents/ReflectionAgent';
+import { AutonomyTriggerAgentRunner } from '@/agents/AutonomyTriggerAgent';
+import { CrossAgentFeedbackAgentRunner } from '@/agents/CrossAgentFeedbackAgent';
 
 export interface AgentDefinition {
   name: string;
@@ -214,6 +219,49 @@ const agentDefinitions: { [key: string]: AgentDefinition } = {
     version: "V8",
     runner: EmergencyAgentDeployerRunner,
     paramSchema: []
+  },
+  lead_generation_master_agent: {
+    name: "LeadGenerationMasterAgent",
+    description: "Advanced lead generation with real keyword search and CRM integration",
+    category: "AGO",
+    version: "V9",
+    runner: LeadGenerationMasterAgentRunner,
+    paramSchema: [
+      { name: 'keyword', placeholder: 'Search keyword', type: 'text' },
+      { name: 'agentId', placeholder: 'Agent identifier', type: 'text' }
+    ]
+  },
+  ago_core_loop_agent: {
+    name: "AGOCoreLoopAgent",
+    description: "Master AGI orchestrator with goal selection, execution, and self-improvement",
+    category: "AGO",
+    version: "V9",
+    runner: AGOCoreLoopAgentRunner,
+    paramSchema: []
+  },
+  reflection_agent: {
+    name: "ReflectionAgent",
+    description: "System reflection and autonomous decision-making for goal progress",
+    category: "AGO",
+    version: "V9",
+    runner: ReflectionAgentRunner,
+    paramSchema: []
+  },
+  autonomy_trigger_agent: {
+    name: "AutonomyTriggerAgent",
+    description: "Monitors conditions and triggers autonomous actions when needed",
+    category: "AGO",
+    version: "V9",
+    runner: AutonomyTriggerAgentRunner,
+    paramSchema: []
+  },
+  cross_agent_feedback_agent: {
+    name: "CrossAgentFeedbackAgent",
+    description: "Inter-agent performance analysis and optimization recommendations",
+    category: "AGO",
+    version: "V9",
+    runner: CrossAgentFeedbackAgentRunner,
+    paramSchema: []
   }
 };
 
@@ -226,7 +274,8 @@ const agentCategories = [
   "Tool",
   "Enhanced",
   "V7",
-  "Emergency"
+  "Emergency",
+  "AGO"
 ];
 
 const getAgentsByCategory = (category: string) => {
@@ -250,6 +299,7 @@ const getSystemStatus = () => {
   const enhancedAgents = getAgentsByCategory("Enhanced").length;
   const v7Agents = getAgentsByCategory("V7").length;
   const emergencyAgents = getAgentsByCategory("Emergency").length;
+  const agoAgents = getAgentsByCategory("AGO").length;
 
   return {
     totalAgents,
@@ -260,7 +310,8 @@ const getSystemStatus = () => {
     enhancedAgents,
     v7Agents,
     emergencyAgents,
-    version: 'V7'
+    agoAgents,
+    version: 'AGO-V9'
   };
 };
 
