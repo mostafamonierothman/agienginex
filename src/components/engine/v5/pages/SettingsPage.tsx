@@ -1,181 +1,244 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Settings, Save, RotateCcw } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { Settings, Key, Database, Zap, Brain, Save } from 'lucide-react';
+import { TrillionPathPersistence } from '@/services/TrillionPathPersistence';
 import { toast } from '@/hooks/use-toast';
 
 const SettingsPage = () => {
-  const [settings, setSettings] = useState({
-    "OpenAI_API_Key": "sk-************************************",
-    "Loop_Delay": "1000",
-    "Parallel_Agents": "12",
-    "Max_Cycles": "1000",
-    "Debug_Mode": "true",
-    "Auto_Learning": "true",
-    "Memory_Compression": "true",
-    "Vector_Similarity_Threshold": "0.85"
-  });
+  const [openaiKey, setOpenaiKey] = useState('');
+  const [autoRestart, setAutoRestart] = useState(false);
+  const [enhancedAGI, setEnhancedAGI] = useState(false);
+  const [systemState, setSystemState] = useState(null);
 
-  const handleUpdateSetting = (key: string, value: string) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
-  };
-
-  const saveSettings = () => {
-    toast({
-      title: "✅ Settings Saved",
-      description: "All configuration changes have been applied",
-    });
-  };
-
-  const resetSettings = () => {
-    setSettings({
-      "OpenAI_API_Key": "",
-      "Loop_Delay": "1000",
-      "Parallel_Agents": "12",
-      "Max_Cycles": "1000",
-      "Debug_Mode": "true",
-      "Auto_Learning": "true",
-      "Memory_Compression": "true",
-      "Vector_Similarity_Threshold": "0.85"
-    });
+  useEffect(() => {
+    // Load current settings
+    const apiKey = localStorage.getItem('openai_api_key') || '';
+    const shouldAutoRestart = TrillionPathPersistence.shouldAutoRestart();
+    const state = TrillionPathPersistence.loadState();
     
+    setOpenaiKey(apiKey ? '••••••••••••••••' : '');
+    setAutoRestart(shouldAutoRestart);
+    setEnhancedAGI(state?.enhancedAGI || false);
+    setSystemState(state);
+  }, []);
+
+  const saveOpenAIKey = () => {
+    if (openaiKey && !openaiKey.includes('••••')) {
+      localStorage.setItem('openai_api_key', openaiKey);
+      setOpenaiKey('••••••••••••••••');
+      toast({
+        title: "OpenAI Key Saved",
+        description: "Your API key has been stored securely.",
+      });
+    }
+  };
+
+  const toggleAutoRestart = (enabled) => {
+    setAutoRestart(enabled);
+    if (enabled) {
+      TrillionPathPersistence.enableAutoRestart();
+    } else {
+      TrillionPathPersistence.disableAutoRestart();
+    }
     toast({
-      title: "🔄 Settings Reset",
-      description: "All settings have been restored to defaults",
+      title: "Auto Restart " + (enabled ? "Enabled" : "Disabled"),
+      description: "System will " + (enabled ? "automatically restart" : "not restart") + " after interruptions.",
     });
+  };
+
+  const clearSystemState = () => {
+    localStorage.removeItem('trillion_path_state');
+    localStorage.removeItem('trillion_path_heartbeat');
+    setSystemState(null);
+    toast({
+      title: "System State Cleared",
+      description: "All persistent state has been reset.",
+    });
+  };
+
+  const exportSettings = () => {
+    const settings = {
+      autoRestart,
+      enhancedAGI,
+      systemState,
+      timestamp: new Date().toISOString()
+    };
+    
+    const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `agienginex-settings-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-white flex items-center gap-2">
-          <Settings className="h-8 w-8 text-purple-400" />
-          Settings
-        </h1>
-        <div className="flex gap-2">
-          <Button onClick={resetSettings} variant="outline" className="border-gray-500 text-gray-200">
-            <RotateCcw className="h-4 w-4 mr-2" />
-            Reset
-          </Button>
-          <Button onClick={saveSettings} className="bg-green-600 hover:bg-green-700">
-            <Save className="h-4 w-4 mr-2" />
-            Save Settings
-          </Button>
-        </div>
-      </div>
+      {/* Header */}
+      <Card className="bg-gradient-to-r from-slate-800/50 to-purple-900/50 border-purple-500/30">
+        <CardHeader>
+          <CardTitle className="text-2xl text-white flex items-center gap-3">
+            <Settings className="h-8 w-8 text-purple-400" />
+            AGI System Settings
+            <Badge variant="outline" className="text-purple-400 border-purple-400">
+              Configuration
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+      </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-slate-800/50 border-slate-600/30">
-          <CardHeader>
-            <CardTitle className="text-white">API Configuration</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label className="text-gray-300">OpenAI API Key</Label>
+      {/* API Keys */}
+      <Card className="bg-slate-800/50 border-slate-600/30">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Key className="h-5 w-5 text-yellow-400" />
+            API Configuration
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="openai-key" className="text-white">OpenAI API Key</Label>
+            <div className="flex gap-2">
               <Input
+                id="openai-key"
                 type="password"
-                value={settings.OpenAI_API_Key}
-                onChange={(e) => handleUpdateSetting("OpenAI_API_Key", e.target.value)}
-                className="bg-slate-700 border-slate-600 text-white mt-1"
+                value={openaiKey}
+                onChange={(e) => setOpenaiKey(e.target.value)}
                 placeholder="sk-..."
+                className="bg-slate-700 border-slate-600 text-white"
               />
+              <Button onClick={saveOpenAIKey} size="sm">
+                <Save className="h-4 w-4" />
+              </Button>
             </div>
-          </CardContent>
-        </Card>
+            <p className="text-sm text-gray-400">
+              Required for LLM agents and advanced AI operations
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
-        <Card className="bg-slate-800/50 border-slate-600/30">
-          <CardHeader>
-            <CardTitle className="text-white">System Performance</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label className="text-gray-300">Loop Delay (ms)</Label>
-              <Input
-                type="number"
-                value={settings.Loop_Delay}
-                onChange={(e) => handleUpdateSetting("Loop_Delay", e.target.value)}
-                className="bg-slate-700 border-slate-600 text-white mt-1"
-              />
+      {/* System Behavior */}
+      <Card className="bg-slate-800/50 border-slate-600/30">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Brain className="h-5 w-5 text-blue-400" />
+            AGI Behavior Settings
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <Label className="text-white">Auto Restart System</Label>
+              <p className="text-sm text-gray-400">
+                Automatically restart AGI system after browser refresh or errors
+              </p>
             </div>
-            <div>
-              <Label className="text-gray-300">Parallel Agents</Label>
-              <Input
-                type="number"
-                value={settings.Parallel_Agents}
-                onChange={(e) => handleUpdateSetting("Parallel_Agents", e.target.value)}
-                className="bg-slate-700 border-slate-600 text-white mt-1"
-              />
-            </div>
-            <div>
-              <Label className="text-gray-300">Max Cycles</Label>
-              <Input
-                type="number"
-                value={settings.Max_Cycles}
-                onChange={(e) => handleUpdateSetting("Max_Cycles", e.target.value)}
-                className="bg-slate-700 border-slate-600 text-white mt-1"
-              />
-            </div>
-          </CardContent>
-        </Card>
+            <Switch
+              checked={autoRestart}
+              onCheckedChange={toggleAutoRestart}
+            />
+          </div>
 
-        <Card className="bg-slate-800/50 border-slate-600/30">
-          <CardHeader>
-            <CardTitle className="text-white">Learning & Memory</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                checked={settings.Auto_Learning === "true"}
-                onChange={(e) => handleUpdateSetting("Auto_Learning", e.target.checked.toString())}
-                className="rounded"
-              />
-              <Label className="text-gray-300">Auto Learning</Label>
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <Label className="text-white">Enhanced AGI Mode</Label>
+              <p className="text-sm text-gray-400">
+                Enable advanced cognitive loops and autonomous decision making
+              </p>
             </div>
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                checked={settings.Memory_Compression === "true"}
-                onChange={(e) => handleUpdateSetting("Memory_Compression", e.target.checked.toString())}
-                className="rounded"
-              />
-              <Label className="text-gray-300">Memory Compression</Label>
+            <Switch
+              checked={enhancedAGI}
+              onCheckedChange={setEnhancedAGI}
+              disabled
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* System State */}
+      <Card className="bg-slate-800/50 border-slate-600/30">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Database className="h-5 w-5 text-green-400" />
+            System State Management
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {systemState ? (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-gray-400">Running Status</Label>
+                  <div className="text-white">{systemState.isRunning ? "Active" : "Inactive"}</div>
+                </div>
+                <div>
+                  <Label className="text-gray-400">Total Runtime</Label>
+                  <div className="text-white">{TrillionPathPersistence.formatRuntime(systemState.totalRuntime || 0)}</div>
+                </div>
+                <div>
+                  <Label className="text-gray-400">Last Update</Label>
+                  <div className="text-white">{new Date(systemState.lastUpdate).toLocaleString()}</div>
+                </div>
+                <div>
+                  <Label className="text-gray-400">AGI Cycles</Label>
+                  <div className="text-white">{systemState.agiCycleCount || 0}</div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-gray-400 text-center py-4">
+              No system state found. Start the AGI system to begin tracking.
+            </div>
+          )}
+
+          <div className="flex gap-2">
+            <Button onClick={clearSystemState} variant="destructive" size="sm">
+              Clear State
+            </Button>
+            <Button onClick={exportSettings} variant="outline" size="sm">
+              Export Settings
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* System Information */}
+      <Card className="bg-slate-800/50 border-slate-600/30">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Zap className="h-5 w-5 text-purple-400" />
+            System Information
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label className="text-gray-400">Version</Label>
+              <div className="text-white">AGIengineX V5</div>
             </div>
             <div>
-              <Label className="text-gray-300">Vector Similarity Threshold</Label>
-              <Input
-                type="number"
-                step="0.01"
-                min="0"
-                max="1"
-                value={settings.Vector_Similarity_Threshold}
-                onChange={(e) => handleUpdateSetting("Vector_Similarity_Threshold", e.target.value)}
-                className="bg-slate-700 border-slate-600 text-white mt-1"
-              />
+              <Label className="text-gray-400">Build</Label>
+              <div className="text-white">Enhanced AGI Operations</div>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-slate-800/50 border-slate-600/30">
-          <CardHeader>
-            <CardTitle className="text-white">Debug & Monitoring</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                checked={settings.Debug_Mode === "true"}
-                onChange={(e) => handleUpdateSetting("Debug_Mode", e.target.checked.toString())}
-                className="rounded"
-              />
-              <Label className="text-gray-300">Debug Mode</Label>
+            <div>
+              <Label className="text-gray-400">Agent Registry</Label>
+              <div className="text-white">46+ Specialized Agents</div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            <div>
+              <Label className="text-gray-400">Capabilities</Label>
+              <div className="text-white">Autonomous Loops, Memory, CRM</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

@@ -1,243 +1,235 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Brain, Activity, Zap, Play, Square, AlertTriangle, CheckCircle } from 'lucide-react';
-import {
-  startDeepAutonomousLoop,
-  stopDeepAutonomousLoop,
-  isDeepAutonomousLoopRunning,
-  shouldAutoStartDeepLoop
-} from '@/engine/DeepAutonomousLoopController';
-import { EnhancedMetaAgentRunner } from '@/agents/EnhancedMetaAgent';
-import { EnhancedGoalAgentRunner } from '@/agents/EnhancedGoalAgent';
-import { EnhancedCollaborationAgentRunner } from '@/agents/EnhancedCollaborationAgent';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Brain, Zap, Target, Cpu, Network, GitBranch } from 'lucide-react';
+import { AGOCoreLoopAgentRunner } from '@/agents/AGOCoreLoopAgent';
+import { ReflectionAgentRunner } from '@/agents/ReflectionAgent';
+import { AutonomyTriggerAgentRunner } from '@/agents/AutonomyTriggerAgent';
+import { CrossAgentFeedbackAgentRunner } from '@/agents/CrossAgentFeedbackAgent';
+import { sendChatUpdate } from '@/utils/sendChatUpdate';
 
 const DeepAgentsPage = () => {
-  const [agents, setAgents] = useState([
-    { name: 'EnhancedMetaAgent', status: 'IDLE', lastAction: '' },
-    { name: 'EnhancedGoalAgent', status: 'IDLE', lastAction: '' },
-    { name: 'EnhancedCollaborationAgent', status: 'IDLE', lastAction: '' }
-  ]);
-  const [logs, setLogs] = useState([]);
-  const [kpis, setKpis] = useState({
-    cycles: 0,
-    loopSpeed: 1000,
-    errors: 0,
-    recoveries: 0,
-    lastAgent: '',
-    lastResult: '',
-    errorRecoveryMode: false
+  const [isRunningAGO, setIsRunningAGO] = useState(false);
+  const [lastResults, setLastResults] = useState({});
+  const [agentStats, setAgentStats] = useState({
+    totalRuns: 0,
+    successRate: 0,
+    avgScore: 0
   });
-  const [isRunning, setIsRunning] = useState(false);
 
-  // Enhanced agents with runners
-  const enhancedAgents = [
+  const deepAgents = [
     {
-      name: 'EnhancedMetaAgent',
-      runner: EnhancedMetaAgentRunner,
-      status: 'IDLE',
-      lastAction: 'System optimization analysis'
+      name: 'AGO Core Loop',
+      key: 'ago_core_loop',
+      description: 'Master AGI orchestrator with goal selection, execution, and self-improvement',
+      icon: Brain,
+      color: 'purple',
+      runner: AGOCoreLoopAgentRunner,
+      category: 'Master Control'
     },
     {
-      name: 'EnhancedGoalAgent',
-      runner: EnhancedGoalAgentRunner,
-      status: 'IDLE',
-      lastAction: 'Goal management and routing'
+      name: 'Reflection Agent',
+      key: 'reflection',
+      description: 'System reflection and autonomous decision-making for goal progress',
+      icon: Cpu,
+      color: 'blue',
+      runner: ReflectionAgentRunner,
+      category: 'Self-Analysis'
     },
     {
-      name: 'EnhancedCollaborationAgent',
-      runner: EnhancedCollaborationAgentRunner,
-      status: 'IDLE',
-      lastAction: 'Network collaboration analysis'
+      name: 'Autonomy Trigger',
+      key: 'autonomy_trigger',
+      description: 'Monitors conditions and triggers autonomous actions when needed',
+      icon: Zap,
+      color: 'yellow',
+      runner: AutonomyTriggerAgentRunner,
+      category: 'Autonomous Control'
+    },
+    {
+      name: 'Cross-Agent Feedback',
+      key: 'cross_feedback',
+      description: 'Inter-agent performance analysis and optimization recommendations',
+      icon: Network,
+      color: 'green',
+      runner: CrossAgentFeedbackAgentRunner,
+      category: 'Performance Analysis'
     }
   ];
 
-  useEffect(() => {
-    if (shouldAutoStartDeepLoop()) {
-      console.log('[DEEP AGENTS] Auto-starting deep autonomous loop...');
-      handleStartLoop();
-    }
-  }, []);
+  const runDeepAgent = async (agent) => {
+    const startTime = Date.now();
+    
+    try {
+      await sendChatUpdate(`🧠 Starting ${agent.name}...`);
+      
+      const result = await agent.runner({
+        input: {
+          trigger: 'deep_agent_manual_run',
+          timestamp: new Date().toISOString(),
+          requestedBy: 'dashboard_user'
+        },
+        user_id: 'deep_agents_page'
+      });
 
-  const handleStartLoop = () => {
-    startDeepAutonomousLoop(
-      enhancedAgents,
-      setAgents,
-      setLogs,
-      setKpis,
-      { 
-        loopDelayMs: 2000, 
-        maxCycles: 1000, 
-        enableAutoRecovery: true,
-        enableHandoffs: true,
-        enableCollaborations: true,
-        adaptiveSpeed: true
-      }
-    );
-    setIsRunning(true);
+      const duration = Date.now() - startTime;
+      
+      setLastResults(prev => ({
+        ...prev,
+        [agent.key]: {
+          ...result,
+          duration,
+          timestamp: new Date().toISOString()
+        }
+      }));
+
+      await sendChatUpdate(`✅ ${agent.name} completed in ${duration}ms`);
+      
+      // Update stats
+      setAgentStats(prev => ({
+        totalRuns: prev.totalRuns + 1,
+        successRate: result.success ? 
+          ((prev.successRate * prev.totalRuns + 100) / (prev.totalRuns + 1)) : 
+          ((prev.successRate * prev.totalRuns) / (prev.totalRuns + 1)),
+        avgScore: result.data?.score ? 
+          ((prev.avgScore * prev.totalRuns + result.data.score) / (prev.totalRuns + 1)) : 
+          prev.avgScore
+      }));
+
+    } catch (error) {
+      await sendChatUpdate(`❌ ${agent.name} failed: ${error.message}`);
+      setLastResults(prev => ({
+        ...prev,
+        [agent.key]: {
+          success: false,
+          message: error.message,
+          timestamp: new Date().toISOString()
+        }
+      }));
+    }
   };
 
-  const handleStopLoop = () => {
-    stopDeepAutonomousLoop();
-    setIsRunning(false);
+  const runAGOCoreLoop = async () => {
+    setIsRunningAGO(true);
+    try {
+      await runDeepAgent(deepAgents[0]); // AGO Core Loop
+    } finally {
+      setIsRunningAGO(false);
+    }
+  };
+
+  const getColorClasses = (color) => {
+    const colors = {
+      purple: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+      blue: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+      yellow: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+      green: 'bg-green-500/20 text-green-400 border-green-500/30'
+    };
+    return colors[color] || colors.blue;
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-white flex items-center gap-2">
-          <Brain className="h-8 w-8 text-purple-400" />
-          Deep Agents System
-          {kpis.errorRecoveryMode && (
-            <span className="text-orange-400 text-sm flex items-center gap-1">
-              <AlertTriangle className="h-4 w-4" />
-              Recovery Mode
-            </span>
-          )}
-        </h1>
-        <div className="flex gap-2">
-          <Button
-            onClick={handleStartLoop}
-            disabled={isRunning}
-            className="bg-green-600 hover:bg-green-700"
-          >
-            <Play className="h-4 w-4 mr-2" />
-            Start Deep Loop
-          </Button>
-          <Button
-            onClick={handleStopLoop}
-            disabled={!isRunning}
-            variant="destructive"
-          >
-            <Square className="h-4 w-4 mr-2" />
-            Stop Loop
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-slate-800/50 border-slate-600/30">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Activity className="h-5 w-5 text-blue-400" />
-              System Status
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 text-sm">
-              <p className="text-gray-300">
-                Status: <span className={isRunning ? 'text-green-400' : 'text-red-400'}>
-                  {isRunning ? 'Running' : 'Stopped'}
-                </span>
-              </p>
-              <p className="text-gray-300">Cycles: <span className="text-blue-400">{kpis.cycles}</span></p>
-              <p className="text-gray-300">Speed: <span className="text-purple-400">{kpis.loopSpeed}ms</span></p>
-              <p className="text-gray-300">
-                Mode: <span className={kpis.errorRecoveryMode ? 'text-orange-400' : 'text-green-400'}>
-                  {kpis.errorRecoveryMode ? 'Recovery' : 'Normal'}
-                </span>
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-slate-800/50 border-slate-600/30">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-orange-400" />
-              Error Metrics
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 text-sm">
-              <p className="text-gray-300">Errors: <span className="text-red-400">{kpis.errors}</span></p>
-              <p className="text-gray-300">Recoveries: <span className="text-green-400">{kpis.recoveries}</span></p>
-              <p className="text-gray-300">
-                Health: <span className={kpis.errors === 0 ? 'text-green-400' : kpis.recoveries > kpis.errors ? 'text-yellow-400' : 'text-red-400'}>
-                  {kpis.errors === 0 ? 'Excellent' : kpis.recoveries > kpis.errors ? 'Recovering' : 'Critical'}
-                </span>
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-slate-800/50 border-slate-600/30">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Zap className="h-5 w-5 text-yellow-400" />
-              Last Activity
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 text-sm">
-              <p className="text-gray-300">Agent: <span className="text-yellow-400">{kpis.lastAgent}</span></p>
-              <p className="text-gray-300">Result: <span className="text-green-400">{kpis.lastResult}</span></p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-slate-800/50 border-slate-600/30">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Brain className="h-5 w-5 text-purple-400" />
-              Enhanced Agents
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1 text-sm">
-              {enhancedAgents.map((agent, idx) => (
-                <p key={idx} className="text-gray-300 flex items-center gap-2">
-                  {agent.status === 'ERROR' ? (
-                    <AlertTriangle className="h-3 w-3 text-red-400" />
-                  ) : (
-                    <CheckCircle className="h-3 w-3 text-green-400" />
-                  )}
-                  {agent.name}: <span className={
-                    agent.status === 'ERROR' ? 'text-red-400' : 
-                    agent.status === 'RUNNING' ? 'text-yellow-400' : 'text-blue-400'
-                  }>{agent.status}</span>
-                </p>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="bg-slate-800/50 border-slate-600/30">
+      {/* Header with Stats */}
+      <Card className="bg-gradient-to-r from-purple-900/50 to-blue-900/50 border-purple-500/30">
         <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            Deep Loop Activity Log
-            {kpis.errorRecoveryMode && (
-              <span className="text-orange-400 text-sm">(Recovery Mode Active)</span>
-            )}
+          <CardTitle className="text-2xl text-white flex items-center gap-3">
+            <Brain className="h-8 w-8 text-purple-400" />
+            Deep AGI Agent Operations
+            <Badge variant="outline" className="text-purple-400 border-purple-400">
+              V7+ Enhanced
+            </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-64 overflow-y-auto space-y-2">
-            {logs.length === 0 ? (
-              <p className="text-gray-400">No activity yet. Start the deep loop to see agent interactions.</p>
-            ) : (
-              logs.slice(-20).map((log, idx) => (
-                <div key={idx} className={`text-sm p-2 rounded ${
-                  log.action.includes('Error') || log.action.includes('Recovery') 
-                    ? 'bg-red-900/20 border-l-2 border-red-500' 
-                    : 'bg-slate-700/50'
-                }`}>
-                  <span className="text-blue-400">{log.agent}</span>
-                  <span className="text-gray-300"> → </span>
-                  <span className={
-                    log.action.includes('Error') ? 'text-red-400' :
-                    log.action.includes('Recovery') ? 'text-orange-400' : 'text-green-400'
-                  }>{log.action}</span>
-                  <span className="text-gray-300">: </span>
-                  <span className="text-gray-200">{log.result}</span>
-                </div>
-              ))
-            )}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <div className="text-2xl font-bold text-white">{agentStats.totalRuns}</div>
+              <div className="text-sm text-gray-300">Total Deep Runs</div>
+            </div>
+            <div className="space-y-2">
+              <div className="text-2xl font-bold text-green-400">{agentStats.successRate.toFixed(1)}%</div>
+              <div className="text-sm text-gray-300">Success Rate</div>
+            </div>
+            <div className="space-y-2">
+              <div className="text-2xl font-bold text-blue-400">{agentStats.avgScore.toFixed(1)}</div>
+              <div className="text-sm text-gray-300">Average Score</div>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <Button
+              onClick={runAGOCoreLoop}
+              disabled={isRunningAGO}
+              size="lg"
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              {isRunningAGO ? "🧠 Running AGO..." : "🚀 Execute AGO Core Loop"}
+            </Button>
           </div>
         </CardContent>
       </Card>
+
+      {/* Deep Agents Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {deepAgents.map((agent) => {
+          const IconComponent = agent.icon;
+          const lastResult = lastResults[agent.key];
+          
+          return (
+            <Card key={agent.key} className="bg-slate-800/50 border-slate-600/30">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-3">
+                  <IconComponent className="h-6 w-6 text-purple-400" />
+                  {agent.name}
+                  <Badge className={getColorClasses(agent.color)}>
+                    {agent.category}
+                  </Badge>
+                </CardTitle>
+                <p className="text-gray-300 text-sm">{agent.description}</p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Button
+                  onClick={() => runDeepAgent(agent)}
+                  className="w-full"
+                  variant="outline"
+                >
+                  <GitBranch className="h-4 w-4 mr-2" />
+                  Execute Agent
+                </Button>
+
+                {lastResult && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-400">Last Result:</span>
+                      <Badge variant={lastResult.success ? "default" : "destructive"}>
+                        {lastResult.success ? "Success" : "Failed"}
+                      </Badge>
+                    </div>
+                    
+                    <div className="bg-slate-700/30 rounded p-3">
+                      <div className="text-sm text-gray-300 mb-2">
+                        {new Date(lastResult.timestamp).toLocaleString()}
+                      </div>
+                      <div className="text-sm text-white">
+                        {lastResult.message?.substring(0, 150)}
+                        {lastResult.message?.length > 150 ? '...' : ''}
+                      </div>
+                      {lastResult.duration && (
+                        <div className="text-xs text-gray-400 mt-2">
+                          Execution time: {lastResult.duration}ms
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 };

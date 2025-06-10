@@ -1,375 +1,182 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Activity, Brain, Zap, TrendingUp, Database, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Brain, Activity, Settings, Zap, Target, Memory } from 'lucide-react';
+import { enhancedFemtosecondSupervisor } from '@/engine/EnhancedFemtosecondSupervisor';
 import { agentRegistry } from '@/config/AgentRegistry';
-import { toast } from '@/hooks/use-toast';
-import { startDeepAutonomousLoop, stopDeepAutonomousLoop, shouldAutoStartDeepLoop, getDeepLoopMetrics, resetDeepLoopMetrics } from '@/engine/DeepAutonomousLoopController';
-import { useAGIStatePersistence } from '@/hooks/usePersistence';
-import KPIWidget from '../components/KPIWidget';
-import AutonomousLoopController from '../components/AutonomousLoopController';
-import SystemRecovery from '../components/SystemRecovery';
-
-interface SystemState {
-  isRunning: boolean;
-  lastUpdate: string;
-  loopType?: string;
-}
-
-interface KPIState {
-  cycles: number;
-  activeAgents: number;
-  projectsCompleted: number;
-  totalOperations: number;
-  loopSpeed: number;
-  handoffs: number;
-  collaborations: number;
-  optimizations: number;
-  errors: number;
-}
+import { TrillionPathPersistence } from '@/services/TrillionPathPersistence';
 
 const DashboardPage = () => {
-  const [systemStatus, setSystemStatus] = useState('MANUAL');
-  const [isDeepLoopRunning, setIsDeepLoopRunning] = useState(false);
-  const [logs, setLogs] = useState([]);
-  const [agents, setAgents] = useState([]);
-  const [hasAutoStarted, setHasAutoStarted] = useState(false);
-  
-  const {
-    agents: persistedAgents,
-    setAgents: setPersistedAgents,
-    kpis: persistedKpis,
-    setKpis: setPersistedKpis,
-    systemState,
-    setSystemState,
-    isLoading: persistenceLoading
-  } = useAGIStatePersistence();
-
-  const [kpis, setKpis] = useState<KPIState>({
-    cycles: 0,
-    activeAgents: 0,
-    projectsCompleted: 0,
-    totalOperations: 0,
-    loopSpeed: 3000,
-    handoffs: 0,
-    collaborations: 0,
-    optimizations: 0,
-    errors: 0
-  });
+  const [agiStatus, setAgiStatus] = useState(null);
+  const [systemState, setSystemState] = useState(null);
+  const [agentCount, setAgentCount] = useState(0);
+  const [isStarting, setIsStarting] = useState(false);
 
   useEffect(() => {
-    // Load agents from registry
-    const registeredAgents = agentRegistry.getAllAgents();
-    const agentData = registeredAgents.map(agent => ({
-      name: agent.name,
-      status: 'IDLE',
-      lastAction: 'Ready for execution',
-      category: agent.category,
-      description: agent.description,
-      version: agent.version,
-      runner: agent.runner
-    }));
-    setAgents(agentData);
-
-    // Update initial KPIs with real data
-    setKpis(prev => ({
-      ...prev,
-      activeAgents: agentData.length
-    }));
-
-    // Auto-start deep loop if it was previously running (but only once and silently)
-    if (shouldAutoStartDeepLoop() && agentData.length > 0 && !hasAutoStarted) {
-      console.log('Auto-starting Deep Autonomous Loop silently...');
-      setIsDeepLoopRunning(true);
-      setSystemStatus('DEEP_AUTONOMOUS');
-      setHasAutoStarted(true);
-      startDeepAutonomousLoop(
-        agentData,
-        setAgents,
-        setLogs,
-        setKpis,
-        { 
-          loopDelayMs: 3000, 
-          maxCycles: 10000,
-          enableHandoffs: true,
-          enableCollaborations: true,
-          adaptiveSpeed: true
-        }
-      );
-      // No toast notification for auto-resume
-    }
-
-    // Load persisted KPIs if available
-    if (persistedKpis && Object.keys(persistedKpis).length > 0) {
-      setKpis(prev => ({ ...prev, ...persistedKpis }));
-    }
-  }, [persistedKpis, hasAutoStarted]);
-
-  useEffect(() => {
+    // Update status every 3 seconds
     const interval = setInterval(() => {
-      const deepMetrics = getDeepLoopMetrics();
-      const registryStatus = agentRegistry.getSystemStatus();
+      const status = enhancedFemtosecondSupervisor.getStatus();
+      const state = TrillionPathPersistence.loadState();
+      const agents = agentRegistry.getAllAgents();
       
-      setKpis(prev => {
-        const updated = {
-          ...prev,
-          cycles: deepMetrics.cycles,
-          activeAgents: registryStatus.totalAgents,
-          handoffs: deepMetrics.handoffs,
-          collaborations: deepMetrics.collaborations,
-          optimizations: deepMetrics.optimizations,
-          errors: deepMetrics.errors,
-          totalOperations: prev.totalOperations + (deepMetrics.cycles > prev.cycles ? 1 : 0)
-        };
-        
-        // Persist KPIs
-        setPersistedKpis(updated);
-        return updated;
-      });
-    }, 1000);
+      setAgiStatus(status);
+      setSystemState(state);
+      setAgentCount(agents.length);
+    }, 3000);
 
     return () => clearInterval(interval);
-  }, [setPersistedKpis]);
+  }, []);
 
-  const startDeepLoop = async () => {
+  const startEnhancedAGI = async () => {
+    setIsStarting(true);
     try {
-      setIsDeepLoopRunning(true);
-      setSystemStatus('DEEP_AUTONOMOUS');
-      
-      startDeepAutonomousLoop(
-        agents,
-        setAgents,
-        setLogs,
-        setKpis,
-        { 
-          loopDelayMs: 3000, 
-          maxCycles: 10000,
-          enableHandoffs: true,
-          enableCollaborations: true,
-          adaptiveSpeed: true
-        }
-      );
-      
-      // Update system state
-      const newSystemState: SystemState = {
-        isRunning: true,
-        lastUpdate: new Date().toISOString(),
-        loopType: 'deep_autonomous'
-      };
-      setSystemState(newSystemState);
-      
-      toast({
-        title: "🚀 Deep Autonomous Loop Started",
-        description: "Enhanced system with handoffs and collaborations is now running",
-      });
+      await enhancedFemtosecondSupervisor.startEnhancedAGISupervision();
     } catch (error) {
-      setIsDeepLoopRunning(false);
-      setSystemStatus('MANUAL');
-      toast({
-        title: "❌ Failed to Start Deep Loop",
-        description: error.message,
-        variant: "destructive"
-      });
+      console.error('Failed to start Enhanced AGI:', error);
+    } finally {
+      setIsStarting(false);
     }
   };
 
-  const stopDeepLoop = () => {
-    setIsDeepLoopRunning(false);
-    setSystemStatus('MANUAL');
-    stopDeepAutonomousLoop();
-    
-    const newSystemState: SystemState = {
-      isRunning: false,
-      lastUpdate: new Date().toISOString(),
-      loopType: 'stopped'
-    };
-    setSystemState(newSystemState);
-    
-    toast({
-      title: "⏹️ Deep Loop Stopped",
-      description: "Manual control restored",
-    });
-  };
-
-  const resetSystem = () => {
-    stopDeepAutonomousLoop();
-    resetDeepLoopMetrics();
-    setKpis(prev => ({ 
-      ...prev, 
-      cycles: 0, 
-      handoffs: 0, 
-      collaborations: 0, 
-      optimizations: 0, 
-      errors: 0 
-    }));
-    setIsDeepLoopRunning(false);
-    setSystemStatus('MANUAL');
-    toast({
-      title: "🔄 System Reset Complete",
-      description: "All metrics reset to zero",
-    });
-  };
-
-  const exportSystemData = () => {
-    return {
-      agents: persistedAgents,
-      kpis: persistedKpis,
-      systemState,
-      timestamp: new Date().toISOString(),
-      version: 'V7'
-    };
-  };
-
-  const importSystemData = (data: any) => {
-    if (data.agents) setPersistedAgents(data.agents);
-    if (data.kpis) setPersistedKpis(data.kpis);
-    if (data.systemState) setSystemState(data.systemState);
-    
-    toast({
-      title: "📥 System Data Imported",
-      description: "Successfully restored from backup",
-    });
+  const stopEnhancedAGI = () => {
+    enhancedFemtosecondSupervisor.stop();
   };
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-white">AGI V7 Memory-Aware Dashboard</h1>
-          <p className="text-gray-300 text-sm">Self-improving autonomous system with {kpis.activeAgents} agents + memory awareness</p>
-        </div>
-        <Badge variant="outline" className={`self-start sm:self-auto ${
-          systemStatus === 'DEEP_AUTONOMOUS' 
-            ? 'text-green-400 border-green-400' 
-            : 'text-gray-400 border-gray-400'
-        }`}>
-          {systemStatus}
-        </Badge>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        <KPIWidget 
-          label="System Status" 
-          value={systemStatus} 
-          icon={<Activity className="h-4 w-4 md:h-5 md:w-5" />}
-          color={systemStatus === 'DEEP_AUTONOMOUS' ? 'green' : 'blue'}
-        />
-        <KPIWidget 
-          label="Deep Cycles" 
-          value={kpis.cycles} 
-          icon={<Brain className="h-4 w-4 md:h-5 md:w-5" />}
-          color="blue"
-        />
-        <KPIWidget 
-          label="Active Agents" 
-          value={kpis.activeAgents} 
-          icon={<Zap className="h-4 w-4 md:h-5 md:w-5" />}
-          color="purple"
-        />
-        <KPIWidget 
-          label="Handoffs" 
-          value={kpis.handoffs} 
-          icon={<TrendingUp className="h-4 w-4 md:h-5 md:w-5" />}
-          color="cyan"
-        />
-      </div>
-
-      <Card className="bg-slate-800/50 border-slate-600/30">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-white text-lg flex items-center gap-2">
-            <Database className="h-5 w-5 text-blue-400" />
-            Enhanced Metrics
+    <div className="space-y-6">
+      {/* AGI System Status Header */}
+      <Card className="bg-gradient-to-r from-purple-900/50 to-blue-900/50 border-purple-500/30">
+        <CardHeader>
+          <CardTitle className="text-2xl text-white flex items-center gap-3">
+            <Brain className="h-8 w-8 text-purple-400" />
+            AGIengineX Enhanced Dashboard
+            <Badge variant={agiStatus?.isRunning ? "default" : "secondary"} className="ml-auto">
+              {agiStatus?.isRunning ? "ACTIVE" : "STANDBY"}
+            </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <div className="text-gray-300">Collaborations</div>
-              <div className="text-cyan-400 font-bold">{kpis.collaborations}</div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Activity className="h-4 w-4 text-green-400" />
+                <span className="text-sm text-gray-300">System Cycles</span>
+              </div>
+              <div className="text-2xl font-bold text-white">
+                {agiStatus?.cycleCount || 0}
+              </div>
+              <div className="text-xs text-gray-400">
+                AGI Decisions: {agiStatus?.agiCycleCount || 0}
+              </div>
             </div>
-            <div>
-              <div className="text-gray-300">Optimizations</div>
-              <div className="text-green-400 font-bold">{kpis.optimizations}</div>
+            
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Zap className="h-4 w-4 text-yellow-400" />
+                <span className="text-sm text-gray-300">Autonomy Ratio</span>
+              </div>
+              <div className="text-2xl font-bold text-white">
+                {((agiStatus?.autonomyRatio || 0) * 100).toFixed(1)}%
+              </div>
             </div>
-            <div>
-              <div className="text-gray-300">Loop Speed</div>
-              <div className="text-blue-400 font-bold">{kpis.loopSpeed}ms</div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Target className="h-4 w-4 text-blue-400" />
+                <span className="text-sm text-gray-300">Active Agents</span>
+              </div>
+              <div className="text-2xl font-bold text-white">
+                {agentCount}
+              </div>
             </div>
-            <div>
-              <div className="text-gray-300">System Errors</div>
-              <div className="text-red-400 font-bold">{kpis.errors}</div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Memory className="h-4 w-4 text-purple-400" />
+                <span className="text-sm text-gray-300">Runtime</span>
+              </div>
+              <div className="text-2xl font-bold text-white">
+                {agiStatus?.runtimeFormatted || "0m"}
+              </div>
             </div>
+          </div>
+
+          <div className="flex gap-4 mt-6">
+            {!agiStatus?.isRunning ? (
+              <Button 
+                onClick={startEnhancedAGI} 
+                disabled={isStarting}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                {isStarting ? "Starting..." : "🚀 Start Enhanced AGI"}
+              </Button>
+            ) : (
+              <Button 
+                onClick={stopEnhancedAGI} 
+                variant="destructive"
+              >
+                ⏹️ Stop AGI System
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      <Card className="bg-slate-800/50 border-slate-600/30">
-        <CardHeader className="pb-3 md:pb-6">
-          <CardTitle className="text-white text-lg md:text-xl">Deep Loop Activity</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2 md:space-y-3 max-h-64 overflow-y-auto">
-            {isDeepLoopRunning && (
-              <div className="text-sm md:text-base text-yellow-400 animate-pulse">
-                🤖 Deep Loop Active: Cycle #{kpis.cycles} • {kpis.handoffs} handoffs • {kpis.collaborations} collaborations
-              </div>
-            )}
-            {logs.slice(-5).map((log, index) => (
-              <div key={index} className="text-sm md:text-base text-orange-400">
-                🔄 {log.agent}: {log.action} → {log.result}
-              </div>
-            ))}
-            {logs.length === 0 && (
-              <div className="text-gray-400 text-center py-4">
-                No activity yet. Start the Deep Loop to see real-time agent interactions.
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* Recent Operations */}
+      {agiStatus?.lastOperations && (
         <Card className="bg-slate-800/50 border-slate-600/30">
-          <CardHeader className="pb-3 md:pb-6">
-            <CardTitle className="text-white text-lg md:text-xl flex items-center gap-2">
-              <Brain className="h-5 w-5 text-purple-400" />
-              Deep Loop Controls
-            </CardTitle>
+          <CardHeader>
+            <CardTitle className="text-white">Recent AGI Operations</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col gap-3">
-              <Button
-                onClick={startDeepLoop}
-                disabled={isDeepLoopRunning}
-                className="bg-green-600 hover:bg-green-700 text-white"
-              >
-                Start Deep Loop
-              </Button>
-              <Button
-                onClick={stopDeepLoop}
-                disabled={!isDeepLoopRunning}
-                className="bg-red-600 hover:bg-red-700 text-white"
-              >
-                Stop Deep Loop
-              </Button>
-              <Button
-                onClick={resetSystem}
-                variant="outline"
-                className="border-yellow-500 text-yellow-400 hover:bg-yellow-500/10"
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Reset System
-              </Button>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <span className="text-sm text-gray-400">Last Reflection</span>
+                <div className="text-white">{agiStatus.lastOperations.lastReflection}</div>
+              </div>
+              <div className="space-y-2">
+                <span className="text-sm text-gray-400">Last Feedback</span>
+                <div className="text-white">{agiStatus.lastOperations.lastFeedback}</div>
+              </div>
+              <div className="space-y-2">
+                <span className="text-sm text-gray-400">Last Goal Evaluation</span>
+                <div className="text-white">{agiStatus.lastOperations.lastGoalEvaluation}</div>
+              </div>
             </div>
           </CardContent>
         </Card>
+      )}
 
-        <SystemRecovery
-          onExport={exportSystemData}
-          onRestore={importSystemData}
-        />
-      </div>
+      {/* System Persistence Status */}
+      {systemState && (
+        <Card className="bg-slate-800/50 border-slate-600/30">
+          <CardHeader>
+            <CardTitle className="text-white">System Persistence</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-gray-400">Auto Restart</span>
+                <Badge variant={systemState.autoRestart ? "default" : "secondary"}>
+                  {systemState.autoRestart ? "Enabled" : "Disabled"}
+                </Badge>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Last Update</span>
+                <span className="text-white">{new Date(systemState.lastUpdate).toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Enhanced AGI</span>
+                <Badge variant={systemState.enhancedAGI ? "default" : "secondary"}>
+                  {systemState.enhancedAGI ? "Active" : "Inactive"}
+                </Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
