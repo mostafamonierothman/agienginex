@@ -104,6 +104,9 @@ class EnhancedFemtosecondSupervisor {
       runtime,
       runtimeFormatted: `${runtimeMinutes}m`,
       lastOperations: {
+        totalCycles: this.cycleCount,
+        agiDecisions: this.agiCycleCount,
+        autonomyRatio: this.agiCycleCount > 0 ? this.agiCycleCount / this.cycleCount : 0,
         lastReflection: `Cycle ${this.cycleCount} completed`,
         lastFeedback: `AGI cycles: ${this.agiCycleCount}`,
         lastGoalEvaluation: `Runtime: ${runtimeMinutes}m`

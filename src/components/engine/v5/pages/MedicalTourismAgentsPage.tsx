@@ -7,6 +7,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { Eye, Heart, Users, Target, Clock, CheckCircle, Activity, AlertCircle, Zap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { agentRegistry } from '@/config/AgentRegistry';
+import { SupabaseMemoryService } from '@/services/SupabaseMemoryService';
 import { MedicalTourismLeadFactoryRunner } from '@/agents/MedicalTourismLeadFactory';
 import { toast } from '@/hooks/use-toast';
 
