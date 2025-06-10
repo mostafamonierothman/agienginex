@@ -24,7 +24,8 @@ const AGIV5Dashboard = () => {
   const tabs = [
     {
       id: 'dashboard',
-      label: 'AGI Dashboard',
+      label: 'Dashboard',
+      shortLabel: 'Home',
       icon: Brain,
       component: DashboardPage,
       badge: 'AGO',
@@ -33,6 +34,7 @@ const AGIV5Dashboard = () => {
     {
       id: 'agents',
       label: 'Agent Registry',
+      shortLabel: 'Agents',
       icon: Bot,
       component: AgentsPage,
       badge: '46+',
@@ -41,6 +43,7 @@ const AGIV5Dashboard = () => {
     {
       id: 'chat',
       label: 'Chat Interface',
+      shortLabel: 'Chat',
       icon: MessageSquare,
       component: ChatPage,
       badge: 'LLM',
@@ -49,6 +52,7 @@ const AGIV5Dashboard = () => {
     {
       id: 'deep-agents',
       label: 'Deep Agents',
+      shortLabel: 'Deep',
       icon: Zap,
       component: DeepAgentsPage,
       badge: 'V7',
@@ -57,6 +61,7 @@ const AGIV5Dashboard = () => {
     {
       id: 'medical-tourism',
       label: 'Medical Tourism',
+      shortLabel: 'Medical',
       icon: Users,
       component: MedicalTourismAgentsPage,
       badge: 'Leads',
@@ -65,14 +70,16 @@ const AGIV5Dashboard = () => {
     {
       id: 'market-research',
       label: 'Market Research',
+      shortLabel: 'Research',
       icon: Globe,
       component: MarketResearchPage,
-      badge: 'Research',
+      badge: 'Data',
       badgeColor: 'bg-orange-500'
     },
     {
       id: 'memory',
       label: 'Memory System',
+      shortLabel: 'Memory',
       icon: Database,
       component: MemoryPage,
       badge: 'Vector',
@@ -81,6 +88,7 @@ const AGIV5Dashboard = () => {
     {
       id: 'trillion-path',
       label: 'Trillion Path',
+      shortLabel: 'Trillion',
       icon: Target,
       component: TrillionPathPage,
       badge: 'Engine',
@@ -89,6 +97,7 @@ const AGIV5Dashboard = () => {
     {
       id: 'projects',
       label: 'Projects',
+      shortLabel: 'Projects',
       icon: Activity,
       component: ProjectsPage,
       badge: 'Tasks',
@@ -97,6 +106,7 @@ const AGIV5Dashboard = () => {
     {
       id: 'logs',
       label: 'System Logs',
+      shortLabel: 'Logs',
       icon: FileText,
       component: LogsPage,
       badge: 'Live',
@@ -105,6 +115,7 @@ const AGIV5Dashboard = () => {
     {
       id: 'settings',
       label: 'Settings',
+      shortLabel: 'Config',
       icon: Settings,
       component: SettingsPage
     }
@@ -112,52 +123,65 @@ const AGIV5Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      <div className="container mx-auto p-4 space-y-6">
+      <div className="container mx-auto p-2 md:p-4 lg:p-6 space-y-4 md:space-y-6">
         {/* Header */}
         <Card className="bg-gradient-to-r from-purple-900/80 to-blue-900/80 border-purple-500/30 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="text-3xl text-white flex items-center gap-4">
-              <Brain className="h-10 w-10 text-purple-400" />
-              AGIengineX V5 Dashboard
-              <Badge className="bg-purple-500 text-white">
+          <CardHeader className="pb-3 md:pb-4">
+            <CardTitle className="text-xl md:text-2xl lg:text-3xl text-white flex flex-col sm:flex-row sm:items-center gap-2 md:gap-4">
+              <div className="flex items-center gap-2 md:gap-4">
+                <Brain className="h-6 w-6 md:h-8 lg:h-10 md:w-8 lg:w-10 text-purple-400 flex-shrink-0" />
+                <span className="break-words">AGIengineX V5</span>
+              </div>
+              <Badge className="bg-purple-500 text-white text-xs md:text-sm w-fit">
                 Advanced AGI Operations
               </Badge>
             </CardTitle>
-            <p className="text-gray-300 text-lg">
+            <p className="text-gray-300 text-sm md:text-base lg:text-lg mt-2">
               Complete AGI system with 46+ specialized agents, autonomous loops, memory systems, and real-world integrations
             </p>
           </CardHeader>
         </Card>
 
         {/* Main Dashboard */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-6 lg:grid-cols-11 w-full bg-slate-800/50 border border-slate-600/30">
-            {tabs.map((tab) => {
-              const IconComponent = tab.icon;
-              return (
-                <TabsTrigger
-                  key={tab.id}
-                  value={tab.id}
-                  className="flex flex-col items-center gap-1 p-3 data-[state=active]:bg-purple-600 data-[state=active]:text-white"
-                >
-                  <IconComponent className="h-4 w-4" />
-                  <span className="text-xs hidden sm:block">{tab.label.split(' ')[0]}</span>
-                  {tab.badge && (
-                    <Badge 
-                      className={`text-xs px-1 py-0 ${tab.badgeColor} text-white`}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
+          {/* Enhanced TabsList for better visibility */}
+          <div className="w-full overflow-x-auto">
+            <TabsList className="flex flex-nowrap w-full min-w-max bg-slate-800/50 border border-slate-600/30 p-1 h-auto">
+              <div className="flex flex-nowrap gap-1 md:gap-2">
+                {tabs.map((tab) => {
+                  const IconComponent = tab.icon;
+                  return (
+                    <TabsTrigger
+                      key={tab.id}
+                      value={tab.id}
+                      className="flex flex-col items-center gap-1 p-2 md:p-3 min-w-[80px] md:min-w-[100px] data-[state=active]:bg-purple-600 data-[state=active]:text-white transition-all duration-200 hover:bg-slate-700"
                     >
-                      {tab.badge}
-                    </Badge>
-                  )}
-                </TabsTrigger>
-              );
-            })}
-          </TabsList>
+                      <div className="flex items-center gap-1">
+                        <IconComponent className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
+                        {tab.badge && (
+                          <Badge 
+                            className={`text-xs px-1 py-0 ${tab.badgeColor} text-white hidden sm:inline-flex`}
+                          >
+                            {tab.badge}
+                          </Badge>
+                        )}
+                      </div>
+                      <span className="text-xs md:text-sm leading-tight text-center break-words">
+                        <span className="hidden md:inline">{tab.label}</span>
+                        <span className="md:hidden">{tab.shortLabel}</span>
+                      </span>
+                    </TabsTrigger>
+                  );
+                })}
+              </div>
+            </TabsList>
+          </div>
 
+          {/* Tab Content */}
           {tabs.map((tab) => {
             const Component = tab.component;
             return (
-              <TabsContent key={tab.id} value={tab.id} className="space-y-6">
+              <TabsContent key={tab.id} value={tab.id} className="space-y-4 md:space-y-6 mt-4 md:mt-6">
                 <Component />
               </TabsContent>
             );

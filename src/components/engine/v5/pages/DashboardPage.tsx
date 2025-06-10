@@ -17,13 +17,17 @@ const DashboardPage = () => {
   useEffect(() => {
     // Update status every 3 seconds
     const interval = setInterval(() => {
-      const status = enhancedFemtosecondSupervisor.getStatus();
-      const state = TrillionPathPersistence.loadState();
-      const agents = agentRegistry.getAllAgents();
-      
-      setAgiStatus(status);
-      setSystemState(state);
-      setAgentCount(Array.isArray(agents) ? agents.length : 0);
+      try {
+        const status = enhancedFemtosecondSupervisor.getStatus();
+        const state = TrillionPathPersistence.loadState();
+        const agents = agentRegistry.getAllAgents();
+        
+        setAgiStatus(status);
+        setSystemState(state);
+        setAgentCount(Array.isArray(agents) ? agents.length : 0);
+      } catch (error) {
+        console.error('Error updating dashboard status:', error);
+      }
     }, 3000);
 
     return () => clearInterval(interval);
@@ -41,30 +45,36 @@ const DashboardPage = () => {
   };
 
   const stopEnhancedAGI = () => {
-    enhancedFemtosecondSupervisor.stop();
+    try {
+      enhancedFemtosecondSupervisor.stop();
+    } catch (error) {
+      console.error('Failed to stop Enhanced AGI:', error);
+    }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* AGI System Status Header */}
       <Card className="bg-gradient-to-r from-purple-900/50 to-blue-900/50 border-purple-500/30">
-        <CardHeader>
-          <CardTitle className="text-2xl text-white flex items-center gap-3">
-            <Brain className="h-8 w-8 text-purple-400" />
-            AGIengineX Enhanced Dashboard
-            <Badge variant={agiStatus?.isRunning ? "default" : "secondary"} className="ml-auto">
+        <CardHeader className="pb-3 md:pb-4">
+          <CardTitle className="text-lg md:text-xl lg:text-2xl text-white flex flex-col sm:flex-row sm:items-center gap-2 md:gap-3">
+            <div className="flex items-center gap-2 md:gap-3">
+              <Brain className="h-6 w-6 md:h-7 lg:h-8 md:w-7 lg:w-8 text-purple-400 flex-shrink-0" />
+              <span className="break-words">AGIengineX Enhanced Dashboard</span>
+            </div>
+            <Badge variant={agiStatus?.isRunning ? "default" : "secondary"} className="w-fit">
               {agiStatus?.isRunning ? "ACTIVE" : "STANDBY"}
             </Badge>
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="space-y-2">
+        <CardContent className="space-y-4 md:space-y-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+            <div className="space-y-2 p-3 bg-slate-800/30 rounded-lg border border-slate-600/20">
               <div className="flex items-center gap-2">
                 <Activity className="h-4 w-4 text-green-400" />
-                <span className="text-sm text-gray-300">System Cycles</span>
+                <span className="text-xs md:text-sm text-gray-300">System Cycles</span>
               </div>
-              <div className="text-2xl font-bold text-white">
+              <div className="text-lg md:text-xl lg:text-2xl font-bold text-white">
                 {agiStatus?.cycleCount || 0}
               </div>
               <div className="text-xs text-gray-400">
@@ -72,43 +82,43 @@ const DashboardPage = () => {
               </div>
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-2 p-3 bg-slate-800/30 rounded-lg border border-slate-600/20">
               <div className="flex items-center gap-2">
                 <Zap className="h-4 w-4 text-yellow-400" />
-                <span className="text-sm text-gray-300">Autonomy Ratio</span>
+                <span className="text-xs md:text-sm text-gray-300">Autonomy Ratio</span>
               </div>
-              <div className="text-2xl font-bold text-white">
+              <div className="text-lg md:text-xl lg:text-2xl font-bold text-white">
                 {((agiStatus?.autonomyRatio || 0) * 100).toFixed(1)}%
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 p-3 bg-slate-800/30 rounded-lg border border-slate-600/20">
               <div className="flex items-center gap-2">
                 <Target className="h-4 w-4 text-blue-400" />
-                <span className="text-sm text-gray-300">Active Agents</span>
+                <span className="text-xs md:text-sm text-gray-300">Active Agents</span>
               </div>
-              <div className="text-2xl font-bold text-white">
+              <div className="text-lg md:text-xl lg:text-2xl font-bold text-white">
                 {agentCount}
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 p-3 bg-slate-800/30 rounded-lg border border-slate-600/20">
               <div className="flex items-center gap-2">
                 <Database className="h-4 w-4 text-purple-400" />
-                <span className="text-sm text-gray-300">Runtime</span>
+                <span className="text-xs md:text-sm text-gray-300">Runtime</span>
               </div>
-              <div className="text-2xl font-bold text-white">
+              <div className="text-lg md:text-xl lg:text-2xl font-bold text-white">
                 {agiStatus?.runtimeFormatted || "0m"}
               </div>
             </div>
           </div>
 
-          <div className="flex gap-4 mt-6">
+          <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
             {!agiStatus?.isRunning ? (
               <Button 
                 onClick={startEnhancedAGI} 
                 disabled={isStarting}
-                className="bg-purple-600 hover:bg-purple-700"
+                className="bg-purple-600 hover:bg-purple-700 text-sm md:text-base px-4 py-2 md:px-6 md:py-3"
               >
                 {isStarting ? "Starting..." : "🚀 Start Enhanced AGI"}
               </Button>
@@ -116,6 +126,7 @@ const DashboardPage = () => {
               <Button 
                 onClick={stopEnhancedAGI} 
                 variant="destructive"
+                className="text-sm md:text-base px-4 py-2 md:px-6 md:py-3"
               >
                 ⏹️ Stop AGI System
               </Button>
@@ -127,22 +138,22 @@ const DashboardPage = () => {
       {/* Recent Operations */}
       {agiStatus?.lastOperations && (
         <Card className="bg-slate-800/50 border-slate-600/30">
-          <CardHeader>
-            <CardTitle className="text-white">Recent AGI Operations</CardTitle>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-white text-lg md:text-xl">Recent AGI Operations</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="space-y-2 p-3 bg-slate-700/30 rounded border border-slate-600/20">
                 <span className="text-sm text-gray-400">Last Reflection</span>
-                <div className="text-white">{agiStatus.lastOperations.lastReflection}</div>
+                <div className="text-white text-sm break-words">{agiStatus.lastOperations.lastReflection}</div>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 p-3 bg-slate-700/30 rounded border border-slate-600/20">
                 <span className="text-sm text-gray-400">Last Feedback</span>
-                <div className="text-white">{agiStatus.lastOperations.lastFeedback}</div>
+                <div className="text-white text-sm break-words">{agiStatus.lastOperations.lastFeedback}</div>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 p-3 bg-slate-700/30 rounded border border-slate-600/20">
                 <span className="text-sm text-gray-400">Last Goal Evaluation</span>
-                <div className="text-white">{agiStatus.lastOperations.lastGoalEvaluation}</div>
+                <div className="text-white text-sm break-words">{agiStatus.lastOperations.lastGoalEvaluation}</div>
               </div>
             </div>
           </CardContent>
@@ -152,23 +163,23 @@ const DashboardPage = () => {
       {/* System Persistence Status */}
       {systemState && (
         <Card className="bg-slate-800/50 border-slate-600/30">
-          <CardHeader>
-            <CardTitle className="text-white">System Persistence</CardTitle>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-white text-lg md:text-xl">System Persistence</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-400">Auto Restart</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="flex justify-between items-center p-3 bg-slate-700/30 rounded border border-slate-600/20">
+                <span className="text-gray-400 text-sm">Auto Restart</span>
                 <Badge variant={systemState.autoRestart ? "default" : "secondary"}>
                   {systemState.autoRestart ? "Enabled" : "Disabled"}
                 </Badge>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Last Update</span>
-                <span className="text-white">{new Date(systemState.lastUpdate).toLocaleString()}</span>
+              <div className="flex justify-between items-center p-3 bg-slate-700/30 rounded border border-slate-600/20">
+                <span className="text-gray-400 text-sm">Last Update</span>
+                <span className="text-white text-sm">{new Date(systemState.lastUpdate).toLocaleString()}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Enhanced AGI</span>
+              <div className="flex justify-between items-center p-3 bg-slate-700/30 rounded border border-slate-600/20">
+                <span className="text-gray-400 text-sm">Enhanced AGI</span>
                 <Badge variant={systemState.enhancedAGI ? "default" : "secondary"}>
                   {systemState.enhancedAGI ? "Active" : "Inactive"}
                 </Badge>
