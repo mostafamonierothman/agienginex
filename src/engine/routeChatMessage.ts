@@ -1,13 +1,13 @@
 
 export async function routeChatMessage(message: string) {
   try {
-    const response = await fetch('/run_agent', {
+    const response = await fetch('https://agienginex-production.mostafamonier13.workers.dev/run_agent', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        agent: 'ChatProcessorAgent',
+        agent: 'OpenAI',
         input: {
           message,
         },
@@ -15,7 +15,7 @@ export async function routeChatMessage(message: string) {
     });
 
     if (!response.ok) {
-      console.error('Failed to contact AGIengineX backend:', response.statusText);
+      console.error('❌ Failed to contact AGIengineX backend:', response.statusText);
       return {
         role: 'assistant',
         content: `⚠️ Backend error: ${response.statusText}`,
@@ -36,7 +36,7 @@ export async function routeChatMessage(message: string) {
       content: '⚠️ No valid response from AGIengineX.',
     };
   } catch (error) {
-    console.error('Exception in routeChatMessage:', error);
+    console.error('❌ Exception in routeChatMessage:', error);
     return {
       role: 'assistant',
       content: '❌ Error connecting to AGIengineX. Please try again later.',
