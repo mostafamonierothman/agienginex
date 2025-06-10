@@ -4,7 +4,22 @@ export default {
 
     if (request.method === 'POST' && url.pathname === '/run_agent') {
       try {
-        const { agent, input } = await request.json();
+        const rawBody = await request.text();
+
+        let parsed: any;
+        try {
+          parsed = JSON.parse(rawBody);
+        } catch {
+          return new Response(JSON.stringify({
+            role: "assistant",
+            content: "❌ Error: Malformed JSON in request body.",
+          }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+
+        const { agent, input } = parsed;
         const content = input?.message || input?.goal || 'Hello!';
 
         let responseMessage = `✅ Agent "${agent}" received: "${content}"`;
@@ -27,7 +42,8 @@ export default {
         }
 
         return new Response(JSON.stringify({
-          response: { role: "assistant", content: responseMessage }
+          role: "assistant",
+          content: responseMessage,
         }), {
           headers: { "Content-Type": "application/json" }
         });
@@ -35,7 +51,7 @@ export default {
       } catch (err: any) {
         return new Response(JSON.stringify({
           role: "assistant",
-          content: `❌ Error: ${err.message}`,
+          content: `❌ Internal Error: ${err.message}`,
         }), {
           status: 500,
           headers: { "Content-Type": "application/json" }
@@ -43,6 +59,9 @@ export default {
       }
     }
 
-    return new Response("🔧 AGIengineX worker is online.", { status: 200 });
+    return new Response("🔧 AGIengineX worker is online.", {
+      status: 200,
+      headers: { "Content-Type": "text/plain" }
+    });
   }
 };
