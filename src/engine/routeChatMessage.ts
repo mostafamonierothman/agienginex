@@ -1,11 +1,15 @@
-import { ChatProcessorAgent } from '@/server/agents/ChatProcessorAgent';
+// routeChatMessage.ts
+export async function routeChatMessage({ input }: { input: { message: string } }) {
+  const res = await fetch('https://agienginex.mostafamonier13.workers.dev/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: input.message })
+  });
 
-export async function routeChatMessage(context: any) {
-  try {
-    const agent = new ChatProcessorAgent();
-    return await agent.runner(context);
-  } catch (err) {
-    console.error('[AgentChatBus] Routing error:', err);
-    return { role: 'assistant', content: 'Sorry, something went wrong.' };
-  }
+  const data = await res.json();
+
+  return {
+    role: data.role || 'assistant',
+    content: data.content || '⚠️ No response received from AGIengineX.'
+  };
 }
