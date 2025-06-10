@@ -1,44 +1,35 @@
-
-import { AgentContext, AgentResponse } from '../../types/AgentTypes';
-import { saveChatMessage } from '../../utils/saveChatMessage';
-import { LLMExecutiveAgentRunner } from './LLMExecutiveAgent';
+import { AgentContext, AgentResponse } from '@/types/AgentTypes';
+import { SupabaseMemoryService } from '@/services/SupabaseMemoryService';
+import { LLMExecutiveAgent } from './LLMExecutiveAgent';
+import { saveChatMessage } from '@/utils/saveChatMessage';
 
 export class ChatProcessorAgent {
   async runner(context: AgentContext): Promise<AgentResponse> {
+    const sessionId = context?.input?.sessionId || 'default';
+    const message = context?.input?.message || '';
+
     try {
-      const userMessage = context.input?.message || '';
-      
-      console.log('[ChatProcessorAgent] Processing user message:', userMessage);
-      console.log('[ChatProcessorAgent] Routing message to LLMExecutiveAgent...');
+      // 1. Load memory
+      const memory = await SupabaseMemoryService.loadMemory(sessionId);
 
-      // Save user message to chat history
-      await saveChatMessage('User', userMessage);
+      // 2. Build context-aware prompt
+      const prompt = `User: ${message}\nMemory: ${JSON.stringify(memory)}\nRespond as a helpful assistant.`;
 
-      // Forward the message to LLMExecutiveAgent for GPT-4o processing
-      const llmResponse = await LLMExecutiveAgentRunner({
-        user_id: context.user_id || 'chat_user',
-        input: {
-          goal: 'Respond to user chat message',
-          context: `User said: "${userMessage}"`,
-          message: userMessage
-        },
-        timestamp: new Date().toISOString()
+      // 3. Run decision through executive agent
+      const executive = new LLMExecutiveAgent();
+      const response = await executive.runner({
+        input: { goal: prompt, sessionId }
       });
 
-      // The LLMExecutiveAgent already saves its response, so we just return it
-      return llmResponse;
+      // 4. Save memory and chat logs
+      await SupabaseMemoryService.saveMemory(sessionId, { input: message, response });
+      await saveChatMessage({ sessionId, role: 'user', message });
+      await saveChatMessage({ sessionId, role: 'assistant', message: response.content });
 
-    } catch (error) {
-      console.error('[ChatProcessorAgent] Error:', error);
-      return {
-        success: false,
-        message: `❌ ChatProcessorAgent error: ${error instanceof Error ? error.message : 'Unknown error'}`
-      };
+      return response;
+    } catch (e) {
+      console.error('[ChatProcessorAgent] Error:', e);
+      return { role: 'assistant', content: 'Sorry, something went wrong.' };
     }
   }
-}
-
-export async function ChatProcessorAgentRunner(context: AgentContext): Promise<AgentResponse> {
-  const agent = new ChatProcessorAgent();
-  return await agent.runner(context);
 }
