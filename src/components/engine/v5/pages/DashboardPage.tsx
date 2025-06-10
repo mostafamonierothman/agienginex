@@ -7,6 +7,8 @@ import { Brain, Activity, Settings, Zap, Target, Database } from 'lucide-react';
 import { enhancedFemtosecondSupervisor } from '@/engine/EnhancedFemtosecondSupervisor';
 import { agentRegistry } from '@/config/AgentRegistry';
 import { TrillionPathPersistence } from '@/services/TrillionPathPersistence';
+import { SupabaseMemoryService } from '@/services/SupabaseMemoryService';
+import { toast } from '@/hooks/use-toast';
 
 const DashboardPage = () => {
   const [agiStatus, setAgiStatus] = useState(null);
@@ -36,17 +38,51 @@ const DashboardPage = () => {
   const startEnhancedAGI = async () => {
     setIsStarting(true);
     try {
+      console.log('🚀 Starting Enhanced AGI from Dashboard...');
+      
+      // Start the enhanced supervisor
       await enhancedFemtosecondSupervisor.startEnhancedAGISupervision();
+      
+      // Log the start event
+      await SupabaseMemoryService.saveExecutionLog('DashboardPage', 'start_enhanced_agi', {
+        success: true,
+        message: 'Enhanced AGI started from dashboard',
+        timestamp: new Date().toISOString()
+      });
+      
+      toast({
+        title: "🚀 Enhanced AGI Started",
+        description: "AGI supervision is now running with autonomous agents",
+      });
+      
+      console.log('✅ Enhanced AGI started successfully');
     } catch (error) {
       console.error('Failed to start Enhanced AGI:', error);
+      
+      toast({
+        title: "❌ Failed to Start AGI",
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: "destructive"
+      });
     } finally {
       setIsStarting(false);
     }
   };
 
-  const stopEnhancedAGI = () => {
+  const stopEnhancedAGI = async () => {
     try {
       enhancedFemtosecondSupervisor.stop();
+      
+      await SupabaseMemoryService.saveExecutionLog('DashboardPage', 'stop_enhanced_agi', {
+        success: true,
+        message: 'Enhanced AGI stopped from dashboard',
+        timestamp: new Date().toISOString()
+      });
+      
+      toast({
+        title: "⏹️ Enhanced AGI Stopped",
+        description: "AGI supervision has been halted",
+      });
     } catch (error) {
       console.error('Failed to stop Enhanced AGI:', error);
     }

@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Brain, Zap, Target, Settings, Play, Pause } from 'lucide-react';
 import { agentRegistry } from '@/config/AgentRegistry';
-import { sendChatUpdate } from '@/utils/sendChatUpdate';
+import { SupabaseMemoryService } from '@/services/SupabaseMemoryService';
+import { toast } from '@/hooks/use-toast';
 
 interface AgentInfo {
   name: string;
@@ -34,20 +35,47 @@ const AgentsPage = () => {
     }
   }, []);
 
-  const runAgent = async (agentName) => {
+  const runAgent = async (agentName: string) => {
+    const agentKey = agentName.toLowerCase().replace(/\s+/g, '_');
     setRunningAgents(prev => new Set([...prev, agentName]));
     
     try {
-      await sendChatUpdate(`🚀 Running ${agentName}...`);
+      console.log(`🚀 Running agent: ${agentName} (${agentKey})`);
       
-      const result = await agentRegistry.runAgent(agentName, {
-        input: { trigger: 'manual_execution', timestamp: new Date().toISOString() },
+      const result = await agentRegistry.runAgent(agentKey, {
+        input: { 
+          trigger: 'manual_execution', 
+          timestamp: new Date().toISOString(),
+          source: 'agents_page'
+        },
         user_id: 'dashboard_user'
       });
 
-      await sendChatUpdate(`✅ ${agentName} completed: ${result.message}`);
+      console.log(`✅ Agent ${agentName} completed:`, result);
+      
+      // Save execution log
+      await SupabaseMemoryService.saveExecutionLog(agentName, 'manual_run', result);
+      
+      toast({
+        title: `✅ ${agentName} Completed`,
+        description: result.message || 'Agent executed successfully',
+      });
+
     } catch (error) {
-      await sendChatUpdate(`❌ ${agentName} failed: ${error.message}`);
+      console.error(`❌ Agent ${agentName} failed:`, error);
+      
+      // Save error log
+      await SupabaseMemoryService.saveExecutionLog(agentName, 'manual_run_error', {
+        success: false,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
+      
+      toast({
+        title: `❌ ${agentName} Failed`,
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: "destructive"
+      });
     } finally {
       setRunningAgents(prev => {
         const newSet = new Set(prev);
@@ -57,7 +85,7 @@ const AgentsPage = () => {
     }
   };
 
-  const getCategoryColor = (category) => {
+  const getCategoryColor = (category: string) => {
     const colors = {
       'Core': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
       'Coordination': 'bg-green-500/20 text-green-400 border-green-500/30',
@@ -77,7 +105,7 @@ const AgentsPage = () => {
     if (!groups[category]) groups[category] = [];
     groups[category].push(agent);
     return groups;
-  }, {}) : {};
+  }, {} as Record<string, AgentInfo[]>) : {};
 
   return (
     <div className="space-y-6">

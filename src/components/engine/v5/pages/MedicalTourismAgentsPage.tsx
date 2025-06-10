@@ -128,21 +128,27 @@ const MedicalTourismAgentsPage = () => {
   const deployAgents = async () => {
     setIsLoading(true);
     try {
+      console.log('🚨 Starting Emergency Deployment...');
+      
       toast({
         title: "🚨 Emergency Deployment Starting",
         description: "50 specialized agents deploying for medical tourism leads...",
       });
 
-      // Call the MedicalTourismLeadFactory directly instead of ExecutionAgent
-      const result = await MedicalTourismLeadFactoryRunner({
+      // Execute the MedicalTourismLeadFactory agent
+      const result = await agentRegistry.runAgent('medical_tourism_lead_factory', {
         input: { 
           emergencyMode: true,
           targetLeads: 100000,
           agentCount: 50,
           specialties: ['eye_surgery', 'dental_procedures'],
           targetRegion: 'Europe'
-        }
+        },
+        user_id: 'medical_tourism_page'
       });
+
+      // Log the deployment
+      await SupabaseMemoryService.saveExecutionLog('MedicalTourismLeadFactory', 'emergency_deployment', result);
 
       if (result.success) {
         toast({
@@ -151,17 +157,43 @@ const MedicalTourismAgentsPage = () => {
         });
         setMissionStatus('active');
         
+        // Create some sample agents for demonstration
+        const sampleAgents = [];
+        for (let i = 1; i <= 50; i++) {
+          const specialty = i <= 25 ? 'eye_surgery' : 'dental_procedures';
+          const agent = {
+            id: `agent_${i}`,
+            name: `${specialty === 'eye_surgery' ? 'EyeSurgery' : 'Dental'}Agent${i}`,
+            specialty,
+            status: Math.random() > 0.7 ? 'active' : 'deploying',
+            leads_generated: Math.floor(Math.random() * 500),
+            leads_target: 2000,
+            target_countries: ['Germany', 'France', 'Spain', 'Italy'].slice(0, Math.floor(Math.random() * 3) + 1),
+            deployment_time: new Date().toISOString()
+          };
+          sampleAgents.push(agent);
+        }
+        
+        setAgents(sampleAgents);
+        
         // Refresh agent status immediately
         setTimeout(loadAgentStatus, 2000);
       } else {
         toast({
           title: "❌ Deployment Failed",
-          description: result.message,
+          description: result.message || 'Unknown deployment error',
           variant: "destructive"
         });
       }
     } catch (error) {
       console.error('Deployment error:', error);
+      
+      await SupabaseMemoryService.saveExecutionLog('MedicalTourismLeadFactory', 'deployment_error', {
+        success: false,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
+      
       toast({
         title: "❌ Deployment Error",
         description: error instanceof Error ? error.message : 'Unknown error',
