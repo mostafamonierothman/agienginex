@@ -17,7 +17,7 @@ export default {
           messages: [{ role: 'user', content: message }]
         });
 
-        const content = chat.choices?.[0]?.message?.content || 'No response.';
+        const content = chat.choices?.[0]?.message?.content || 'No reply.';
         return new Response(JSON.stringify({ role: 'assistant', content }), {
           headers: { 'Content-Type': 'application/json' },
         });
