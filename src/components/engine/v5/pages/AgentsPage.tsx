@@ -8,16 +8,30 @@ import { Brain, Zap, Target, Settings, Play, Pause } from 'lucide-react';
 import { agentRegistry } from '@/config/AgentRegistry';
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
 
+interface AgentInfo {
+  name: string;
+  description: string;
+  category: string;
+  version: string;
+}
+
 const AgentsPage = () => {
-  const [agents, setAgents] = useState([]);
+  const [agents, setAgents] = useState<AgentInfo[]>([]);
   const [runningAgents, setRunningAgents] = useState(new Set());
   const [systemStats, setSystemStats] = useState(null);
 
   useEffect(() => {
-    const allAgents = agentRegistry.getAllAgents();
-    const stats = agentRegistry.getSystemStatus();
-    setAgents(allAgents);
-    setSystemStats(stats);
+    try {
+      const allAgents = agentRegistry.getAllAgents();
+      const stats = agentRegistry.getSystemStatus();
+      // Ensure allAgents is an array
+      const agentsArray = Array.isArray(allAgents) ? allAgents : [];
+      setAgents(agentsArray);
+      setSystemStats(stats);
+    } catch (error) {
+      console.error('Error loading agents:', error);
+      setAgents([]); // Fallback to empty array
+    }
   }, []);
 
   const runAgent = async (agentName) => {
@@ -57,12 +71,13 @@ const AgentsPage = () => {
     return colors[category] || 'bg-gray-500/20 text-gray-400 border-gray-500/30';
   };
 
-  const groupedAgents = agents.reduce((groups, agent) => {
+  // Ensure agents is always an array before using reduce
+  const groupedAgents = Array.isArray(agents) ? agents.reduce((groups, agent) => {
     const category = agent.category || 'Uncategorized';
     if (!groups[category]) groups[category] = [];
     groups[category].push(agent);
     return groups;
-  }, {});
+  }, {}) : {};
 
   return (
     <div className="space-y-6">
@@ -80,7 +95,7 @@ const AgentsPage = () => {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="space-y-1">
-              <div className="text-2xl font-bold text-white">{systemStats?.totalAgents || 0}</div>
+              <div className="text-2xl font-bold text-white">{systemStats?.totalAgents || agents.length}</div>
               <div className="text-sm text-gray-300">Total Agents</div>
             </div>
             <div className="space-y-1">
@@ -108,14 +123,14 @@ const AgentsPage = () => {
                 <Target className="h-5 w-5" />
                 {category} Agents
                 <Badge variant="outline" className={getCategoryColor(category)}>
-                  {categoryAgents.length}
+                  {Array.isArray(categoryAgents) ? categoryAgents.length : 0}
                 </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-64">
                 <div className="grid gap-3">
-                  {categoryAgents.map((agent) => (
+                  {Array.isArray(categoryAgents) && categoryAgents.map((agent) => (
                     <div 
                       key={agent.name}
                       className="flex items-center justify-between p-3 bg-slate-700/30 rounded border border-slate-600/20"

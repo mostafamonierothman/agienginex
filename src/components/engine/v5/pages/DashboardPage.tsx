@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Brain, Activity, Settings, Zap, Target, Memory } from 'lucide-react';
+import { Brain, Activity, Settings, Zap, Target, Database } from 'lucide-react';
 import { enhancedFemtosecondSupervisor } from '@/engine/EnhancedFemtosecondSupervisor';
 import { agentRegistry } from '@/config/AgentRegistry';
 import { TrillionPathPersistence } from '@/services/TrillionPathPersistence';
@@ -23,7 +23,7 @@ const DashboardPage = () => {
       
       setAgiStatus(status);
       setSystemState(state);
-      setAgentCount(agents.length);
+      setAgentCount(Array.isArray(agents) ? agents.length : 0);
     }, 3000);
 
     return () => clearInterval(interval);
@@ -94,7 +94,7 @@ const DashboardPage = () => {
 
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <Memory className="h-4 w-4 text-purple-400" />
+                <Database className="h-4 w-4 text-purple-400" />
                 <span className="text-sm text-gray-300">Runtime</span>
               </div>
               <div className="text-2xl font-bold text-white">
