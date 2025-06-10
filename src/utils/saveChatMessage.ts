@@ -1,15 +1,32 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-export async function saveChatMessage(agentName: string, message: string): Promise<void> {
+export async function saveChatMessage(sessionId: string, role: string, message: string): Promise<void>;
+export async function saveChatMessage(agentName: string, message: string): Promise<void>;
+export async function saveChatMessage(param1: string, param2: string, param3?: string): Promise<void> {
   try {
+    let agentName: string;
+    let message: string;
+    let sessionId: string | undefined;
+
+    if (param3 !== undefined) {
+      // 3 parameter version: sessionId, role, message
+      sessionId = param1;
+      agentName = param2;
+      message = param3;
+    } else {
+      // 2 parameter version: agentName, message
+      agentName = param1;
+      message = param2;
+    }
+
     console.log(`[SaveChatMessage] Saving message from ${agentName}:`, message.substring(0, 100));
     
     // Try to save to Supabase
     const { error } = await supabase
       .from('agent_memory')
       .insert({
-        user_id: 'chat_system',
+        user_id: sessionId || 'chat_system',
         agent_name: agentName,
         memory_key: 'chat_message',
         memory_value: message,
@@ -39,8 +56,8 @@ export async function saveChatMessage(agentName: string, message: string): Promi
     try {
       const emergencyKey = `emergency_chat_${Date.now()}`;
       const emergencyData = {
-        agent_name: agentName,
-        memory_value: message,
+        agent_name: param2,
+        memory_value: param3 || param2,
         timestamp: new Date().toISOString(),
         error: error instanceof Error ? error.message : 'Unknown error'
       };

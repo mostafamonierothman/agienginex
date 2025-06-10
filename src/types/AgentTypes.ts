@@ -42,8 +42,11 @@ export interface AgentResponse {
   message: string;
   data?: any;
   timestamp?: string;
-  nextAgent?: string; // Add support for agent handoffs
-  shouldContinue?: boolean; // Add support for continuation logic
+  nextAgent?: string;
+  shouldContinue?: boolean;
+  // Add compatibility properties for chat responses
+  role?: string;
+  content?: string;
 }
 
 export interface EnhancedAgentResponse {

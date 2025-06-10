@@ -1,3 +1,4 @@
+
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { SupabaseMemoryService } from '@/services/SupabaseMemoryService';
 import { LLMExecutiveAgent } from './LLMExecutiveAgent';
@@ -17,13 +18,30 @@ export class ChatProcessorAgent {
       const response = await executive.runner({ input: { goal: prompt, sessionId } });
 
       await SupabaseMemoryService.saveMemory(sessionId, { input: message, response });
-      await saveChatMessage({ sessionId, role: 'user', message });
-      await saveChatMessage({ sessionId, role: 'assistant', message: response.content });
+      await saveChatMessage(sessionId, 'user', message);
+      await saveChatMessage(sessionId, 'assistant', response.content || response.message);
 
-      return response;
+      return {
+        success: true,
+        message: response.content || response.message || 'No response',
+        role: 'assistant',
+        content: response.content || response.message || 'No response',
+        timestamp: new Date().toISOString()
+      };
     } catch (e) {
       console.error('[ChatProcessorAgent] Error:', e);
-      return { role: 'assistant', content: 'Sorry, something went wrong.' };
+      return { 
+        success: false,
+        message: 'Sorry, something went wrong.',
+        role: 'assistant', 
+        content: 'Sorry, something went wrong.',
+        timestamp: new Date().toISOString()
+      };
     }
   }
+}
+
+export async function ChatProcessorAgentRunner(context: AgentContext): Promise<AgentResponse> {
+  const agent = new ChatProcessorAgent();
+  return await agent.runner(context);
 }

@@ -1,14 +1,8 @@
 
-'use client';
-
 import React, { useState } from 'react';
 import { routeChatMessage } from '@/engine/routeChatMessage';
 
-interface ChatInterfaceProps {
-  className?: string;
-}
-
-export default function ChatInterface({ className }: ChatInterfaceProps) {
+export const ChatInterface = () => {
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -39,7 +33,7 @@ export default function ChatInterface({ className }: ChatInterfaceProps) {
   };
 
   return (
-    <div className={`p-4 max-w-2xl mx-auto bg-white rounded-lg shadow ${className || ''}`}>
+    <div className="p-4 max-w-2xl mx-auto bg-white rounded-lg shadow">
       <div className="h-[400px] overflow-y-scroll border border-gray-300 p-3 mb-4 rounded">
         {messages.map((msg, idx) => (
           <div key={idx} className={`mb-2 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
@@ -67,4 +61,4 @@ export default function ChatInterface({ className }: ChatInterfaceProps) {
       </div>
     </div>
   );
-}
+};
