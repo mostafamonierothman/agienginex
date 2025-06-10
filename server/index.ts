@@ -1,5 +1,3 @@
-
-
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
@@ -16,7 +14,7 @@ export default {
 
         const chat = await openai.chat.completions.create({
           model: 'gpt-4',
-          messages: [{ role: 'user', content: message }],
+          messages: [{ role: 'user', content: message }]
         });
 
         const content = chat.choices?.[0]?.message?.content || 'No response.';
