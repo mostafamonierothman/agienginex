@@ -43,6 +43,7 @@ export default {
         const content = input.message || input.goal || input.prompt || 'Hello!';
 
         const supportedAgents = ['openai', 'gpt', 'chatgpt'];
+
         if (!supportedAgents.includes(agent)) {
           return new Response(JSON.stringify({
             success: false,
@@ -86,7 +87,7 @@ export default {
 
         return new Response(JSON.stringify({
           success: true,
-          agent: agent,
+          agent,
           model,
           result: data.choices?.[0]?.message?.content || "⚠️ No reply from OpenAI",
           usage: data.usage,
