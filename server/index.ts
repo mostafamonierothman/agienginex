@@ -25,8 +25,9 @@ export default {
     if (request.method === 'POST' && url.pathname === '/run_agent') {
       try {
         const rawBody = await request.text();
-        let body;
+        console.log("Raw Body:", rawBody);
 
+        let body;
         try {
           body = JSON.parse(rawBody);
         } catch {
@@ -37,16 +38,28 @@ export default {
           }), { status: 400, headers: corsHeaders });
         }
 
-        const agentRaw = body.agent;
-        const agent = (agentRaw || '').toString().trim().toLowerCase();
+        const agentRaw = body.agent || '';
+        const agent = agentRaw.toString().trim().toLowerCase();
+        console.log("Parsed agent:", agent);
+
         const input = body.input || {};
         const content = input.message || input.goal || input.prompt || 'Hello!';
 
-        if (['openai', 'gpt', 'chatgpt'].includes(agent)) {
-          const model = input.model || 'gpt-4o';
-          const max_tokens = input.max_tokens || 1000;
-          const temperature = input.temperature || 0.7;
+        // Supported agents
+        const supportedAgents = ['openai', 'gpt', 'chatgpt'];
 
+        if (!supportedAgents.includes(agent)) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: "Unsupported or missing agent",
+            received_agent: agentRaw,
+            supported_agents: supportedAgents,
+            timestamp: new Date().toISOString()
+          }), { status: 400, headers: corsHeaders });
+        }
+
+        // OpenAI Agent Execution
+        if (agent === 'openai' || agent === 'gpt' || agent === 'chatgpt') {
           if (!env.OPENAI_API_KEY) {
             return new Response(JSON.stringify({
               success: false,
@@ -54,6 +67,10 @@ export default {
               timestamp: new Date().toISOString()
             }), { status: 503, headers: corsHeaders });
           }
+
+          const model = input.model || 'gpt-4o';
+          const max_tokens = input.max_tokens || 1000;
+          const temperature = input.temperature || 0.7;
 
           const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
@@ -86,13 +103,12 @@ export default {
           }), { headers: corsHeaders });
         }
 
+        // Just in case something slips
         return new Response(JSON.stringify({
           success: false,
-          error: "Unsupported agent",
-          received_agent: agentRaw,
-          supported_agents: ["openai", "gpt", "chatgpt"],
+          error: "Agent not handled",
           timestamp: new Date().toISOString()
-        }), { status: 400, headers: corsHeaders });
+        }), { status: 500, headers: corsHeaders });
 
       } catch (err: any) {
         return new Response(JSON.stringify({
