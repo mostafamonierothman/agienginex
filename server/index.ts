@@ -25,8 +25,8 @@ export default {
     if (request.method === 'POST' && url.pathname === '/run_agent') {
       try {
         const rawBody = await request.text();
-
         let body;
+
         try {
           body = JSON.parse(rawBody);
         } catch {
@@ -43,7 +43,6 @@ export default {
         const content = input.message || input.goal || input.prompt || 'Hello!';
 
         const supportedAgents = ['openai', 'gpt', 'chatgpt'];
-
         if (!supportedAgents.includes(agent)) {
           return new Response(JSON.stringify({
             success: false,
@@ -87,10 +86,9 @@ export default {
 
         return new Response(JSON.stringify({
           success: true,
-          agent,
+          agent: agent,
           model,
-          result: `Agent ${agent} executed successfully`,
-          output: data.choices?.[0]?.message?.content || "⚠️ No reply from OpenAI",
+          result: data.choices?.[0]?.message?.content || "⚠️ No reply from OpenAI",
           usage: data.usage,
           input_processed: input,
           execution_time: Date.now() - start,
