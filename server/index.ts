@@ -62,35 +62,47 @@ export default {
           }), { status: 503, headers: corsHeaders });
         }
 
-        const model = input.model || 'gpt-4o';
-        const max_tokens = input.max_tokens || 1000;
-        const temperature = input.temperature || 0.7;
+        // ✅ EXECUTE the agent logic
+        if (['openai', 'gpt', 'chatgpt'].includes(agent)) {
+          const model = input.model || 'gpt-4o';
+          const max_tokens = input.max_tokens || 1000;
+          const temperature = input.temperature || 0.7;
 
-        const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${env.OPENAI_API_KEY}`
-          },
-          body: JSON.stringify({
+          const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${env.OPENAI_API_KEY}`
+            },
+            body: JSON.stringify({
+              model,
+              messages: [
+                { role: "system", content: "You are a helpful assistant." },
+                { role: "user", content }
+              ],
+              max_tokens,
+              temperature
+            })
+          });
+
+          const data = await openaiRes.json();
+
+          return new Response(JSON.stringify({
+            success: true,
+            agent,
             model,
-            messages: [
-              { role: "system", content: "You are a helpful assistant." },
-              { role: "user", content }
-            ],
-            max_tokens,
-            temperature
-          })
-        });
+            result: data.choices?.[0]?.message?.content || "⚠️ No reply from OpenAI",
+            usage: data.usage,
+            input_processed: input,
+            execution_time: Date.now() - start,
+            timestamp: new Date().toISOString()
+          }), { headers: corsHeaders });
+        }
 
-        const data = await openaiRes.json();
-
+        // Fallback if agent supported but not implemented
         return new Response(JSON.stringify({
           success: true,
-          agent,
-          model,
-          result: data.choices?.[0]?.message?.content || "⚠️ No reply from OpenAI",
-          usage: data.usage,
+          result: `Agent ${agent} logic not yet implemented`,
           input_processed: input,
           execution_time: Date.now() - start,
           timestamp: new Date().toISOString()
