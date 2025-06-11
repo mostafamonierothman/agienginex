@@ -47,7 +47,7 @@ export default {
 
           return new Response(JSON.stringify({
             success: true,
-            agent: agentRaw || "unknown",
+            agent: "openai", // ✅ Use normalized name
             result: data.choices?.[0]?.message?.content || "⚠️ No reply from OpenAI.",
             input_processed: input,
             debug,
