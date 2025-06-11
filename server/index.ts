@@ -14,6 +14,7 @@ export default {
       return new Response(null, { headers: corsHeaders });
     }
 
+    // Health check
     if (request.method === 'GET' && url.pathname === '/health') {
       return new Response(JSON.stringify({
         status: 'healthy',
@@ -22,12 +23,12 @@ export default {
       }), { headers: corsHeaders });
     }
 
+    // Execute Agent
     if (request.method === 'POST' && url.pathname === '/run_agent') {
       try {
         const rawBody = await request.text();
-        console.log("Raw Body:", rawBody);
-
         let body;
+
         try {
           body = JSON.parse(rawBody);
         } catch {
@@ -40,8 +41,6 @@ export default {
 
         const agentRaw = body.agent || '';
         const agent = agentRaw.toString().trim().toLowerCase();
-        console.log("Parsed agent:", agent);
-
         const input = body.input || {};
         const content = input.message || input.goal || input.prompt || 'Hello!';
 
@@ -58,58 +57,48 @@ export default {
           }), { status: 400, headers: corsHeaders });
         }
 
-        // OpenAI Agent Execution
-        if (agent === 'openai' || agent === 'gpt' || agent === 'chatgpt') {
-          if (!env.OPENAI_API_KEY) {
-            return new Response(JSON.stringify({
-              success: false,
-              error: "OpenAI API key not configured",
-              timestamp: new Date().toISOString()
-            }), { status: 503, headers: corsHeaders });
-          }
-
-          const model = input.model || 'gpt-4o';
-          const max_tokens = input.max_tokens || 1000;
-          const temperature = input.temperature || 0.7;
-
-          const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${env.OPENAI_API_KEY}`
-            },
-            body: JSON.stringify({
-              model,
-              messages: [
-                { role: "system", content: "You are a helpful assistant." },
-                { role: "user", content }
-              ],
-              max_tokens,
-              temperature
-            })
-          });
-
-          const data = await openaiRes.json();
-
+        // OpenAI Execution
+        if (!env.OPENAI_API_KEY) {
           return new Response(JSON.stringify({
-            success: true,
-            agent,
-            model,
-            result: data.choices?.[0]?.message?.content || "⚠️ No reply",
-            usage: data.usage,
-            input_processed: input,
-            execution_time: Date.now() - start,
+            success: false,
+            error: "OpenAI API key not configured",
             timestamp: new Date().toISOString()
-          }), { headers: corsHeaders });
+          }), { status: 503, headers: corsHeaders });
         }
 
-        // Just in case something slips
-        return new Response(JSON.stringify({
-          success: false,
-          error: "Agent not handled",
-          timestamp: new Date().toISOString()
-        }), { status: 500, headers: corsHeaders });
+        const model = input.model || 'gpt-4o';
+        const max_tokens = input.max_tokens || 1000;
+        const temperature = input.temperature || 0.7;
 
+        const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${env.OPENAI_API_KEY}`
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: "system", content: "You are a helpful assistant." },
+              { role: "user", content }
+            ],
+            max_tokens,
+            temperature
+          })
+        });
+
+        const data = await openaiRes.json();
+
+        return new Response(JSON.stringify({
+          success: true,
+          agent,
+          model,
+          result: data.choices?.[0]?.message?.content || "⚠️ No reply",
+          usage: data.usage,
+          input_processed: input,
+          execution_time: Date.now() - start,
+          timestamp: new Date().toISOString()
+        }), { headers: corsHeaders });
       } catch (err: any) {
         return new Response(JSON.stringify({
           success: false,
@@ -119,13 +108,12 @@ export default {
       }
     }
 
+    // Catch-all fallback
     return new Response(JSON.stringify({
-      status: "AGIengineX API Ready",
-      endpoints: {
-        "POST /run_agent": "Execute AI tasks",
-        "GET /health": "Health check"
-      },
+      success: false,
+      error: "Not Found",
+      available_endpoints: ["/agi", "/next_move", "/run_agent"],
       timestamp: new Date().toISOString()
-    }), { headers: corsHeaders });
+    }), { status: 404, headers: corsHeaders });
   }
 };
