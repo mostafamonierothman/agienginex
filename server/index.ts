@@ -18,18 +18,19 @@ export default {
           }), { status: 400 });
         }
 
-        const agent = body.agent?.trim();
+        const agentRaw = body.agent;
+        const agent = typeof agentRaw === 'string' ? agentRaw.trim().toLowerCase() : '';
         const input = body.input || {};
         const content = input?.message || input?.goal || 'Hello!';
 
-        // ✅ Debugging Info
         const debug = {
-          received_agent: agent,
+          received_agent: agentRaw,
           input: input,
           content_used: content
         };
 
-        if (agent && agent.toLowerCase() === "openai") {
+        // ✅ Validate known agent
+        if (agent === "openai") {
           const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -57,12 +58,12 @@ export default {
           });
         }
 
-        // 🟥 Agent not supported or not implemented
+        // ❌ Agent not supported
         return new Response(JSON.stringify({
           success: false,
-          error: "❌ Agent not recognized or not implemented",
-          received_agent: agent,
-          expected_agents: ["OpenAI"],
+          error: "❌ Agent not recognized or supported.",
+          received_agent: agentRaw,
+          expected: "OpenAI",
           input_processed: input,
           timestamp: new Date().toISOString()
         }), {
@@ -82,7 +83,6 @@ export default {
       }
     }
 
-    // Default GET response
     return new Response("🔧 AGIengineX is running", {
       headers: { "Content-Type": "text/plain" }
     });
