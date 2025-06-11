@@ -4,11 +4,11 @@ export default {
 
     if (request.method === 'POST' && url.pathname === '/run_agent') {
       try {
-        const rawBody = await request.text(); // Get raw body for debugging
+        const rawBody = await request.text();
         let body;
 
         try {
-          body = JSON.parse(rawBody); // Try to parse
+          body = JSON.parse(rawBody);
         } catch (jsonErr) {
           return new Response(JSON.stringify({
             success: false,
@@ -21,6 +21,13 @@ export default {
         const agent = body.agent?.trim();
         const input = body.input || {};
         const content = input?.message || input?.goal || 'Hello!';
+
+        // ✅ Debugging Info
+        const debug = {
+          received_agent: agent,
+          input: input,
+          content_used: content
+        };
 
         if (agent && agent.toLowerCase() === "openai") {
           const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -40,9 +47,9 @@ export default {
           return new Response(JSON.stringify({
             success: true,
             agent: "OpenAI",
-            result: data.choices?.[0]?.message?.content || "⚠️ No reply from OpenAI",
+            result: data.choices?.[0]?.message?.content || "⚠️ No reply from OpenAI.",
             input_processed: input,
-            raw_openai_response: data,
+            debug,
             execution_time: Date.now(),
             timestamp: new Date().toISOString()
           }), {
@@ -50,12 +57,12 @@ export default {
           });
         }
 
+        // 🟥 Agent not supported or not implemented
         return new Response(JSON.stringify({
           success: false,
-          error: `❌ Agent not supported or not matched`,
+          error: "❌ Agent not recognized or not implemented",
           received_agent: agent,
-          expected: "OpenAI",
-          raw_body: rawBody,
+          expected_agents: ["OpenAI"],
           input_processed: input,
           timestamp: new Date().toISOString()
         }), {
@@ -75,6 +82,7 @@ export default {
       }
     }
 
+    // Default GET response
     return new Response("🔧 AGIengineX is running", {
       headers: { "Content-Type": "text/plain" }
     });
