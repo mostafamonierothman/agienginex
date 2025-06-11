@@ -4,10 +4,15 @@ export default {
 
     if (request.method === 'POST' && url.pathname === '/run_agent') {
       try {
-        const { agent, input } = await request.json();
-        const content = input?.message || input?.goal || 'Hello!';
+        const body = await request.json();
+        const { agent, input } = body || {};
 
-        let responseMessage = `✅ Agent "${agent}" received: "${content}"`;
+        if (!agent) {
+          throw new Error("Agent is not specified in the request.");
+        }
+
+        const content = input?.message || input?.goal || 'Hello!';
+        let responseMessage = '';
 
         if (agent === 'OpenAI') {
           const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -23,25 +28,34 @@ export default {
           });
 
           const data = await openaiResponse.json();
-          console.log("[OpenAI Response]", JSON.stringify(data, null, 2));
 
-          responseMessage = data?.choices?.[0]?.message?.content || "⚠️ No response from OpenAI.";
+          if (data?.choices?.[0]?.message?.content) {
+            responseMessage = data.choices[0].message.content;
+          } else if (data?.error) {
+            throw new Error(`OpenAI API returned: ${JSON.stringify(data.error, null, 2)}`);
+          } else {
+            responseMessage = "⚠️ No response from OpenAI.";
+          }
+
+        } else {
+          throw new Error(`Agent "${agent}" is not implemented.`);
         }
 
-        const result = {
-          response: { role: "assistant", content: responseMessage }
-        };
-
-        console.log("[Worker Final Response]", JSON.stringify(result, null, 2));
-
-        return new Response(JSON.stringify(result), {
+        return new Response(JSON.stringify({
+          success: true,
+          agent,
+          result: responseMessage,
+          input_processed: input,
+          execution_time: Math.random() * 1000,
+          timestamp: new Date().toISOString()
+        }), {
           headers: { "Content-Type": "application/json" }
         });
 
       } catch (err: any) {
         return new Response(JSON.stringify({
-          role: "assistant",
-          content: `❌ Error: ${err.message}`,
+          success: false,
+          error: err.message || "Unknown error occurred",
         }), {
           status: 500,
           headers: { "Content-Type": "application/json" }
@@ -49,6 +63,8 @@ export default {
       }
     }
 
-    return new Response("🔧 AGIengineX worker is online.", { status: 200 });
+    return new Response("🧠 AGIengineX worker is online and waiting for POST requests to /run_agent.", {
+      status: 200,
+    });
   }
 };
