@@ -25,8 +25,8 @@ export default {
     if (request.method === 'POST' && url.pathname === '/run_agent') {
       try {
         const rawBody = await request.text();
-        let body;
 
+        let body;
         try {
           body = JSON.parse(rawBody);
         } catch {
@@ -108,7 +108,7 @@ export default {
     return new Response(JSON.stringify({
       success: false,
       error: "Not Found",
-      available_endpoints: ["/health", "/run_agent"],
+      available_endpoints: ["/agi", "/next_move", "/run_agent"],
       timestamp: new Date().toISOString()
     }), { status: 404, headers: corsHeaders });
   }
