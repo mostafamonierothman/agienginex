@@ -4,8 +4,17 @@ export default {
 
     if (request.method === 'POST' && url.pathname === '/run_agent') {
       try {
-        const { agent, input } = await request.json();
+        const body = await request.json();
+
+        const agent = body.agent?.trim();
+        const input = body.input || {};
         const content = input?.message || input?.goal || 'Hello!';
+
+        // ✅ DEBUG: Log incoming agent
+        let debugInfo = {
+          received_agent: agent,
+          known_agents: ["OpenAI"]
+        };
 
         if (agent?.toLowerCase() === 'openai') {
           const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -35,10 +44,11 @@ export default {
           });
         }
 
-        // If no agent matched
+        // 🟥 If agent not matched
         return new Response(JSON.stringify({
           success: false,
-          error: `❌ Unknown agent: "${agent}"`,
+          error: `❌ Unknown or unsupported agent.`,
+          debug: debugInfo,
           input_processed: input,
           timestamp: new Date().toISOString()
         }), {
