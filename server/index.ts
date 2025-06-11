@@ -62,8 +62,7 @@ export default {
           }), { status: 503, headers: corsHeaders });
         }
 
-        // ✅ EXECUTE the agent logic
-        if (['openai', 'gpt', 'chatgpt'].includes(agent)) {
+        if (agent === 'openai' || agent === 'gpt' || agent === 'chatgpt') {
           const model = input.model || 'gpt-4o';
           const max_tokens = input.max_tokens || 1000;
           const temperature = input.temperature || 0.7;
@@ -99,10 +98,11 @@ export default {
           }), { headers: corsHeaders });
         }
 
-        // Fallback if agent supported but not implemented
+        // Default fallback IF logic fails
         return new Response(JSON.stringify({
-          success: true,
-          result: `Agent ${agent} logic not yet implemented`,
+          success: false,
+          error: "Agent matched but execution logic is missing.",
+          agent,
           input_processed: input,
           execution_time: Date.now() - start,
           timestamp: new Date().toISOString()
