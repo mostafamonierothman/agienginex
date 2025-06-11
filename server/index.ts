@@ -1,6 +1,7 @@
 export default {
   async fetch(request: Request, env: any): Promise<Response> {
     const url = new URL(request.url);
+    const start = Date.now();
 
     if (request.method === 'POST' && url.pathname === '/run_agent') {
       try {
@@ -29,7 +30,6 @@ export default {
           content_used: content
         };
 
-        // ✅ Validate known agent
         if (agent === "openai") {
           const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
@@ -47,18 +47,17 @@ export default {
 
           return new Response(JSON.stringify({
             success: true,
-            agent: "OpenAI",
+            agent: agentRaw || "unknown",
             result: data.choices?.[0]?.message?.content || "⚠️ No reply from OpenAI.",
             input_processed: input,
             debug,
-            execution_time: Date.now(),
+            execution_time: Date.now() - start,
             timestamp: new Date().toISOString()
           }), {
             headers: { "Content-Type": "application/json" }
           });
         }
 
-        // ❌ Agent not supported
         return new Response(JSON.stringify({
           success: false,
           error: "❌ Agent not recognized or supported.",
