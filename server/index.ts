@@ -4,18 +4,25 @@ export default {
 
     if (request.method === 'POST' && url.pathname === '/run_agent') {
       try {
-        const body = await request.json();
+        const bodyText = await request.text(); // First, get the raw body
+        let body;
+
+        try {
+          body = JSON.parse(bodyText); // Parse JSON from raw text
+        } catch (e) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: "❌ Invalid JSON body",
+            raw: bodyText,
+            timestamp: new Date().toISOString()
+          }), { status: 400 });
+        }
 
         const agent = body.agent?.trim();
         const input = body.input || {};
         const content = input?.message || input?.goal || 'Hello!';
 
-        // ✅ DEBUG: Log incoming agent
-        let debugInfo = {
-          received_agent: agent,
-          known_agents: ["OpenAI"]
-        };
-
+        // Show what agent was received
         if (agent?.toLowerCase() === 'openai') {
           const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
@@ -30,26 +37,27 @@ export default {
           });
 
           const data = await openaiRes.json();
-          const output = data.choices?.[0]?.message?.content || "⚠️ No reply from OpenAI.";
 
           return new Response(JSON.stringify({
             success: true,
             agent: "OpenAI",
-            result: output,
             input_processed: input,
-            execution_time: Date.now(),
+            result: data.choices?.[0]?.message?.content || "⚠️ No reply from OpenAI",
+            raw_response: data,
             timestamp: new Date().toISOString()
           }), {
             headers: { "Content-Type": "application/json" }
           });
         }
 
-        // 🟥 If agent not matched
+        // 🚨 Agent did not match — log what was received
         return new Response(JSON.stringify({
           success: false,
-          error: `❌ Unknown or unsupported agent.`,
-          debug: debugInfo,
+          error: `❌ Unsupported agent or missing logic.`,
+          received_agent: agent,
+          known_agents: ["OpenAI"],
           input_processed: input,
+          raw_body: bodyText,
           timestamp: new Date().toISOString()
         }), {
           status: 400,
