@@ -4,16 +4,16 @@ export default {
 
     if (request.method === 'POST' && url.pathname === '/run_agent') {
       try {
-        const bodyText = await request.text(); // First, get the raw body
+        const rawBody = await request.text(); // Get raw body for debugging
         let body;
 
         try {
-          body = JSON.parse(bodyText); // Parse JSON from raw text
-        } catch (e) {
+          body = JSON.parse(rawBody); // Try to parse
+        } catch (jsonErr) {
           return new Response(JSON.stringify({
             success: false,
-            error: "❌ Invalid JSON body",
-            raw: bodyText,
+            error: "❌ Invalid JSON format",
+            raw_body: rawBody,
             timestamp: new Date().toISOString()
           }), { status: 400 });
         }
@@ -22,8 +22,7 @@ export default {
         const input = body.input || {};
         const content = input?.message || input?.goal || 'Hello!';
 
-        // Show what agent was received
-        if (agent?.toLowerCase() === 'openai') {
+        if (agent && agent.toLowerCase() === "openai") {
           const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -41,23 +40,23 @@ export default {
           return new Response(JSON.stringify({
             success: true,
             agent: "OpenAI",
-            input_processed: input,
             result: data.choices?.[0]?.message?.content || "⚠️ No reply from OpenAI",
-            raw_response: data,
+            input_processed: input,
+            raw_openai_response: data,
+            execution_time: Date.now(),
             timestamp: new Date().toISOString()
           }), {
             headers: { "Content-Type": "application/json" }
           });
         }
 
-        // 🚨 Agent did not match — log what was received
         return new Response(JSON.stringify({
           success: false,
-          error: `❌ Unsupported agent or missing logic.`,
+          error: `❌ Agent not supported or not matched`,
           received_agent: agent,
-          known_agents: ["OpenAI"],
+          expected: "OpenAI",
+          raw_body: rawBody,
           input_processed: input,
-          raw_body: bodyText,
           timestamp: new Date().toISOString()
         }), {
           status: 400,
@@ -67,7 +66,7 @@ export default {
       } catch (err: any) {
         return new Response(JSON.stringify({
           success: false,
-          error: `❌ Server error: ${err.message}`,
+          error: `❌ Internal server error: ${err.message}`,
           timestamp: new Date().toISOString()
         }), {
           status: 500,
@@ -76,7 +75,7 @@ export default {
       }
     }
 
-    return new Response("🔧 AGIengineX is alive!", {
+    return new Response("🔧 AGIengineX is running", {
       headers: { "Content-Type": "text/plain" }
     });
   }
