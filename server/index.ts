@@ -37,10 +37,11 @@ export default {
           });
         }
 
-        // fallback
+        // fallback for unknown agents
         return new Response(JSON.stringify({
           success: false,
-          error: `Unknown agent: ${agent}`,
+          error: `❌ Agent "${agent}" is not supported.`,
+          input_processed: input,
           timestamp: new Date().toISOString()
         }), {
           headers: { 'Content-Type': 'application/json' },
@@ -50,7 +51,7 @@ export default {
       } catch (err: any) {
         return new Response(JSON.stringify({
           success: false,
-          error: `Exception: ${err.message}`,
+          error: `❌ Server error: ${err.message}`,
           timestamp: new Date().toISOString()
         }), {
           headers: { 'Content-Type': 'application/json' },
