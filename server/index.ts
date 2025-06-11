@@ -38,7 +38,7 @@ export default {
         }
 
         const agentRaw = body.agent;
-        const agent = typeof agentRaw === 'string' ? agentRaw.trim().toLowerCase() : '';
+        const agent = (agentRaw || '').toString().trim().toLowerCase();
         const input = body.input || {};
         const content = input.message || input.goal || input.prompt || 'Hello!';
 
@@ -76,7 +76,7 @@ export default {
 
           return new Response(JSON.stringify({
             success: true,
-            agent: "openai",
+            agent,
             model,
             result: data.choices?.[0]?.message?.content || "⚠️ No reply",
             usage: data.usage,
