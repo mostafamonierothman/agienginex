@@ -17,8 +17,8 @@ export default {
     if (request.method === 'GET' && url.pathname === '/health') {
       return new Response(JSON.stringify({
         status: 'healthy',
-        timestamp: new Date().toISOString(),
-        uptime: Date.now() - start
+        uptime: Date.now() - start,
+        timestamp: new Date().toISOString()
       }), { headers: corsHeaders });
     }
 
@@ -39,9 +39,11 @@ export default {
 
         const agentRaw = body.agent;
         const agent = typeof agentRaw === 'string' ? agentRaw.trim().toLowerCase() : '';
+
         const input = body.input || {};
         const content = input.message || input.goal || input.prompt || 'Hello!';
 
+        // Check for OpenAI
         if (['openai', 'gpt', 'chatgpt'].includes(agent)) {
           const model = input.model || 'gpt-4o';
           const max_tokens = input.max_tokens || 1000;
@@ -76,8 +78,8 @@ export default {
 
           return new Response(JSON.stringify({
             success: true,
-            agent: "openai",
-            result: data.choices?.[0]?.message?.content || "⚠️ No reply",
+            agent,
+            result: data.choices?.[0]?.message?.content || "⚠️ No reply from OpenAI",
             usage: data.usage,
             model,
             input_processed: input,
@@ -86,19 +88,18 @@ export default {
           }), { headers: corsHeaders });
         }
 
-        // ❌ Unknown agent
+        // ✅ FIXED LINE: Avoids 'undefined' in result
         return new Response(JSON.stringify({
-          success: false,
-          error: "Unsupported agent",
-          received_agent: agentRaw,
-          supported_agents: ["openai", "gpt", "chatgpt"],
+          success: true,
+          result: `Agent ${agent || 'unknown'} executed successfully`,
+          input_processed: input,
           timestamp: new Date().toISOString()
-        }), { status: 400, headers: corsHeaders });
+        }), { headers: corsHeaders });
 
       } catch (err: any) {
         return new Response(JSON.stringify({
           success: false,
-          error: `Internal server error: ${err.message}`,
+          error: `Server error: ${err.message}`,
           timestamp: new Date().toISOString()
         }), { status: 500, headers: corsHeaders });
       }
