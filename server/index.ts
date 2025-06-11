@@ -1,63 +1,116 @@
-if (request.method === 'POST' && url.pathname === '/run_agent') {
-  try {
-    const rawBody = await request.text();
-    const logs: any = { received_raw: rawBody };
+export default {
+  async fetch(request: Request, env: any): Promise<Response> {
+    const url = new URL(request.url);
+    const start = Date.now();
 
-    let body;
-    try {
-      body = JSON.parse(rawBody);
-      logs.parsed_body = body;
-    } catch (err) {
-      logs.json_error = err.message;
-      return new Response(JSON.stringify({ success: false, error: "Invalid JSON", logs }), { status: 400, headers: corsHeaders });
+    const corsHeaders = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Content-Type': 'application/json'
+    };
+
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { headers: corsHeaders });
     }
 
-    const agent = (body.agent || '').toString().trim().toLowerCase();
-    const input = body.input || {};
-    const content = input.message || input.goal || input.prompt || 'Hello!';
-    logs.agent = agent;
-
-    if (!['openai', 'gpt', 'chatgpt'].includes(agent)) {
-      return new Response(JSON.stringify({ success: false, error: "Unsupported agent", logs }), { status: 400, headers: corsHeaders });
+    if (request.method === 'GET' && url.pathname === '/health') {
+      return new Response(JSON.stringify({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        uptime: Date.now() - start
+      }), { headers: corsHeaders });
     }
 
-    if (!env.OPENAI_API_KEY) {
-      logs.env_key = !!env.OPENAI_API_KEY;
-      return new Response(JSON.stringify({ success: false, error: "Missing OpenAI key", logs }), { status: 503, headers: corsHeaders });
+    if (request.method === 'POST' && url.pathname === '/run_agent') {
+      try {
+        const rawBody = await request.text();
+
+        let body;
+        try {
+          body = JSON.parse(rawBody);
+        } catch {
+          return new Response(JSON.stringify({
+            success: false,
+            error: "Invalid JSON payload",
+            timestamp: new Date().toISOString()
+          }), { status: 400, headers: corsHeaders });
+        }
+
+        const agentRaw = body.agent || '';
+        const agent = agentRaw.toString().trim().toLowerCase();
+        const input = body.input || {};
+        const content = input.message || input.goal || input.prompt || 'Hello!';
+
+        const supportedAgents = ['openai', 'gpt', 'chatgpt'];
+
+        if (!supportedAgents.includes(agent)) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: "Unsupported or missing agent",
+            received_agent: agentRaw,
+            supported_agents: supportedAgents,
+            timestamp: new Date().toISOString()
+          }), { status: 400, headers: corsHeaders });
+        }
+
+        if (!env.OPENAI_API_KEY) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: "OpenAI API key not configured",
+            timestamp: new Date().toISOString()
+          }), { status: 503, headers: corsHeaders });
+        }
+
+        const model = input.model || 'gpt-4o';
+        const max_tokens = input.max_tokens || 1000;
+        const temperature = input.temperature || 0.7;
+
+        const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${env.OPENAI_API_KEY}`
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: "system", content: "You are a helpful assistant." },
+              { role: "user", content }
+            ],
+            max_tokens,
+            temperature
+          })
+        });
+
+        const data = await openaiRes.json();
+
+        return new Response(JSON.stringify({
+          success: true,
+          agent,
+          model,
+          result: `Agent ${agent} executed successfully`,
+          output: data.choices?.[0]?.message?.content || "⚠️ No reply from OpenAI",
+          usage: data.usage,
+          input_processed: input,
+          execution_time: Date.now() - start,
+          timestamp: new Date().toISOString()
+        }), { headers: corsHeaders });
+
+      } catch (err: any) {
+        return new Response(JSON.stringify({
+          success: false,
+          error: `Internal server error: ${err.message}`,
+          timestamp: new Date().toISOString()
+        }), { status: 500, headers: corsHeaders });
+      }
     }
 
-    const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${env.OPENAI_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: input.model || 'gpt-4o',
-        messages: [
-          { role: "system", content: "You are a helpful assistant." },
-          { role: "user", content }
-        ],
-        max_tokens: input.max_tokens || 1000,
-        temperature: input.temperature || 0.7
-      })
-    });
-
-    const data = await openaiRes.json();
-    logs.openai_response = data;
-
-    return new Response(JSON.stringify({
-      success: true,
-      agent,
-      result: data.choices?.[0]?.message?.content || "⚠️ No reply from OpenAI",
-      logs
-    }), { headers: corsHeaders });
-
-  } catch (err: any) {
     return new Response(JSON.stringify({
       success: false,
-      error: "Internal server error",
-      logs: { err: err.message }
-    }), { status: 500, headers: corsHeaders });
+      error: "Not Found",
+      available_endpoints: ["/health", "/run_agent"],
+      timestamp: new Date().toISOString()
+    }), { status: 404, headers: corsHeaders });
   }
-}
+};
