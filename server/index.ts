@@ -3,6 +3,29 @@ export default {
     const url = new URL(request.url);
     const start = Date.now();
 
+    // CORS headers (used throughout)
+    const corsHeaders = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Content-Type': 'application/json'
+    };
+
+    // Handle CORS preflight
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { headers: corsHeaders });
+    }
+
+    // Health check endpoint
+    if (request.method === 'GET' && url.pathname === '/health') {
+      return new Response(JSON.stringify({
+        status: 'healthy',
+        uptime_ms: Date.now() - start,
+        timestamp: new Date().toISOString()
+      }), { headers: corsHeaders });
+    }
+
+    // Main AI Agent endpoint
     if (request.method === 'POST' && url.pathname === '/run_agent') {
       try {
         const rawBody = await request.text();
@@ -10,80 +33,100 @@ export default {
 
         try {
           body = JSON.parse(rawBody);
-        } catch (jsonErr) {
+        } catch {
           return new Response(JSON.stringify({
             success: false,
             error: "❌ Invalid JSON format",
-            raw_body: rawBody,
             timestamp: new Date().toISOString()
-          }), { status: 400 });
+          }), { status: 400, headers: corsHeaders });
         }
 
         const agentRaw = body.agent;
         const agent = typeof agentRaw === 'string' ? agentRaw.trim().toLowerCase() : '';
         const input = body.input || {};
-        const content = input?.message || input?.goal || 'Hello!';
+        const content = input?.message || input?.goal || input?.prompt || 'Hello!';
 
+        // Debug info
         const debug = {
-          received_agent: agentRaw,
-          input: input,
-          content_used: content
+          agent_received: agentRaw,
+          agent_normalized: agent,
+          input_fields: Object.keys(input),
+          content_preview: content.slice(0, 50),
+          has_api_key: !!env.OPENAI_API_KEY
         };
 
-        if (agent === "openai") {
-          const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+        if (agent === 'openai' || agent === 'gpt' || agent === 'chatgpt') {
+          const model = input.model || 'gpt-4o';
+          const max_tokens = input.max_tokens || 1000;
+          const temperature = input.temperature || 0.7;
+
+          if (!env.OPENAI_API_KEY) {
+            return new Response(JSON.stringify({
+              success: false,
+              error: "❌ Missing OpenAI API key",
+              timestamp: new Date().toISOString()
+            }), { status: 503, headers: corsHeaders });
+          }
+
+          const response = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               "Authorization": `Bearer ${env.OPENAI_API_KEY}`
             },
             body: JSON.stringify({
-              model: "gpt-4",
-              messages: [{ role: "user", content }]
+              model,
+              messages: [
+                { role: "system", content: "You are a helpful assistant." },
+                { role: "user", content }
+              ],
+              max_tokens,
+              temperature
             })
           });
 
-          const data = await openaiRes.json();
+          const data = await response.json();
 
           return new Response(JSON.stringify({
             success: true,
-            agent: "openai", // ✅ Use normalized name
-            result: data.choices?.[0]?.message?.content || "⚠️ No reply from OpenAI.",
+            agent: "openai",
+            model,
+            result: data.choices?.[0]?.message?.content || "⚠️ No reply",
+            usage: data.usage,
             input_processed: input,
             debug,
             execution_time: Date.now() - start,
             timestamp: new Date().toISOString()
-          }), {
-            headers: { "Content-Type": "application/json" }
-          });
+          }), { headers: corsHeaders });
         }
 
+        // Unknown agent
         return new Response(JSON.stringify({
           success: false,
-          error: "❌ Agent not recognized or supported.",
+          error: "❌ Unsupported agent",
           received_agent: agentRaw,
-          expected: "OpenAI",
-          input_processed: input,
+          supported_agents: ["openai", "gpt", "chatgpt"],
           timestamp: new Date().toISOString()
-        }), {
-          status: 400,
-          headers: { "Content-Type": "application/json" }
-        });
+        }), { status: 400, headers: corsHeaders });
 
       } catch (err: any) {
         return new Response(JSON.stringify({
           success: false,
-          error: `❌ Internal server error: ${err.message}`,
+          error: `❌ Server error: ${err.message}`,
           timestamp: new Date().toISOString()
-        }), {
-          status: 500,
-          headers: { "Content-Type": "application/json" }
-        });
+        }), { status: 500, headers: corsHeaders });
       }
     }
 
-    return new Response("🔧 AGIengineX is running", {
-      headers: { "Content-Type": "text/plain" }
-    });
+    // Default response
+    return new Response(JSON.stringify({
+      status: "AGIengineX API",
+      version: "1.0.0",
+      available_endpoints: {
+        "POST /run_agent": "Run AI agent with input",
+        "GET /health": "Check worker status"
+      },
+      timestamp: new Date().toISOString()
+    }), { headers: corsHeaders });
   }
 };
