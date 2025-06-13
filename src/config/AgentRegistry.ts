@@ -16,6 +16,16 @@ import { MedicalTourismResearchAgentRunner } from '@/agents/MedicalTourismResear
 import { CustomerAcquisitionAgentRunner } from '@/agents/CustomerAcquisitionAgent';
 import { EnhancedExecutiveAgentRunner } from '@/agents/EnhancedExecutiveAgent';
 
+export interface RegisteredAgent {
+  name: string;
+  status: string;
+  lastAction: string;
+  category: string;
+  description: string;
+  version: string;
+  runner: (context: AgentContext) => Promise<AgentResponse>;
+}
+
 export class AgentRegistry {
   private agents = new Map<string, (context: AgentContext) => Promise<AgentResponse>>();
   private systemStatus: any = {
@@ -112,6 +122,37 @@ export class AgentRegistry {
 
   getAgent(agentName: string): (context: AgentContext) => Promise<AgentResponse> | undefined {
     return this.agents.get(agentName);
+  }
+
+  getRandomAgent(): RegisteredAgent | null {
+    const agents = this.getAllAgents();
+    if (agents.length === 0) return null;
+    const randomIndex = Math.floor(Math.random() * agents.length);
+    const agentDef = agents[randomIndex];
+    const runner = this.agents.get(agentDef.name);
+    if (!runner) return null;
+    
+    return {
+      name: agentDef.name,
+      status: 'idle',
+      lastAction: 'none',
+      category: agentDef.category,
+      description: agentDef.description,
+      version: agentDef.version,
+      runner
+    };
+  }
+
+  async runRandomAgent(context: AgentContext): Promise<AgentResponse> {
+    const randomAgent = this.getRandomAgent();
+    if (!randomAgent) {
+      return {
+        success: false,
+        message: 'No agents available',
+        timestamp: new Date().toISOString()
+      };
+    }
+    return await randomAgent.runner(context);
   }
 
   getAllAgents(): { name: string; description: string; category: string; version: string }[] {

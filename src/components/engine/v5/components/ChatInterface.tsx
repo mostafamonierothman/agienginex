@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -23,9 +24,7 @@ export default function ChatInterface() {
     setLoading(true);
 
     try {
-      const response = await routeChatMessage({
-        input: { message: input, sessionId: 'user-session-1' }
-      });
+      const response = await routeChatMessage(input);
 
       const assistantMessage = {
         role: response.role || 'assistant',

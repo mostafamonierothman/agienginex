@@ -1,4 +1,5 @@
-import { supabase } from '@/integrations/supabase'
+
+import { supabase } from '@/integrations/supabase/client'
 
 export const ConversionTrackerAgent = async (leadEmail: string, conversionAmount: number) => {
   const { data: lead, error } = await supabase

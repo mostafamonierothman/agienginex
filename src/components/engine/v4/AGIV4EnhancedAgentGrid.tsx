@@ -14,15 +14,18 @@ const AGIV4EnhancedAgentGrid = () => {
 
   useEffect(() => {
     // Map AgentDefinition to RegisteredAgent
-    const mappedAgents: RegisteredAgent[] = agentRegistry.getAllAgents().map(agent => ({
-      name: agent.name,
-      status: 'idle',
-      lastAction: 'none',
-      category: agent.category,
-      description: agent.description,
-      version: agent.version,
-      runner: agent.runner
-    }));
+    const mappedAgents: RegisteredAgent[] = agentRegistry.getAllAgents().map(agent => {
+      const runner = agentRegistry.getAgent(agent.name);
+      return {
+        name: agent.name,
+        status: 'idle',
+        lastAction: 'none',
+        category: agent.category,
+        description: agent.description,
+        version: agent.version,
+        runner: runner || (() => Promise.resolve({ success: false, message: 'Agent not found', timestamp: new Date().toISOString() }))
+      };
+    });
     setAgents(mappedAgents);
     
     // Update system status every 2 seconds
@@ -75,6 +78,7 @@ const AGIV4EnhancedAgentGrid = () => {
     try {
       const context = {
         user_id: 'enhanced_ui_user',
+        input: { task: 'Execute agent', timestamp: new Date().toISOString() },
         timestamp: new Date().toISOString()
       };
 
@@ -87,7 +91,7 @@ const AGIV4EnhancedAgentGrid = () => {
     } catch (error) {
       toast({
         title: `❌ ${agentName} Failed`,
-        description: error.message,
+        description: error instanceof Error ? error.message : 'Unknown error',
         variant: "destructive"
       });
     } finally {
@@ -108,7 +112,7 @@ const AGIV4EnhancedAgentGrid = () => {
     } catch (error) {
       toast({
         title: "❌ Random Agent Failed",
-        description: error.message,
+        description: error instanceof Error ? error.message : 'Unknown error',
         variant: "destructive"
       });
     }
