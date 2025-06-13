@@ -9,9 +9,10 @@ export const ConversionTrackerAgent = async (leadEmail: string, conversionAmount
     .single()
 
   if (lead && !error) {
+    // Update only the status field since 'converted' and 'conversion_value' don't exist in the schema
     await supabase
       .from('leads')
-      .update({ converted: true, conversion_value: conversionAmount })
+      .update({ status: 'converted' })
       .eq('id', lead.id)
 
     return { success: true, message: 'Lead conversion tracked successfully.' }
