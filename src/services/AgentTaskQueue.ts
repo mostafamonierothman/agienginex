@@ -5,7 +5,7 @@ import { agentCommunicationBus } from './AgentCommunicationBus';
 
 interface Task {
   id: string;
-  type: 'error_fix' | 'system_repair' | 'code_generation' | 'optimization';
+  type: 'error_fix' | 'system_repair' | 'code_generation' | 'optimization' | 'lead_generation';
   priority: 'low' | 'medium' | 'high' | 'emergency';
   assignedAgent?: string;
   status: 'pending' | 'assigned' | 'in_progress' | 'completed' | 'failed';
@@ -83,7 +83,8 @@ export class AgentTaskQueue {
       'error_fix': ['ConsoleLogAgent', 'CodeFixerAgent', 'SystemRepairAgent'],
       'system_repair': ['SystemRepairAgent', 'SystemHealthAgent'],
       'code_generation': ['IntelligentAgentFactory', 'CodeFixerAgent'],
-      'optimization': ['AgentEvolutionEngine', 'SystemHealthAgent']
+      'optimization': ['AgentEvolutionEngine', 'SystemHealthAgent'],
+      'lead_generation': ['LeadGenerationMasterAgent', 'MedicalTourismLeadFactory']
     };
 
     const suitableAgents = agentCapabilities[task.type] || [];
@@ -103,16 +104,21 @@ export class AgentTaskQueue {
       task.status = 'in_progress';
       await sendChatUpdate(`⚡ Executing ${task.type} task with ${task.assignedAgent}...`);
 
-      // Send task to agent via communication bus
-      await agentCommunicationBus.sendMessage({
-        id: `execute_${task.id}`,
-        fromAgent: 'TaskQueue',
-        toAgent: task.assignedAgent!,
-        messageType: 'task_request',
-        payload: task.payload,
-        timestamp: new Date().toISOString(),
-        priority: task.priority
-      });
+      // If it's a lead generation task, trigger immediate lead generation
+      if (task.type === 'lead_generation') {
+        await this.executeLeadGenerationTask(task);
+      } else {
+        // Send task to agent via communication bus
+        await agentCommunicationBus.sendMessage({
+          id: `execute_${task.id}`,
+          fromAgent: 'TaskQueue',
+          toAgent: task.assignedAgent!,
+          messageType: 'task_request',
+          payload: task.payload,
+          timestamp: new Date().toISOString(),
+          priority: task.priority
+        });
+      }
 
       // Simulate task execution time
       await new Promise(resolve => setTimeout(resolve, Math.random() * 2000 + 500));
@@ -136,6 +142,28 @@ export class AgentTaskQueue {
     }
   }
 
+  private async executeLeadGenerationTask(task: Task) {
+    try {
+      const { LeadGenerationMasterAgentRunner } = await import('@/agents/LeadGenerationMasterAgent');
+      
+      const result = await LeadGenerationMasterAgentRunner({
+        input: { 
+          keyword: 'emergency LASIK surgery abroad',
+          agentId: `emergency_agent_${Date.now()}`
+        },
+        user_id: 'emergency_system'
+      });
+
+      if (result.success) {
+        await sendChatUpdate(`✅ Emergency lead generation completed: ${result.data?.leadsGenerated || 0} leads`);
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
   private async handleTaskFailure(task: Task, error: any) {
     task.retryCount++;
     this.activeAgents.delete(task.assignedAgent!);
@@ -153,20 +181,23 @@ export class AgentTaskQueue {
     }
   }
 
-  async addEmergencyErrorFixingTasks(errors: any[]) {
-    await sendChatUpdate(`🚨 Adding ${errors.length} emergency error-fixing tasks to queue`);
+  async addEmergencyLeadGenerationTasks(count: number = 5) {
+    await sendChatUpdate(`🚨 Adding ${count} emergency lead generation tasks to queue`);
     
-    const taskPromises = errors.map(error => 
+    const taskPromises = Array.from({ length: count }, (_, i) => 
       this.addTask({
-        type: 'error_fix',
+        type: 'lead_generation',
         priority: 'emergency',
-        payload: { error, mode: 'emergency_fix' }
+        payload: { 
+          keyword: `emergency medical tourism ${i + 1}`,
+          mode: 'emergency_generation'
+        }
       })
     );
 
     const taskIds = await Promise.all(taskPromises);
     
-    await sendChatUpdate(`⚡ Emergency tasks queued: ${taskIds.length} error-fixing agents deployed`);
+    await sendChatUpdate(`⚡ Emergency lead generation tasks queued: ${taskIds.length} agents deployed`);
     return taskIds;
   }
 

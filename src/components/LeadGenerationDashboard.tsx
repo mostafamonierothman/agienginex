@@ -165,8 +165,19 @@ const LeadGenerationDashboard = () => {
         
         toast({
           title: "✅ Emergency Squad Deployed",
-          description: "50 agents now generating leads. Refresh to see results.",
+          description: "50 agents now generating leads. Auto-monitoring will track progress.",
         });
+        
+        // Ensure monitoring is active after deployment
+        if (!leadMonitoringService.isMonitoring()) {
+          leadMonitoringService.startMonitoring((status) => {
+            setSystemStatus(status);
+            if (status.leadsGenerated !== leadStats.totalLeads) {
+              loadLeadStats();
+            }
+          });
+          setIsMonitoring(true);
+        }
         
         // Refresh stats immediately
         setTimeout(loadLeadStats, 2000);
@@ -216,6 +227,17 @@ const LeadGenerationDashboard = () => {
           description: `Generated ${result.data?.leadsGenerated || 0} leads`,
         });
         
+        // Ensure monitoring is active after test
+        if (!leadMonitoringService.isMonitoring()) {
+          leadMonitoringService.startMonitoring((status) => {
+            setSystemStatus(status);
+            if (status.leadsGenerated !== leadStats.totalLeads) {
+              loadLeadStats();
+            }
+          });
+          setIsMonitoring(true);
+        }
+        
         setTimeout(loadLeadStats, 1000);
       } else {
         console.error('❌ Single agent failed:', result.message);
@@ -261,7 +283,7 @@ const LeadGenerationDashboard = () => {
       
       toast({
         title: "🔍 Monitoring Started",
-        description: "System will auto-check every 5 minutes",
+        description: "System will auto-check every 5 minutes and attempt recovery",
       });
     }
   };
@@ -270,18 +292,35 @@ const LeadGenerationDashboard = () => {
     // Load initial stats
     loadLeadStats();
     
-    // Start monitoring immediately
-    leadMonitoringService.startMonitoring((status) => {
-      setSystemStatus(status);
-    });
-    setIsMonitoring(true);
+    // Check if monitoring should auto-resume, if not start fresh
+    const wasResumed = leadMonitoringService.checkAndResumeMonitoring();
+    
+    if (!wasResumed) {
+      // Start monitoring fresh if not resumed from localStorage
+      leadMonitoringService.startMonitoring((status) => {
+        setSystemStatus(status);
+      });
+    }
+    
+    setIsMonitoring(leadMonitoringService.isMonitoring());
     
     // Set up regular updates
-    const interval = setInterval(loadLeadStats, 10000); // Update every 10 seconds
+    const interval = setInterval(() => {
+      loadLeadStats();
+      
+      // Ensure monitoring stays active
+      if (!leadMonitoringService.isMonitoring()) {
+        console.log('🔄 Auto-restarting monitoring service...');
+        leadMonitoringService.startMonitoring((status) => {
+          setSystemStatus(status);
+        });
+        setIsMonitoring(true);
+      }
+    }, 10000); // Update every 10 seconds
     
     return () => {
       clearInterval(interval);
-      leadMonitoringService.stopMonitoring();
+      // Don't stop monitoring on unmount - let it persist
     };
   }, []);
 
