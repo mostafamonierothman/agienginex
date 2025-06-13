@@ -201,6 +201,23 @@ export class AgentTaskQueue {
     return taskIds;
   }
 
+  async addEmergencyErrorFixingTasks(errorTasks: any[]) {
+    await sendChatUpdate(`🚨 Adding ${errorTasks.length} emergency error fixing tasks`);
+    
+    const taskPromises = errorTasks.map((errorTask, i) => 
+      this.addTask({
+        type: 'error_fix',
+        priority: 'emergency',
+        payload: errorTask
+      })
+    );
+
+    const taskIds = await Promise.all(taskPromises);
+    
+    await sendChatUpdate(`⚡ Emergency error fixing tasks queued: ${taskIds.length} error agents deployed`);
+    return taskIds;
+  }
+
   getQueueStats() {
     return {
       pendingTasks: this.taskQueue.filter(t => t.status === 'pending').length,
