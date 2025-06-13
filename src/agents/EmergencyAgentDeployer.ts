@@ -1,21 +1,20 @@
-
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
 import { MedicalTourismLeadFactoryRunner } from './MedicalTourismLeadFactory';
-import { agentTaskQueue } from '@/services/AgentTaskQueue';
+import { agentTaskQueue } from '@/engine/AgentTaskQueue';
 
 export class EmergencyAgentDeployer {
   async deployEmergencyLeadGenerationSquad(): Promise<AgentResponse> {
     try {
       await sendChatUpdate('🚨 EMERGENCY DEPLOYMENT INITIATED');
       await sendChatUpdate('📡 Activating Medical Tourism Lead Generation Factory...');
-      
-      // Add emergency tasks to queue
-      await agentTaskQueue.addEmergencyErrorFixingTasks([
-        { type: 'lead_generation', message: 'Deploy emergency lead generation agents' }
-      ]);
 
-      // Deploy the medical tourism factory
+      await agentTaskQueue.enqueue({
+        type: 'emergency_deployment',
+        timestamp: new Date().toISOString(),
+        message: 'Triggered by EmergencyAgentDeployer'
+      });
+
       const factoryResult = await MedicalTourismLeadFactoryRunner({
         input: { 
           emergencyMode: true,
@@ -29,19 +28,18 @@ export class EmergencyAgentDeployer {
       if (factoryResult.success) {
         await sendChatUpdate('✅ Emergency deployment successful');
         await sendChatUpdate('🎯 50 agents deployed for 100,000 lead generation');
-        await sendChatUpdate('👁️ Eye surgery specialists: 25 agents (LASEK, LASIK, Femto-LASEK)');
-        await sendChatUpdate('🦷 Dental procedure specialists: 25 agents (veneers, major dental work)');
-        await sendChatUpdate('🌍 Target region: Europe');
-        await sendChatUpdate('📊 Agents will disappear after mission completion, knowledge preserved');
+      } else {
+        await sendChatUpdate('⚠️ Factory deployment returned partial or failed result');
       }
 
       return factoryResult;
 
     } catch (error) {
-      await sendChatUpdate(`❌ Emergency deployment failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      await sendChatUpdate(`❌ Emergency deployment failed: ${msg}`);
       return {
         success: false,
-        message: `❌ Emergency deployment error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `❌ Emergency deployment error: ${msg}`,
         timestamp: new Date().toISOString()
       };
     }
