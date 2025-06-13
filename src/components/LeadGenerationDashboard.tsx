@@ -4,11 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Target, Users, Zap, TrendingUp, Bell, Activity } from 'lucide-react';
+import { Target, Users, Zap, TrendingUp, Bell, Activity, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { agentRegistry } from '@/config/AgentRegistry';
 import { toast } from '@/hooks/use-toast';
 import { leadMonitoringService } from '@/services/LeadMonitoringService';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface LeadStats {
   totalLeads: number;
@@ -30,6 +31,8 @@ interface SystemStatus {
 }
 
 const LeadGenerationDashboard = () => {
+  const isMobile = useIsMobile();
+  
   const [leadStats, setLeadStats] = useState<LeadStats>({
     totalLeads: 0,
     eyeSurgeryLeads: 0,
@@ -46,12 +49,14 @@ const LeadGenerationDashboard = () => {
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
   const [isMonitoring, setIsMonitoring] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const loadLeadStats = async () => {
     try {
+      setError(null);
       console.log('📊 Loading lead statistics...');
       
-      // Get total leads with better error handling
       const { data: allLeads, error } = await supabase
         .from('leads')
         .select('*')
@@ -59,28 +64,19 @@ const LeadGenerationDashboard = () => {
 
       if (error) {
         console.error('Database error loading leads:', error);
-        
-        // Show user-friendly error message
-        toast({
-          title: "⚠️ Database Connection Issue",
-          description: "Unable to load leads. System is attempting recovery...",
-          variant: "destructive"
-        });
-        
+        setError('Unable to load leads from database');
         return;
       }
 
       const leads = allLeads || [];
       console.log(`📊 Loaded ${leads.length} leads from database`);
       
-      // Calculate stats
       const eyeSurgeryLeads = leads.filter(l => l.industry === 'eye surgery').length;
       const dentalLeads = leads.filter(l => l.industry === 'dental procedures').length;
       const newLeads = leads.filter(l => l.status === 'new').length;
       const contactedLeads = leads.filter(l => l.status === 'contacted').length;
       const convertedLeads = leads.filter(l => l.status === 'converted').length;
       
-      // Calculate leads per minute based on recent activity
       const now = new Date();
       const oneMinuteAgo = new Date(now.getTime() - 60000);
       const recentLeads = leads.filter(l => new Date(l.created_at) > oneMinuteAgo);
@@ -93,29 +89,24 @@ const LeadGenerationDashboard = () => {
         contactedLeads,
         convertedLeads,
         leadsPerMinute: recentLeads.length,
-        estimatedRevenue: leads.length * 500 // $500 potential per lead
+        estimatedRevenue: leads.length * 500
       });
       
       setLastUpdate(new Date());
 
-      // Check for milestone notifications
       if (leads.length >= 100) {
         await sendNotification();
       }
 
-      // Log progress to console
       if (leads.length > 0) {
         console.log(`✅ Lead Stats: ${leads.length} total leads (${eyeSurgeryLeads} eye surgery, ${dentalLeads} dental)`);
       }
       
     } catch (error) {
       console.error('❌ Failed to load lead stats:', error);
-      
-      toast({
-        title: "❌ Error Loading Data",
-        description: "System error occurred. Auto-recovery is active.",
-        variant: "destructive"
-      });
+      setError('Failed to load lead statistics');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -127,8 +118,6 @@ const LeadGenerationDashboard = () => {
       
       if (error) {
         console.error('Notification error:', error);
-      } else {
-        console.log('Notification check completed:', data);
       }
     } catch (error) {
       console.error('Notification error:', error);
@@ -147,7 +136,6 @@ const LeadGenerationDashboard = () => {
         description: "Deploying 50 specialized medical tourism lead generation agents...",
       });
 
-      // Deploy the emergency agent squad
       const result = await agentRegistry.runAgent('emergency_agent_deployer', {
         input: {
           targetLeads: 100000,
@@ -168,7 +156,6 @@ const LeadGenerationDashboard = () => {
           description: "50 agents now generating leads. Auto-monitoring will track progress.",
         });
         
-        // Ensure monitoring is active after deployment
         if (!leadMonitoringService.isMonitoring()) {
           leadMonitoringService.startMonitoring((status) => {
             setSystemStatus(status);
@@ -179,7 +166,6 @@ const LeadGenerationDashboard = () => {
           setIsMonitoring(true);
         }
         
-        // Refresh stats immediately
         setTimeout(loadLeadStats, 2000);
       } else {
         setDeploymentStatus('Deployment Failed');
@@ -227,7 +213,6 @@ const LeadGenerationDashboard = () => {
           description: `Generated ${result.data?.leadsGenerated || 0} leads`,
         });
         
-        // Ensure monitoring is active after test
         if (!leadMonitoringService.isMonitoring()) {
           leadMonitoringService.startMonitoring((status) => {
             setSystemStatus(status);
@@ -274,7 +259,6 @@ const LeadGenerationDashboard = () => {
       leadMonitoringService.startMonitoring((status) => {
         setSystemStatus(status);
         
-        // Update lead stats if leads changed
         if (status.leadsGenerated !== leadStats.totalLeads) {
           loadLeadStats();
         }
@@ -289,14 +273,11 @@ const LeadGenerationDashboard = () => {
   };
 
   useEffect(() => {
-    // Load initial stats
     loadLeadStats();
     
-    // Check if monitoring should auto-resume, if not start fresh
     const wasResumed = leadMonitoringService.checkAndResumeMonitoring();
     
     if (!wasResumed) {
-      // Start monitoring fresh if not resumed from localStorage
       leadMonitoringService.startMonitoring((status) => {
         setSystemStatus(status);
       });
@@ -304,11 +285,9 @@ const LeadGenerationDashboard = () => {
     
     setIsMonitoring(leadMonitoringService.isMonitoring());
     
-    // Set up regular updates
     const interval = setInterval(() => {
       loadLeadStats();
       
-      // Ensure monitoring stays active
       if (!leadMonitoringService.isMonitoring()) {
         console.log('🔄 Auto-restarting monitoring service...');
         leadMonitoringService.startMonitoring((status) => {
@@ -316,11 +295,10 @@ const LeadGenerationDashboard = () => {
         });
         setIsMonitoring(true);
       }
-    }, 10000); // Update every 10 seconds
+    }, 10000);
     
     return () => {
       clearInterval(interval);
-      // Don't stop monitoring on unmount - let it persist
     };
   }, []);
 
@@ -335,224 +313,264 @@ const LeadGenerationDashboard = () => {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white">Loading Lead Dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
+        <Card className="bg-red-900/20 border-red-500/20 max-w-md w-full">
+          <CardContent className="p-6 text-center">
+            <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-white mb-2">Dashboard Error</h2>
+            <p className="text-red-200 mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()} className="bg-red-600 hover:bg-red-700">
+              Reload Dashboard
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6 p-4 md:p-6">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div className="text-center lg:text-left">
-          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">🚀 Lead Generation Dashboard</h1>
-          <p className="text-blue-200">Real-time medical tourism lead generation system</p>
-          {systemStatus && (
-            <div className="flex items-center gap-2 mt-2">
-              <Activity className="h-4 w-4" />
-              <span className={`text-sm ${getHealthColor(systemStatus.systemHealth)}`}>
-                System: {systemStatus.systemHealth} | {systemStatus.agentsActive} agents active
-              </span>
-            </div>
-          )}
-        </div>
-        <div className="flex flex-col sm:flex-row gap-2 justify-center lg:justify-end">
-          <Button 
-            onClick={toggleMonitoring}
-            variant={isMonitoring ? "destructive" : "outline"}
-            size="sm"
-            className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-          >
-            {isMonitoring ? '🛑 Stop Monitoring' : '🔍 Start Monitoring'}
-          </Button>
-          <Button 
-            onClick={runSingleLeadAgent}
-            disabled={isGenerating}
-            variant="outline"
-            size="sm"
-            className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-          >
-            {isGenerating ? 'Running...' : '🧪 Test Single Agent'}
-          </Button>
-          <Button
-            onClick={deployEmergencySquad}
-            disabled={isGenerating}
-            className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg"
-          >
-            {isGenerating ? 'Deploying...' : '🚨 Deploy Emergency Squad (50 Agents)'}
-          </Button>
-        </div>
-      </div>
-
-      {/* Main Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-blue-600 to-blue-700 border-blue-500/20 text-white">
-          <CardContent className="p-4 md:p-6 text-center">
-            <Users className="h-6 w-6 md:h-8 md:w-8 mx-auto mb-2 text-blue-200" />
-            <div className="text-xl md:text-2xl font-bold">{leadStats.totalLeads.toLocaleString()}</div>
-            <div className="text-xs md:text-sm text-blue-200">Total Leads</div>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-gradient-to-br from-yellow-600 to-yellow-700 border-yellow-500/20 text-white">
-          <CardContent className="p-4 md:p-6 text-center">
-            <Zap className="h-6 w-6 md:h-8 md:w-8 mx-auto mb-2 text-yellow-200" />
-            <div className="text-xl md:text-2xl font-bold">{leadStats.leadsPerMinute}</div>
-            <div className="text-xs md:text-sm text-yellow-200">Leads/Minute</div>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-gradient-to-br from-green-600 to-green-700 border-green-500/20 text-white">
-          <CardContent className="p-4 md:p-6 text-center">
-            <TrendingUp className="h-6 w-6 md:h-8 md:w-8 mx-auto mb-2 text-green-200" />
-            <div className="text-xl md:text-2xl font-bold">${leadStats.estimatedRevenue.toLocaleString()}</div>
-            <div className="text-xs md:text-sm text-green-200">Est. Revenue</div>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-gradient-to-br from-purple-600 to-purple-700 border-purple-500/20 text-white">
-          <CardContent className="p-4 md:p-6 text-center">
-            <Target className="h-6 w-6 md:h-8 md:w-8 mx-auto mb-2 text-purple-200" />
-            <div className="text-xl md:text-2xl font-bold">{progressToTarget.toFixed(1)}%</div>
-            <div className="text-xs md:text-sm text-purple-200">Progress to 100K</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Progress Bar */}
-      <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white">
-            <Target className="h-5 w-5" />
-            Progress to 100,000 Lead Target
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Progress value={progressToTarget} className="h-3 mb-2 bg-white/20" />
-          <div className="flex justify-between text-sm text-blue-200">
-            <span>{leadStats.totalLeads.toLocaleString()} leads generated</span>
-            <span>Target: 100,000 leads</span>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Lead Categories */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-white">
-              👁️ Eye Surgery Leads
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-blue-200">LASIK/LASEK Procedures</span>
-                <Badge variant="outline" className="border-blue-300 text-blue-300">
-                  {leadStats.eyeSurgeryLeads}
-                </Badge>
-              </div>
-              <div className="text-sm text-blue-300">
-                Target: European patients seeking affordable eye surgery
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-white">
-              🦷 Dental Procedure Leads
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-blue-200">Veneers & Major Work</span>
-                <Badge variant="outline" className="border-blue-300 text-blue-300">
-                  {leadStats.dentalLeads}
-                </Badge>
-              </div>
-              <div className="text-sm text-blue-300">
-                Target: Patients seeking cosmetic dental procedures abroad
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Status Breakdown */}
-      <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-        <CardHeader>
-          <CardTitle className="text-white">Lead Status Breakdown</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-400">{leadStats.newLeads}</div>
-              <div className="text-sm text-blue-200">New Leads</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-400">{leadStats.contactedLeads}</div>
-              <div className="text-sm text-blue-200">Contacted</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-400">{leadStats.convertedLeads}</div>
-              <div className="text-sm text-blue-200">Converted</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* System Status */}
-      <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white">
-            <Activity className="h-5 w-5" />
-            System Status & Auto-Monitoring
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <div className="font-medium text-white">Deployment Status: {deploymentStatus}</div>
-                <div className="text-sm text-blue-300">
-                  Last updated: {lastUpdate.toLocaleTimeString()}
-                </div>
-                {systemStatus && (
-                  <div className="text-sm text-blue-300 mt-1">
-                    System Health: <span className={getHealthColor(systemStatus.systemHealth)}>{systemStatus.systemHealth}</span>
-                    {systemStatus.errors.length > 0 && ` (${systemStatus.errors.length} issues)`}
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant={deploymentStatus === '50 Agents Active' ? 'default' : 'secondary'}>
-                  {deploymentStatus}
-                </Badge>
-                {isMonitoring && (
-                  <Badge className="bg-blue-600 text-white">
-                    <Activity className="h-3 w-3 mr-1" />
-                    Auto-Monitoring
-                  </Badge>
-                )}
-                {leadStats.totalLeads >= 100 && (
-                  <Badge className="bg-green-600 text-white">
-                    <Bell className="h-3 w-3 mr-1" />
-                    Milestone Reached
-                  </Badge>
-                )}
-              </div>
-            </div>
-            
-            {systemStatus?.errors.length > 0 && (
-              <div className="bg-red-900/20 border border-red-500/20 rounded p-3">
-                <div className="text-red-300 text-sm font-medium mb-1">System Issues:</div>
-                <ul className="text-red-200 text-sm space-y-1">
-                  {systemStatus.errors.slice(0, 3).map((error, i) => (
-                    <li key={i}>• {error}</li>
-                  ))}
-                </ul>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-2 sm:p-4 lg:p-6">
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+        {/* Header - Mobile Optimized */}
+        <div className="flex flex-col space-y-4">
+          <div className="text-center">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-2">
+              🚀 Lead Generation Dashboard
+            </h1>
+            <p className="text-sm sm:text-base text-blue-200">
+              Real-time medical tourism lead generation system
+            </p>
+            {systemStatus && (
+              <div className="flex items-center justify-center gap-2 mt-2">
+                <Activity className="h-4 w-4" />
+                <span className={`text-xs sm:text-sm ${getHealthColor(systemStatus.systemHealth)}`}>
+                  System: {systemStatus.systemHealth} | {systemStatus.agentsActive} agents active
+                </span>
               </div>
             )}
           </div>
-        </CardContent>
-      </Card>
+          
+          {/* Control Buttons - Mobile Optimized */}
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-center">
+            <Button 
+              onClick={toggleMonitoring}
+              variant={isMonitoring ? "destructive" : "outline"}
+              size="sm"
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-xs sm:text-sm"
+            >
+              {isMonitoring ? '🛑 Stop Monitoring' : '🔍 Start Monitoring'}
+            </Button>
+            <Button 
+              onClick={runSingleLeadAgent}
+              disabled={isGenerating}
+              variant="outline"
+              size="sm"
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-xs sm:text-sm"
+            >
+              {isGenerating ? 'Running...' : '🧪 Test Single Agent'}
+            </Button>
+            <Button
+              onClick={deployEmergencySquad}
+              disabled={isGenerating}
+              className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg text-xs sm:text-sm"
+            >
+              {isGenerating ? 'Deploying...' : '🚨 Deploy Emergency Squad (50 Agents)'}
+            </Button>
+          </div>
+        </div>
+
+        {/* Main Stats - Mobile Optimized Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+          <Card className="bg-gradient-to-br from-blue-600 to-blue-700 border-blue-500/20 text-white">
+            <CardContent className="p-3 sm:p-6 text-center">
+              <Users className="h-5 w-5 sm:h-8 sm:w-8 mx-auto mb-2 text-blue-200" />
+              <div className="text-lg sm:text-2xl font-bold">{leadStats.totalLeads.toLocaleString()}</div>
+              <div className="text-xs sm:text-sm text-blue-200">Total Leads</div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-br from-yellow-600 to-yellow-700 border-yellow-500/20 text-white">
+            <CardContent className="p-3 sm:p-6 text-center">
+              <Zap className="h-5 w-5 sm:h-8 sm:w-8 mx-auto mb-2 text-yellow-200" />
+              <div className="text-lg sm:text-2xl font-bold">{leadStats.leadsPerMinute}</div>
+              <div className="text-xs sm:text-sm text-yellow-200">Leads/Min</div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-br from-green-600 to-green-700 border-green-500/20 text-white">
+            <CardContent className="p-3 sm:p-6 text-center">
+              <TrendingUp className="h-5 w-5 sm:h-8 sm:w-8 mx-auto mb-2 text-green-200" />
+              <div className="text-lg sm:text-2xl font-bold">${leadStats.estimatedRevenue.toLocaleString()}</div>
+              <div className="text-xs sm:text-sm text-green-200">Est. Revenue</div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-br from-purple-600 to-purple-700 border-purple-500/20 text-white">
+            <CardContent className="p-3 sm:p-6 text-center">
+              <Target className="h-5 w-5 sm:h-8 sm:w-8 mx-auto mb-2 text-purple-200" />
+              <div className="text-lg sm:text-2xl font-bold">{progressToTarget.toFixed(1)}%</div>
+              <div className="text-xs sm:text-sm text-purple-200">Progress to 100K</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Progress Bar */}
+        <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-white text-sm sm:text-base">
+              <Target className="h-4 w-4 sm:h-5 sm:w-5" />
+              Progress to 100,000 Lead Target
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Progress value={progressToTarget} className="h-2 sm:h-3 mb-2 bg-white/20" />
+            <div className="flex justify-between text-xs sm:text-sm text-blue-200">
+              <span>{leadStats.totalLeads.toLocaleString()} leads generated</span>
+              <span>Target: 100,000 leads</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Lead Categories - Mobile Optimized */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-white text-sm sm:text-base">
+                👁️ Eye Surgery Leads
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-blue-200 text-xs sm:text-sm">LASIK/LASEK Procedures</span>
+                  <Badge variant="outline" className="border-blue-300 text-blue-300 text-xs">
+                    {leadStats.eyeSurgeryLeads}
+                  </Badge>
+                </div>
+                <div className="text-xs sm:text-sm text-blue-300">
+                  Target: European patients seeking affordable eye surgery
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-white text-sm sm:text-base">
+                🦷 Dental Procedure Leads
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-blue-200 text-xs sm:text-sm">Veneers & Major Work</span>
+                  <Badge variant="outline" className="border-blue-300 text-blue-300 text-xs">
+                    {leadStats.dentalLeads}
+                  </Badge>
+                </div>
+                <div className="text-xs sm:text-sm text-blue-300">
+                  Target: Patients seeking cosmetic dental procedures abroad
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Status Breakdown - Mobile Optimized */}
+        <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-white text-sm sm:text-base">Lead Status Breakdown</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="text-center">
+                <div className="text-xl sm:text-2xl font-bold text-blue-400">{leadStats.newLeads}</div>
+                <div className="text-xs sm:text-sm text-blue-200">New Leads</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xl sm:text-2xl font-bold text-orange-400">{leadStats.contactedLeads}</div>
+                <div className="text-xs sm:text-sm text-blue-200">Contacted</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xl sm:text-2xl font-bold text-green-400">{leadStats.convertedLeads}</div>
+                <div className="text-xs sm:text-sm text-blue-200">Converted</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* System Status - Mobile Optimized */}
+        <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-white text-sm sm:text-base">
+              <Activity className="h-4 w-4 sm:h-5 sm:w-5" />
+              System Status & Auto-Monitoring
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex flex-col gap-4">
+                <div>
+                  <div className="font-medium text-white text-sm sm:text-base">
+                    Deployment Status: {deploymentStatus}
+                  </div>
+                  <div className="text-xs sm:text-sm text-blue-300">
+                    Last updated: {lastUpdate.toLocaleTimeString()}
+                  </div>
+                  {systemStatus && (
+                    <div className="text-xs sm:text-sm text-blue-300 mt-1">
+                      System Health: <span className={getHealthColor(systemStatus.systemHealth)}>{systemStatus.systemHealth}</span>
+                      {systemStatus.errors.length > 0 && ` (${systemStatus.errors.length} issues)`}
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant={deploymentStatus === '50 Agents Active' ? 'default' : 'secondary'} className="text-xs">
+                    {deploymentStatus}
+                  </Badge>
+                  {isMonitoring && (
+                    <Badge className="bg-blue-600 text-white text-xs">
+                      <Activity className="h-3 w-3 mr-1" />
+                      Auto-Monitoring
+                    </Badge>
+                  )}
+                  {leadStats.totalLeads >= 100 && (
+                    <Badge className="bg-green-600 text-white text-xs">
+                      <Bell className="h-3 w-3 mr-1" />
+                      Milestone Reached
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              
+              {systemStatus?.errors.length > 0 && (
+                <div className="bg-red-900/20 border border-red-500/20 rounded p-3">
+                  <div className="text-red-300 text-xs sm:text-sm font-medium mb-1">System Issues:</div>
+                  <ul className="text-red-200 text-xs sm:text-sm space-y-1">
+                    {systemStatus.errors.slice(0, 3).map((error, i) => (
+                      <li key={i} className="break-words">• {error}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
