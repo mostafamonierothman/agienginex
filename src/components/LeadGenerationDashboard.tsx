@@ -86,15 +86,14 @@ const LeadGenerationDashboard = () => {
 
   const sendNotification = async () => {
     try {
-      const response = await fetch('/functions/v1/lead-notification', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        }
+      const { data, error } = await supabase.functions.invoke('lead-notification', {
+        body: { action: 'milestone_check' }
       });
       
-      if (response.ok) {
-        console.log('Notification check completed');
+      if (error) {
+        console.error('Notification error:', error);
+      } else {
+        console.log('Notification check completed:', data);
       }
     } catch (error) {
       console.error('Notification error:', error);
