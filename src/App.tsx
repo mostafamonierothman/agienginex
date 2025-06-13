@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,6 +10,7 @@ import AGIV4 from "./pages/AGIV4";
 import AGIV5 from "./pages/AGIV5";
 import AGIProPlatform from "./pages/AGIProPlatform";
 import AgentManager from "./pages/AgentManager";
+import LeadDashboard from "./pages/LeadDashboard";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +26,7 @@ const App = () => (
           <Route path="/agi-v5" element={<AGIV5 />} />
           <Route path="/agi-pro" element={<AGIProPlatform />} />
           <Route path="/agent-manager" element={<AgentManager />} />
+          <Route path="/leads" element={<LeadDashboard />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

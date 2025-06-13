@@ -1,33 +1,35 @@
 
+import { HomeIcon, Users, Zap, Settings, Target } from "lucide-react";
+
 export const navItems = [
   {
-    title: "AGI Engine",
+    title: "Home",
     to: "/",
-    icon: "brain",
-    variant: "default" as const,
+    icon: <HomeIcon className="h-4 w-4" />,
   },
   {
     title: "AGI V4",
     to: "/agi-v4",
-    icon: "zap",
-    variant: "default" as const,
+    icon: <Zap className="h-4 w-4" />,
   },
   {
     title: "AGI V5",
     to: "/agi-v5",
-    icon: "crown",
-    variant: "default" as const,
+    icon: <Zap className="h-4 w-4" />,
   },
   {
     title: "AGI Pro",
     to: "/agi-pro",
-    icon: "crown",
-    variant: "default" as const,
+    icon: <Settings className="h-4 w-4" />,
   },
   {
     title: "Agent Manager",
     to: "/agent-manager",
-    icon: "settings",
-    variant: "default" as const,
+    icon: <Users className="h-4 w-4" />,
+  },
+  {
+    title: "Lead Dashboard",
+    to: "/leads",
+    icon: <Target className="h-4 w-4" />,
   },
 ];
