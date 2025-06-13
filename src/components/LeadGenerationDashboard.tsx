@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,6 +27,20 @@ interface SystemStatus {
   lastUpdate: string;
   errors: string[];
   systemHealth: 'healthy' | 'degraded' | 'critical';
+}
+
+interface Lead {
+  id?: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  company: string;
+  job_title: string;
+  source: string;
+  industry: string;
+  location: string;
+  status: string;
+  created_at?: string;
 }
 
 const LeadGenerationDashboard = () => {
@@ -71,7 +84,7 @@ const LeadGenerationDashboard = () => {
         }
       }
 
-      const leads = allLeads || [];
+      const leads: Lead[] = allLeads || [];
       console.log(`📊 Loaded ${leads.length} REAL leads from database`);
       
       const eyeSurgeryLeads = leads.filter(l => l.industry === 'eye surgery').length;
@@ -82,7 +95,7 @@ const LeadGenerationDashboard = () => {
       
       const now = new Date();
       const oneMinuteAgo = new Date(now.getTime() - 60000);
-      const recentLeads = leads.filter(l => new Date(l.created_at) > oneMinuteAgo);
+      const recentLeads = leads.filter(l => l.created_at && new Date(l.created_at) > oneMinuteAgo);
       
       setLeadStats({
         totalLeads: leads.length,
@@ -252,11 +265,11 @@ const LeadGenerationDashboard = () => {
     }
   };
 
-  const generateRealLeads = async (count: number = 5, source: string = 'manual_generation') => {
+  const generateRealLeads = async (count: number = 5, source: string = 'manual_generation'): Promise<Lead[]> => {
     try {
       console.log(`🔄 Generating ${count} REAL leads with source: ${source}`);
 
-      const realLeads = [];
+      const realLeads: Omit<Lead, 'id' | 'created_at'>[] = [];
       const firstNames = ['Sarah', 'Michael', 'Emma', 'David', 'Lisa', 'James', 'Sophie', 'Anna'];
       const lastNames = ['Johnson', 'Brown', 'Wilson', 'Miller', 'Anderson', 'Taylor', 'Garcia', 'Martinez'];
       const domains = ['gmail.com', 'outlook.com', 'yahoo.com', 'hotmail.com'];
