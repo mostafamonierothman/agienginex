@@ -2,6 +2,14 @@
 import { supabase } from '@/integrations/supabase/client';
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
 
+interface DatabaseHealthResponse {
+  database_health: 'optimal' | 'good' | 'needs_optimization';
+  critical_tables_count: number;
+  indexes_count: number;
+  agi_state_initialized: boolean;
+  timestamp: string;
+}
+
 export class DatabaseRecoveryService {
   static async checkAndRepairDatabase(): Promise<boolean> {
     try {
@@ -16,7 +24,8 @@ export class DatabaseRecoveryService {
         return false;
       }
 
-      if (healthCheck?.database_health === 'optimal') {
+      const healthData = healthCheck as DatabaseHealthResponse;
+      if (healthData?.database_health === 'optimal') {
         await sendChatUpdate('✅ Database schema optimal - Phase 2 AGI fully operational without fallbacks');
         await this.verifyPhase2AGIState();
         return true;
@@ -235,7 +244,7 @@ export class DatabaseRecoveryService {
     try {
       const { data, error } = await supabase.rpc('check_phase2_agi_health');
       if (error) throw error;
-      return data;
+      return data as DatabaseHealthResponse;
     } catch (error) {
       return {
         database_health: 'operational',
