@@ -8,7 +8,7 @@ type Message = { role: "user" | "agi"; content: string };
 
 const AGIengineXChat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([
-    { role: "agi", content: "👋 Hello! I'm AGIengineX. Ask me anything about goals, opportunities, or strategic planning." }
+    { role: "agi", content: "🚀 Hello! I'm AGIengineX - your advanced AI assistant with autonomous capabilities. I can help with strategic planning, opportunity detection, goal management, and self-reflection. Ask me anything!" }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -50,7 +50,7 @@ const AGIengineXChat: React.FC = () => {
       console.error("❌ Chat error:", e);
       setMessages(prev => [
         ...prev,
-        { role: "agi", content: "⚠️ Sorry, I'm having trouble connecting. Please try again." }
+        { role: "agi", content: "⚠️ I'm experiencing technical difficulties, but I can still help you in local mode. What would you like to discuss?" }
       ]);
     } finally {
       setLoading(false);
@@ -61,6 +61,10 @@ const AGIengineXChat: React.FC = () => {
     setConnectionStatus("Testing...");
     const result = await agiEngineX.testConnection();
     setConnectionStatus(result.message);
+  };
+
+  const handleQuickQuestion = (question: string) => {
+    setInput(question);
   };
 
   return (
@@ -84,6 +88,34 @@ const AGIengineXChat: React.FC = () => {
             </Button>
           </div>
         </div>
+
+        {/* Quick Questions */}
+        <div className="mb-3 flex flex-wrap gap-1">
+          <Button 
+            onClick={() => handleQuickQuestion("Who are you?")}
+            variant="outline" 
+            size="sm"
+            className="text-xs px-2 py-1 h-6"
+          >
+            Who are you?
+          </Button>
+          <Button 
+            onClick={() => handleQuickQuestion("What are your capabilities?")}
+            variant="outline" 
+            size="sm"
+            className="text-xs px-2 py-1 h-6"
+          >
+            Capabilities
+          </Button>
+          <Button 
+            onClick={() => handleQuickQuestion("Tell me about your founder")}
+            variant="outline" 
+            size="sm"
+            className="text-xs px-2 py-1 h-6"
+          >
+            Founder
+          </Button>
+        </div>
         
         <div className="flex-1 min-h-[300px] max-h-[350px] overflow-y-auto mb-2 border rounded bg-slate-50 p-3">
           {messages.map((m, i) => (
@@ -98,7 +130,7 @@ const AGIengineXChat: React.FC = () => {
               <span className="font-medium">
                 {m.role === "user" ? "You" : "AGIengineX"}:
               </span>{" "}
-              {m.content}
+              <div className="whitespace-pre-wrap">{m.content}</div>
             </div>
           ))}
           <div ref={messagesEndRef} />
