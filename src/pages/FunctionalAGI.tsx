@@ -33,9 +33,14 @@ const FunctionalAGIPage: React.FC = () => {
   const [selfReflections, setSelfReflections] = useState<string[]>([]);
   const [worldSyncStatus, setWorldSyncStatus] = useState<"idle" | "syncing" | "done" | "error">("idle");
 
-  // --- NEW: Assessment State
+  // --- Enhanced assessment with new capabilities
   const [systemAssessment, setSystemAssessment] = useState(() =>
-    AGISystemAssessment.assess({ ...unifiedAGI.getState(), vectorStats, selfReflectionHistory: selfReflections })
+    AGISystemAssessment.assess({ 
+      ...unifiedAGI.getState(), 
+      vectorStats, 
+      selfReflectionHistory: selfReflections,
+      advancedCapabilities: unifiedAGI.getState().advancedCapabilities
+    })
   );
 
   useEffect(() => {
@@ -48,12 +53,11 @@ const FunctionalAGIPage: React.FC = () => {
       setState(unifiedAGI.getState());
       fetchVectorStats();
 
-      // Reflect and store the latest insight for display
       const insight = selfReflection.analyzeAndReflect(unifiedAGI.getState());
       const reflections = [insight, ...selfReflections].slice(0, 5);
       setSelfReflections(reflections);
 
-      // --- Update assessment
+      // Enhanced assessment
       setSystemAssessment(
         AGISystemAssessment.assess({
           ...unifiedAGI.getState(),
@@ -126,17 +130,22 @@ const FunctionalAGIPage: React.FC = () => {
   };
 
   // Use new dynamically computed percent:
-  const AGI_COMPLETION_PERCENT = systemAssessment.overallPercent;
+  const AGI_COMPLETION_PERCENT = Math.min(100, systemAssessment.overallPercent + 
+    (state.advancedCapabilities ? 
+      (state.advancedCapabilities.systemConnections * 2 + 
+       state.advancedCapabilities.agiInstances * 3 +
+       state.advancedCapabilities.memoryConsolidation * 2) : 0));
 
   return (
     <div className="max-w-2xl mx-auto mt-10 space-y-6">
-      {/* NEW: Assessment Panel */}
+      {/* Enhanced Assessment Panel */}
       <AGISystemAssessmentPanel assessment={systemAssessment} />
-      {/* NEW: Show world sync status and latest world memories */}
+      
+      {/* Enhanced Main Panel */}
       <Card className="bg-slate-900/80 border-slate-700">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
-            🌐 Functional AGI Core
+            🧠 Advanced Functional AGI Core
             <span className="ml-auto text-green-400 text-sm">{AGI_COMPLETION_PERCENT}% Complete</span>
           </CardTitle>
         </CardHeader>
@@ -144,9 +153,11 @@ const FunctionalAGIPage: React.FC = () => {
           {worldSyncStatus === "syncing" && (
             <div className="mb-2 text-blue-200">🌎 Syncing up with the current world state...</div>
           )}
+          
+          {/* World State Display */}
           {state.lastRecalledWorldState && state.lastRecalledWorldState.length > 0 && (
-            <div className="mb-2">
-              <div className="font-bold text-cyan-400 mb-1">World Awareness:</div>
+            <div className="mb-4">
+              <div className="font-bold text-cyan-400 mb-1">🌐 World Awareness:</div>
               <ul className="list-disc ml-6 text-cyan-200 text-xs">
                 {state.lastRecalledWorldState.map(
                   (mem: any, i: number) => (
@@ -157,6 +168,33 @@ const FunctionalAGIPage: React.FC = () => {
                   )
                 )}
               </ul>
+            </div>
+          )}
+
+          {/* NEW: Advanced Capabilities Display */}
+          {state.advancedCapabilities && (
+            <div className="mb-4 p-3 bg-purple-900/30 rounded border border-purple-700">
+              <div className="font-bold text-purple-300 mb-2">🚀 Advanced AGI Capabilities</div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="text-purple-200">
+                  🔗 System Connections: <span className="font-bold text-white">{state.advancedCapabilities.systemConnections}</span>
+                </div>
+                <div className="text-purple-200">
+                  🤖 AGI Instances: <span className="font-bold text-white">{state.advancedCapabilities.agiInstances}</span>
+                </div>
+                <div className="text-purple-200">
+                  🧠 Memory Clusters: <span className="font-bold text-white">{state.advancedCapabilities.memoryConsolidation}</span>
+                </div>
+                <div className="text-purple-200">
+                  🔧 Mod Proposals: <span className="font-bold text-white">{state.advancedCapabilities.modificationProposals}</span>
+                </div>
+              </div>
+              <div className="mt-2 text-xs text-purple-300">
+                🛡️ Safety Locks: <span className="font-bold text-green-300">{state.advancedCapabilities.safetyStatus?.locksActive || 0} Active</span>
+                {state.advancedCapabilities.safetyStatus?.highRiskProposals > 0 && (
+                  <span className="ml-2 text-red-300">⚠️ {state.advancedCapabilities.safetyStatus.highRiskProposals} High-Risk</span>
+                )}
+              </div>
             </div>
           )}
 

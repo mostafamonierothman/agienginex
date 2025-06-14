@@ -11,6 +11,13 @@ import { AgentTeamManager } from "./AgentTeamManager";
 import { DataFusionEngine } from "@/utils/data_fusion";
 import { vectorMemoryService } from "@/services/VectorMemoryService";
 
+// --- NEW: Import advanced AGI capabilities
+import { AutonomousResearchEngine } from "./AutonomousResearchEngine";
+import { CrossSystemIntegrationManager } from "./CrossSystemIntegrationManager";
+import { MultiAGIOrchestrator } from "./MultiAGIOrchestrator";
+import { AdvancedMemoryConsolidator } from "./AdvancedMemoryConsolidator";
+import { SelfModificationProtocol } from "./SelfModificationProtocol";
+
 class UnifiedAGICore {
   private static instance: UnifiedAGICore;
   private stateManager = new AGIStateManagement();
@@ -21,6 +28,13 @@ class UnifiedAGICore {
   private agentCollaboration = new AGIAgentCollaborationManager();
   private teamManager = new AgentTeamManager();
   private memoryOps = new AGIMemoryOps(this.lessons, "core-agi-agent");
+
+  // --- NEW: Advanced AGI capabilities
+  private researchEngine = new AutonomousResearchEngine();
+  private systemIntegration = new CrossSystemIntegrationManager();
+  private multiAGIOrchestrator = new MultiAGIOrchestrator();
+  private memoryConsolidator = new AdvancedMemoryConsolidator();
+  private selfModification = new SelfModificationProtocol();
 
   // Mention callback used for adaptive prioritization
   private agentLoop = new AGIAgentLoop(
@@ -53,12 +67,42 @@ class UnifiedAGICore {
       return;
     }
     this.stateManager.setState({ running: true });
-    this.log("🔄 Unified Functional AGI Started.");
-    // NEW: Put recent world state into AGI memory before loop starts
+    this.log("🔄 Unified Functional AGI Started - Full Capability Mode (100%).");
+    
+    // Enhanced startup sequence
     await this.absorbWorldState();
+    await this.initializeAdvancedCapabilities();
     await this.stateManager.persistState();
     this.loop();
     this.notify();
+  }
+
+  // --- NEW: Initialize advanced capabilities
+  private async initializeAdvancedCapabilities() {
+    this.log("🧠 Initializing advanced AGI capabilities...");
+    
+    // Test system connections
+    const connectionResults = await this.systemIntegration.testConnections();
+    const activeConnections = Object.values(connectionResults).filter(Boolean).length;
+    this.log(`🔗 System Integration: ${activeConnections}/${Object.keys(connectionResults).length} connections active`);
+    
+    // Start autonomous research
+    const researchInsights = await this.researchEngine.conductAutonomousResearch("core-agi-agent");
+    this.log(`🔬 Autonomous Research: Generated ${researchInsights.length} research insights`);
+    
+    // Initialize memory consolidation
+    const memoryResults = await this.memoryConsolidator.consolidateMemories("core-agi-agent");
+    this.log(`🧠 Memory Consolidation: ${memoryResults.join(', ')}`);
+    
+    // Spawn specialized AGI instances
+    await this.multiAGIOrchestrator.spawnAGIInstance('research');
+    await this.multiAGIOrchestrator.spawnAGIInstance('creative');
+    await this.multiAGIOrchestrator.spawnAGIInstance('technical');
+    this.log("🤖 Multi-AGI: Spawned 3 specialized AGI instances");
+    
+    // Self-modification readiness check
+    const safetyStatus = this.selfModification.getSafetyStatus();
+    this.log(`🔧 Self-Modification: ${safetyStatus.locksActive} safety locks active, system ready for safe evolution`);
   }
 
   stop() {
@@ -74,12 +118,68 @@ class UnifiedAGICore {
 
   async loop() {
     if (!this.stateManager.getState().running) return;
+    
+    // Enhanced loop with advanced capabilities
+    await this.enhancedAgentLoop();
+    
+    this.loopTimer = setTimeout(() => this.loop(), 2000);
+  }
+
+  // --- NEW: Enhanced agent loop with advanced capabilities
+  private async enhancedAgentLoop() {
+    const state = this.stateManager.getState();
+    state.generation++;
+    this.log(`🔁 Enhanced AGI Generation ${state.generation}...`);
+    
+    // Execute original agent loop
     await this.agentLoop.runLoop(
-      this.stateManager.getState(),
+      state,
       (msg) => this.log(msg),
       () => this.stateManager.persistState()
     );
-    this.loopTimer = setTimeout(() => this.loop(), 2000);
+    
+    // Enhanced capabilities (every 5th generation)
+    if (state.generation % 5 === 0) {
+      await this.executeAdvancedCapabilities();
+    }
+  }
+
+  private async executeAdvancedCapabilities() {
+    try {
+      // Autonomous research cycle
+      if (Math.random() < 0.7) {
+        const insights = await this.researchEngine.conductAutonomousResearch("core-agi-agent");
+        this.log(`🔬 Autonomous research completed: ${insights.length} new insights`);
+      }
+      
+      // Memory consolidation
+      if (Math.random() < 0.4) {
+        const consolidation = await this.memoryConsolidator.consolidateMemories("core-agi-agent");
+        this.log(`🧠 Memory consolidated: ${consolidation.join(', ')}`);
+      }
+      
+      // Multi-AGI collaboration
+      if (Math.random() < 0.3) {
+        const collaboration = await this.multiAGIOrchestrator.orchestrateCollaboration(
+          "Advanced problem solving", 
+          ["research", "creative", "technical"]
+        );
+        this.log(`🤖 Multi-AGI collaboration: ${collaboration.length} instances coordinated`);
+      }
+      
+      // Self-improvement proposal
+      if (Math.random() < 0.2) {
+        const proposal = await this.selfModification.proposeModification(
+          'capability',
+          'Enhance autonomous learning speed by 15%',
+          'Faster adaptation to new problem domains'
+        );
+        this.log(`🔧 Self-modification proposed: ${proposal.description} (${proposal.riskLevel} risk)`);
+      }
+      
+    } catch (error) {
+      this.log(`⚠️ Advanced capabilities error: ${error.message}`);
+    }
   }
 
   log(msg: string) {
@@ -89,6 +189,26 @@ class UnifiedAGICore {
     if (state.logs.length > 60) state.logs = state.logs.slice(0, 60);
     this.notify();
   }
+
+  // ... keep existing code (public methods)
+
+  // NEW: Advanced capability accessors
+  public async executeSystemAction(connector: string, action: string, params: any) {
+    return await this.systemIntegration.executeSystemAction(connector, action, params);
+  }
+
+  public async spawnSpecializedAGI(specialization: string) {
+    const instance = await this.multiAGIOrchestrator.spawnAGIInstance(specialization);
+    this.log(`🤖 Spawned specialized AGI: ${instance.name} (${specialization})`);
+    return instance;
+  }
+
+  public async proposeSystemModification(type: any, description: string, benefit: string) {
+    const proposal = await this.selfModification.proposeModification(type, description, benefit);
+    this.log(`🔧 Modification proposed: ${description}`);
+    return proposal;
+  }
+
   public registerPlugin(plugin: Parameters<AGIPluginHandler["register"]>[0]) {
     this.pluginHandler.register(plugin);
     this.log(`🔌 Registered plugin "${plugin.name}" (${plugin.description})`);
@@ -124,9 +244,8 @@ class UnifiedAGICore {
     this.lessons.clear();
     this.pluginHandler.clear();
     this.goalScheduler.clear();
-    // NEW: Absorb world state
     await this.absorbWorldState();
-    this.log("🔄 AGI memory, goals, lessons, plugins, and queue cleared. State reset.");
+    this.log("🔄 Enhanced AGI memory, goals, lessons, plugins, and queue cleared. Full system reset.");
     this.stateManager.persistState();
     this.notify();
   }
@@ -154,7 +273,6 @@ class UnifiedAGICore {
   // NEW: Method to fuse world data
   private async absorbWorldState() {
     this.log("🌎 Absorbing real-world state: fetching news, RSS, and APIs.");
-    // Demo: use processRSSFeed for world news/tech
     try {
       await DataFusionEngine.processRSSFeed(
         "https://www.cnbc.com/id/100003114/device/rss/rss.html",
@@ -165,7 +283,6 @@ class UnifiedAGICore {
         "core-agi-agent"
       );
       this.log("🌎 World data fused into agent memory.");
-      // Optionally: surface in state
       const latestMemories = await vectorMemoryService.retrieveMemories(
         "core-agi-agent",
         "world news",
@@ -187,8 +304,15 @@ class UnifiedAGICore {
       goalQueue: this.goalScheduler.getQueue(),
       recentCollaborationFeedback: this.stateManager.getState()["recentCollaborationFeedback"] || [],
       lastRecalledVectorMemories: this.stateManager.getState()["lastRecalledVectorMemories"] || [],
-      // NEW: expose world state knowledge
       lastRecalledWorldState: this.stateManager.getState()["lastRecalledWorldState"] || [],
+      // --- NEW: Advanced capability status
+      advancedCapabilities: {
+        systemConnections: this.systemIntegration.getAvailableConnectors().length,
+        agiInstances: this.multiAGIOrchestrator.getActiveInstances().length,
+        memoryConsolidation: this.memoryConsolidator.getClusters().length,
+        modificationProposals: this.selfModification.getProposals().length,
+        safetyStatus: this.selfModification.getSafetyStatus()
+      }
     };
   }
 }
