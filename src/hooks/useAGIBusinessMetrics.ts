@@ -22,6 +22,27 @@ export function useAGIBusinessMetrics(key: string = "agi_metrics") {
   const [metrics, setMetrics] = useState<BusinessMetrics>(DEFAULT);
   const [loading, setLoading] = useState(true);
 
+  // Helper to parse Supabase jsonb result safely
+  function toMetrics(val: unknown): BusinessMetrics {
+    if (
+      typeof val === "object" &&
+      val !== null &&
+      "revenue" in val &&
+      "deals" in val &&
+      "leads" in val &&
+      "velocity" in val
+    ) {
+      const state = val as Record<string, any>;
+      return {
+        revenue: Number(state.revenue) || 0,
+        deals: Number(state.deals) || 0,
+        leads: Number(state.leads) || 0,
+        velocity: Number(state.velocity) || 0,
+      };
+    }
+    return DEFAULT;
+  }
+
   // Load real metrics
   const loadMetrics = useCallback(async () => {
     setLoading(true);
@@ -32,13 +53,10 @@ export function useAGIBusinessMetrics(key: string = "agi_metrics") {
       .order("updated_at", { ascending: false })
       .limit(1);
 
-    if (!error && data && data.length > 0 && data[0].state) {
-      setMetrics({
-        revenue: data[0].state.revenue ?? 0,
-        deals: data[0].state.deals ?? 0,
-        leads: data[0].state.leads ?? 0,
-        velocity: data[0].state.velocity ?? 0,
-      });
+    if (!error && data && data.length > 0) {
+      setMetrics(toMetrics(data[0].state));
+    } else {
+      setMetrics(DEFAULT);
     }
     setLoading(false);
   }, [key]);

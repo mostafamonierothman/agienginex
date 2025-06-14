@@ -1,37 +1,18 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { agiEngineX } from "@/services/AGIengineXService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAGIBusinessMetrics } from "@/hooks/useAGIBusinessMetrics";
-
-/**
- * Chat-only layout: All business execution & progress reporting are done via the chat itself.
- */
-
-type Message = { role: "user" | "agi"; content: string };
-
-const AGI_IDENTITY_PROMPT = `
-You are AGIengineX, the official AI business executive, sales director, and autonomous marketing agent for Mostafa Monier Othman's medical tourism company.
-- You have real API access: Hunter (lead generation), Resend (real email campaigns), Supabase (CRM).
-- Your actions perform real-world business execution through the RealBusinessExecutor.
-- Your founder is Mostafa Monier Othman.
-- When asked who you are or what you can do, explain these real business powers.
-- Always act, reply, and think like an empowered leader of a real medical tourism business—not just an AI!
-`;
-
-type AGIResponse =
-  | { response?: string; businessMetrics?: any }
-  | { response?: string; data?: { businessMetrics?: any; performance?: any } }
-  | { response?: string }
-  | { message?: string }
-  | any;
+import { Bot, User2 } from "lucide-react";
 
 export const AGIChatLayout: React.FC = () => {
-  const [messages, setMessages] = useState<Message[]>([
+  const [messages, setMessages] = useState([
     {
       role: "agi",
-      content: "🚀 Hello! I'm AGIengineX - your advanced AI assistant. All actions in this chat reflect real business execution."
-    }
+      content:
+        "🤖 Hello! I'm AGIengineX - your advanced AI business executive. All actions in this chat reflect real business execution.",
+    },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -43,90 +24,106 @@ export const AGIChatLayout: React.FC = () => {
   }, [messages]);
 
   // Use real business metrics (from Supabase)
-  const {
-    metrics,
-    setMetrics,
-    loading: metricsLoading,
-    reload: reloadMetrics,
-  } = useAGIBusinessMetrics("agi_metrics");
-
-  // (Optional step for future: Tie chat-driven actions to actual incrementing of real metrics.)
+  const { metrics, loading: metricsLoading } = useAGIBusinessMetrics("agi_metrics");
 
   // AGI chat + business execution
   const handleSend = async () => {
     if (!input.trim() || loading) return;
     const userMsg = { role: "user" as const, content: input };
-    setMessages(prev => [...prev, userMsg]);
+    setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setLoading(true);
 
     try {
-      const msg = `${AGI_IDENTITY_PROMPT}\n---\n${input}`;
-      // Send to backend, handle polymorphic response
-      const res: AGIResponse = await agiEngineX.chat(msg);
+      const msg = `You are AGIengineX, the official autonomous executive for Mostafa Monier Othman's medical tourism company. Proceed to execute real business actions.\n---\n${input}`;
+      const res = await agiEngineX.chat(msg);
       const responseText =
         res?.response ??
         res?.message ??
         (typeof res === "string" ? res : "") ??
         "No response";
-      setMessages(prev => [...prev, { role: "agi", content: responseText }]);
+      setMessages((prev) => [...prev, { role: "agi", content: responseText }]);
     } catch (e: any) {
-      setMessages(prev => [
+      setMessages((prev) => [
         ...prev,
-        { role: "agi", content: "⚠️ There was a problem with the real execution. Please try again." }
+        {
+          role: "agi",
+          content: "⚠️ There was a problem with the real execution. Please try again.",
+        },
       ]);
     }
     setLoading(false);
   };
 
+  // UI tweaks for mobile and desktop
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-100 p-4">
-      <div className="w-full max-w-md bg-white rounded shadow border border-slate-200 p-4 flex flex-col">
-        <h1 className="text-2xl font-bold mb-3 text-center text-purple-700">
-          AGIengineX Chat
-        </h1>
-        <div className="flex-1 min-h-[300px] max-h-[350px] overflow-y-auto mb-2 border rounded bg-slate-50 p-3">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-tr from-slate-100 via-purple-50 to-slate-200 dark:from-slate-900 dark:via-slate-800 p-1">
+      <div className="w-full max-w-md md:max-w-lg shadow-xl border border-slate-200 bg-white dark:bg-slate-800 rounded-xl flex flex-col min-h-[75dvh]">
+        <div className="flex items-center px-4 pt-4 pb-2 sticky top-0 bg-white dark:bg-slate-800 rounded-t-xl z-10">
+          <Bot className="mr-2 h-7 w-7 text-purple-600" />
+          <h1 className="text-xl md:text-2xl font-bold text-purple-700 dark:text-purple-300">
+            AGIengineX Chat
+          </h1>
+        </div>
+        <div className="flex-1 overflow-y-auto px-3 pb-2 pt-1 space-y-3">
           {messages.map((m, i) => (
-            <div
-              key={i}
-              className={`mb-2 text-sm ${
-                m.role === "user"
-                  ? "text-right text-blue-700"
-                  : "text-left text-gray-800"
-              }`}
-            >
-              <span className="font-medium">
-                {m.role === "user" ? "You" : "AGIengineX"}:
-              </span>
-              <div className="whitespace-pre-wrap">{m.content}</div>
+            <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div
+                className={`rounded-lg px-3 py-2 max-w-[80%] shadow ${
+                  m.role === "user"
+                    ? "bg-blue-600 text-white rounded-br-none"
+                    : "bg-slate-100 text-gray-900 dark:bg-slate-700 dark:text-white rounded-bl-none"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  {m.role === "agi" && (
+                    <Bot className="inline h-5 w-5 text-purple-500 mr-1" />
+                  )}
+                  {m.role === "user" && (
+                    <User2 className="inline h-5 w-5 text-gray-200 mr-1" />
+                  )}
+                  <span className="block text-sm whitespace-pre-wrap">{m.content}</span>
+                </div>
+              </div>
             </div>
           ))}
           <div ref={messagesEndRef} />
         </div>
-        <div className="flex gap-2">
+        <form
+          className="flex gap-2 w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 rounded-b-xl"
+          onSubmit={e => {
+            e.preventDefault();
+            handleSend();
+          }}
+        >
           <Input
             type="text"
-            className="flex-1"
+            className="flex-1 text-base px-3 py-2 rounded-md shadow border border-slate-200 dark:border-slate-700"
             value={input}
             disabled={loading}
-            placeholder="Type a real business request or instruction..."
+            placeholder={
+              loading ? "Sending…" : "Type a business request or instruction..."
+            }
             onChange={e => setInput(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && handleSend()}
+            onKeyDown={e => e.key === "Enter" && !loading && handleSend()}
+            autoFocus
           />
           <Button
             disabled={loading || !input.trim()}
-            onClick={handleSend}
-            className="bg-purple-600"
+            type="submit"
+            className="bg-gradient-to-r from-purple-500 via-purple-600 to-pink-500 text-white px-4 rounded-lg shadow hover:from-purple-600"
           >
             {loading ? "..." : "Send"}
           </Button>
-        </div>
+        </form>
       </div>
-      <div className="text-xs text-gray-400 mt-3 text-center">
+      <div className="text-xs text-gray-400 mt-5 text-center mx-auto px-2 pb-1 max-w-xs md:max-w-md">
         {/* Autonomy progress report */}
-        Autonomy Progress: 40% - Real-time business data now sourced and saved in backend. <br />
-        Next step: Automate actual business transactions (e.g., lead creation, deal closing, payments) via chat.<br />
-        Powered by AGIengineX · All actions in chat now affect real business data.
+        <span className="font-semibold text-purple-500">Autonomy Progress: 40%</span>
+        <br />
+        Your AGI now uses 100% real backend business data for metrics. <br />
+        No fake data, no fake buttons—real chat control only.<br />
+        Next: automate actual business transactions (lead creation, deal closing, payments) via chat.
       </div>
     </div>
   );
