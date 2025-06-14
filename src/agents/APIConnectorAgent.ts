@@ -1,4 +1,3 @@
-
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -28,7 +27,7 @@ export class APIConnectorAgent {
       } else {
         return await response.text();
       }
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`API call failed: ${error.message}`);
     }
   }
@@ -54,14 +53,14 @@ export async function APIConnectorAgentRunner(context: AgentContext): Promise<Ag
     // Log to supervisor queue
     await supabase
       .from('supervisor_queue')
-      .insert({
+      .insert([{ // Wrapped in array
         user_id: context.user_id || 'api_connector_agent',
         agent_name: 'api_connector_agent',
         action: 'test_public_api',
         input: JSON.stringify({ action: 'test_random_api' }),
         status: 'completed',
         output: JSON.stringify(result).substring(0, 500)
-      });
+      }]);
 
     return {
       success: true,
@@ -69,7 +68,7 @@ export async function APIConnectorAgentRunner(context: AgentContext): Promise<Ag
       data: { result },
       timestamp: new Date().toISOString()
     };
-  } catch (error) {
+  } catch (error: any) {
     return {
       success: false,
       message: `❌ APIConnectorAgent error: ${error.message}`

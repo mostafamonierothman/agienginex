@@ -1,11 +1,8 @@
-
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { PersistentMemory } from '@/core/PersistentMemory';
 import { EnhancedGoalAgentRunner } from '@/agents/EnhancedGoalAgent';
 import { StrategicAgent } from '@/agents/StrategicAgent';
 import { ReflectionAgentRunner } from '@/agents/ReflectionAgent';
-import { SelfImprovementAgentRunner } from '@/agents/SelfImprovementAgent';
-import { agentRegistry } from '@/config/AgentRegistry';
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -69,7 +66,7 @@ export class AGOCoreLoopAgent {
 
           await sendChatUpdate(`✅ [AGO] Goal "${goal}" completed with score: ${evaluation.score}/100`);
 
-        } catch (error) {
+        } catch (error: any) {
           console.error(`AGO Loop error for goal "${goal}":`, error);
           await sendChatUpdate(`❌ [AGO] Error processing goal "${goal}": ${error.message}`);
           
@@ -85,7 +82,7 @@ export class AGOCoreLoopAgent {
       // Step 6: System reflection and improvement
       await this.performSystemReflection(loopResults);
 
-      const overallScore = loopResults.reduce((sum, r) => sum + (r.score || 0), 0) / loopResults.length;
+      const overallScore = loopResults.reduce((sum, r) => sum + (r.score || 0), 0) / (loopResults.length || 1);
       
       await sendChatUpdate(`🧠 [AGO] Core loop complete. Overall performance: ${overallScore.toFixed(1)}/100`);
 
@@ -155,19 +152,19 @@ export class AGOCoreLoopAgent {
     // Log to supervisor queue for tracking
     await supabase
       .from('supervisor_queue')
-      .insert({
+      .insert([{ // Wrapped in array
         user_id: 'ago_core_loop',
         agent_name: 'ago_core_loop_agent',
         action: 'goal_execution',
         input: JSON.stringify({ goal }),
         status: result.success ? 'completed' : 'failed',
         output: JSON.stringify({ evaluation, result: result.message })
-      });
+      }]);
   }
 
   private async performSystemReflection(results: any[]) {
     try {
-      const successRate = results.filter(r => r.success).length / results.length;
+      const successRate = results.length > 0 ? results.filter(r => r.success).length / results.length : 0;
       
       if (successRate < 0.7) {
         await sendChatUpdate('🔍 [AGO] Low success rate detected - initiating system reflection');

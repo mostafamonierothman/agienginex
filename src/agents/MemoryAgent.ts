@@ -1,4 +1,3 @@
-
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -11,13 +10,13 @@ export class MemoryAgent {
 
       await supabase
         .from('agent_memory')
-        .insert({
+        .insert([{ // Wrapped in array
           user_id: context.user_id || 'memory_agent',
           agent_name: 'memory_agent',
           memory_key: memoryKey,
           memory_value: memoryValue,
           timestamp: new Date().toISOString()
-        });
+        }]);
 
       return {
         success: true,

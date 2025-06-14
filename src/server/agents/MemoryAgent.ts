@@ -1,48 +1,45 @@
-
 import { AgentContext, AgentResponse } from '../../types/AgentTypes';
 import { supabase } from '../../integrations/supabase/client';
 
 export class MemoryAgent {
   async runner(context: AgentContext): Promise<AgentResponse> {
     try {
-      console.log('[MemoryAgent] Running with context:', context);
+      console.log('[MemoryAgent Server] Running with context:', context);
       
-      // Basic memory operation - store and retrieve context
       const memoryKey = `memory_${Date.now()}`;
       const memoryValue = JSON.stringify(context.input || {});
 
       const { error } = await supabase
         .from('agent_memory')
-        .insert({
-          user_id: context.user_id || 'memory_agent',
-          agent_name: 'memory_agent',
+        .insert([{ // Wrapped in array
+          user_id: context.user_id || 'memory_agent_server', // Differentiated user_id for server agent
+          agent_name: 'memory_agent_server', // Differentiated agent_name
           memory_key: memoryKey,
           memory_value: memoryValue,
           timestamp: new Date().toISOString()
-        });
+        }]);
 
       if (error) {
-        console.error('[MemoryAgent] Supabase error:', error);
-        // Fallback to simple memory simulation if DB is not available
+        console.error('[MemoryAgent Server] Supabase error:', error);
         return {
-          success: true,
-          message: `🧠 MemoryAgent: Stored memory locally (DB unavailable) with key ${memoryKey}`,
-          data: { memoryKey, stored: true, fallback: true },
+          success: true, // Or false, depending on desired behavior on DB error
+          message: `🧠 MemoryAgent Server: Stored memory locally (DB unavailable or error: ${error.message}) with key ${memoryKey}`,
+          data: { memoryKey, stored: true, fallback: true, error: error.message },
           timestamp: new Date().toISOString()
         };
       }
 
       return {
         success: true,
-        message: `🧠 MemoryAgent: Stored memory with key ${memoryKey}`,
+        message: `🧠 MemoryAgent Server: Stored memory with key ${memoryKey}`,
         data: { memoryKey, stored: true },
         timestamp: new Date().toISOString()
       };
-    } catch (error) {
-      console.error('[MemoryAgent] Error:', error);
+    } catch (error: any) { // Added type any for error
+      console.error('[MemoryAgent Server] Error:', error);
       return {
         success: false,
-        message: `❌ MemoryAgent error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `❌ MemoryAgent Server error: ${error.message || 'Unknown error'}`,
         timestamp: new Date().toISOString()
       };
     }

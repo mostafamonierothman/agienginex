@@ -8,13 +8,13 @@ export class PersistentMemory {
       this.memoryCache.set(key, value);
       await supabase
         .from('agent_memory')
-        .upsert({
+        .upsert([{ // Wrapped in array
           user_id: 'persistent_memory',
           agent_name: 'system_memory',
           memory_key: key,
           memory_value: typeof value === 'string' ? value : JSON.stringify(value)
-        }, {
-          onConflict: 'user_id,agent_name,memory_key'
+        }], {
+          onConflict: 'user_id,agent_name,memory_key' // This assumes a unique constraint exists on these columns
         });
       console.log(`🧠 Persistent memory set: ${key}`);
     } catch (error) {
@@ -36,16 +36,19 @@ export class PersistentMemory {
         .order('timestamp', { ascending: false })
         .limit(1);
       if (error || !data || data.length === 0) {
+        // If error, log it but still return defaultValue
+        if (error) console.error('Failed to get persistent memory from DB:', error);
         return defaultValue;
       }
-      const value = data[0].memory_value;
+      const memValue = data[0].memory_value; // Renamed to avoid conflict
       try {
-        const parsed = JSON.parse(value);
+        // Ensure memValue is not null or undefined before parsing
+        const parsed = memValue ? JSON.parse(memValue) : defaultValue;
         this.memoryCache.set(key, parsed);
         return parsed;
       } catch {
-        this.memoryCache.set(key, value);
-        return value;
+        this.memoryCache.set(key, memValue);
+        return memValue;
       }
     } catch (error) {
       console.error('Failed to get persistent memory:', error);
@@ -74,10 +77,15 @@ export class PersistentMemory {
         .select('memory_key')
         .eq('user_id', 'persistent_memory')
         .eq('agent_name', 'system_memory');
-      return data?.map(item => item.memory_key) || [];
+      
+      if (error) {
+        console.error('Failed to get memory keys from DB:', error);
+        return Array.from(this.memoryCache.keys()); // Fallback to cache keys
+      }
+      return data?.map(item => item.memory_key).filter(k => k !== null) as string[] || [];
     } catch (error) {
       console.error('Failed to get memory keys:', error);
-      return [];
+      return Array.from(this.memoryCache.keys()); // Fallback to cache keys
     }
   }
 }

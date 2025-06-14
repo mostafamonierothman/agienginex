@@ -1,4 +1,3 @@
-
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
 import { supabase } from '@/integrations/supabase/client';
@@ -91,12 +90,21 @@ export class AGISelfHealingAgent {
       }
 
       // Check agent execution health
-      const { data: recentAgents } = await supabase
+      const { data: recentAgentsData, error: agentError } = await supabase
         .from('supervisor_queue')
         .select('status')
         .gte('timestamp', new Date(Date.now() - 5 * 60 * 1000).toISOString());
 
-      const failedAgents = recentAgents?.filter(a => a.status === 'failed') || [];
+      if (agentError) {
+        console.error("[AGISelfHealingAgent] Error fetching recent agent statuses:", agentError);
+        issues.push({
+          type: 'supervisor_queue_read_error',
+          severity: 'medium' as const,
+          details: { error: agentError.message }
+        });
+      }
+      
+      const failedAgents = recentAgentsData?.filter(a => a && a.status === 'failed') || [];
       if (failedAgents.length > 3) {
         issues.push({
           type: 'agent_failure',
@@ -191,14 +199,14 @@ export class AGISelfHealingAgent {
     // Log successful agent restart to supervisor queue
     await supabase
       .from('supervisor_queue')
-      .insert({
+      .insert([{ // Wrapped in array
         user_id: 'agi_healing_system',
         agent_name: 'agi_self_healing_agent',
         action: 'agent_system_repair',
         input: JSON.stringify(issue.details),
         status: 'completed',
         output: 'Agent execution system repaired and optimized'
-      });
+      }]);
 
     return {
       success: true,
@@ -285,8 +293,8 @@ export class AGISelfHealingAgent {
     // Store learning data for future improvements
     await supabase
       .from('agi_state')
-      .upsert({
-        key: 'healing_performance',
+      .upsert([{ // Wrapped in array
+        key: 'healing_performance', // This field name is correct as per types.ts for agi_state
         state: {
           lastHealingSession: new Date().toISOString(),
           successRate,
@@ -297,7 +305,7 @@ export class AGISelfHealingAgent {
             'Optimized recovery protocols'
           ]
         }
-      });
+      }], { onConflict: 'key' }); // Assuming 'key' is the column for conflict resolution
   }
 
   private async emergencyRecovery() {

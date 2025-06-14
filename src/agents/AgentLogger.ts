@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface LogEntry {
@@ -29,14 +28,14 @@ export class AgentLogger {
     try {
       await supabase
         .from('supervisor_queue')
-        .insert({
+        .insert([{ // Wrapped in array
           user_id: 'system_logger',
           agent_name,
           action,
           input: JSON.stringify({ action }),
           status: level === 'error' ? 'error' : 'completed',
           output: result
-        });
+        }]);
     } catch (error) {
       console.error('Failed to store log:', error);
     }
