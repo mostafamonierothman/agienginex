@@ -117,13 +117,18 @@ const AGIengineXChat: React.FC = () => {
         ...prev,
         { role: "agi", content: "⚡ Initiating autonomous growth protocols for exponential revenue. Allocating agents for new business lines, launching cross-market campaigns, and boosting deal velocity..." }
       ]);
-      // Simulate revenue burst for demo (in real system, would trigger a real strategic execution loop)
-      setPerformance((p) => ({
-        ...p, revenue: p.revenue + Math.round(1000000 + Math.random() * 1000000), 
-        deals: p.deals + Math.floor(5 + Math.random() * 5),
-        leads: p.leads + Math.floor(500 + Math.random() * 1000), 
-        velocity: p.velocity + Math.round(2e6 + Math.random() * 5e6)
-      }));
+      // --- Fix: Don't pass a function, instead calculate new values here
+      const revenueBoost = Math.round(1000000 + Math.random() * 1000000);
+      const dealsBoost = Math.floor(5 + Math.random() * 5);
+      const leadsBoost = Math.floor(500 + Math.random() * 1000);
+      const velocityBoost = Math.round(2e6 + Math.random() * 5e6);
+
+      setPerformance({
+        revenue: performance.revenue + revenueBoost,
+        deals: performance.deals + dealsBoost,
+        leads: performance.leads + leadsBoost,
+        velocity: performance.velocity + velocityBoost
+      });
       setTimeout(() => {
         setMessages(prev => [
           ...prev,
@@ -168,13 +173,18 @@ const AGIengineXChat: React.FC = () => {
         { role: "agi", content: execResult.response || "Execution complete. See updated business metrics below." }
       ]);
       // Demo scoring: boost metrics for now, real implementation should update based on API/DB results!
-      setPerformance((p) => ({
-        ...p, 
-        revenue: p.revenue + Math.round(200000 + Math.random() * 400000), 
-        deals: p.deals + Math.floor(1 + Math.random() * 3),
-        leads: p.leads + Math.floor(100 + Math.random() * 300),
-        velocity: Math.max(p.velocity, Math.round(8e5 + Math.random() * 7e5))
-      }));
+
+      const revenueBoost = Math.round(200000 + Math.random() * 400000);
+      const dealsBoost = Math.floor(1 + Math.random() * 3);
+      const leadsBoost = Math.floor(100 + Math.random() * 300);
+      const velocityValue = Math.max(performance.velocity, Math.round(8e5 + Math.random() * 7e5));
+
+      setPerformance({
+        revenue: performance.revenue + revenueBoost,
+        deals: performance.deals + dealsBoost,
+        leads: performance.leads + leadsBoost,
+        velocity: velocityValue
+      });
       setLoading(false);
       return true;
     }
