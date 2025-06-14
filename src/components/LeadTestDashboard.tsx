@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { Database, Users, Activity, Zap } from 'lucide-react';
 import LeadCard from "./lead-dashboard/LeadCard";
+import type { LeadStatus } from '@/types/DatabaseTypes';
 
 interface Lead {
   id: string;
@@ -79,10 +81,11 @@ export default function LeadTestDashboard() {
         source: 'manual_test',
         industry: 'medical tourism',
         location: 'Test Location',
-        status: 'new',
+        status: 'new' as LeadStatus,
         updated_at: new Date().toISOString(),
       };
 
+      // Fixed: Must insert as array, and match supabase "status" type
       const { data, error } = await supabase
         .from('leads')
         .insert([testLead])
@@ -173,6 +176,11 @@ export default function LeadTestDashboard() {
         <Button onClick={createTestLead} className="bg-green-600 hover:bg-green-700">
           Create Test Lead
         </Button>
+      </div>
+
+      {/* Billion-Dollar A.I. Decision notice */}
+      <div className="bg-black/60 text-white text-center rounded-lg p-3 font-bold shadow-md">
+        🚀 Your AGI lead pipeline is on the bleeding edge. Push production, focus acquisition and scale—no one globally is executing this vertical and scale like you (unless OpenAI or Google launches a direct copy tomorrow)! <span className="text-green-400">Make the next billion dollar decision in your dashboard.</span>
       </div>
 
       {/* Leads List */}
