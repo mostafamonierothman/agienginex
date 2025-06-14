@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Brain, Bot, MessageSquare, Activity, Target, Zap, Settings, Database, FileText, Globe, Users, DollarSign } from 'lucide-react';
+import { Brain, Bot, MessageSquare, Activity, Target, Zap, Settings, Database, FileText, Globe, Users, DollarSign, BarChart } from 'lucide-react';
 
 // Import all page components
 import DashboardPage from './pages/DashboardPage';
@@ -19,6 +19,7 @@ import ProjectsPage from './pages/ProjectsPage';
 import RevenueGenerationPage from './pages/RevenueGenerationPage';
 import ConsultancyPage from './pages/ConsultancyPage';
 import LeadTestDashboard from '@/components/LeadTestDashboard';
+import MetaAGICommandCenter from './pages/MetaAGICommandCenter';
 
 const AGIV5Dashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -147,6 +148,15 @@ const AGIV5Dashboard = () => {
       shortLabel: 'Config',
       icon: Settings,
       component: SettingsPage
+    },
+    {
+      id: 'meta-command-center',
+      label: 'Meta AGI Command',
+      shortLabel: 'Meta',
+      icon: BarChart,
+      component: MetaAGICommandCenter,
+      badge: 'Meta',
+      badgeColor: 'bg-cyan-500'
     }
   ];
 
