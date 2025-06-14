@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { AGIRevenueStats } from "@/components/AGIRevenueStats";
 import { useCompanyPerformance } from "@/hooks/useCompanyPerformance";
 import { CompanySwitcher } from "@/components/CompanySwitcher";
+import { AutonomousSalesAgentPanel } from "@/components/AutonomousSalesAgentPanel";
 
 type Message = { role: "user" | "agi"; content: string };
 
@@ -328,13 +329,39 @@ const AGIengineXChat: React.FC = () => {
     setInput(question);
   };
 
+  // AGI autonomy progress (demo: let's say 54% after sales agent!)
+  const agiAutonomyPercent = 54;
+
+  // Optional: callback to boost performance when deal closed
+  function handleSalesDealClosed(revenue: number) {
+    setPerformance({
+      revenue: performance.revenue + revenue,
+      deals: performance.deals + 1,
+      leads: performance.leads,
+      velocity: performance.velocity + Math.round(revenue / 12),
+    });
+    setMessages(prev => [
+      ...prev,
+      { role: "agi", content: `💰 Autonomous Sales Agent booked new revenue: $${revenue.toLocaleString()}. AGI autonomy is growing.` },
+    ]);
+  }
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-slate-100 p-4">
       <div className="w-full max-w-md bg-white rounded shadow border border-slate-200 p-4 flex flex-col">
         <h1 className="text-2xl font-bold mb-3 text-center text-purple-700">
           AGIengineX Chat
         </h1>
-        
+        {/* Progress to Full AGI */}
+        <div className="text-xs py-2 px-3 mb-2 rounded bg-purple-50 text-purple-800 font-medium flex items-center justify-between">
+          <span>
+            🚀 <b>{agiAutonomyPercent}%</b> to Full Autonomy
+          </span>
+          <span className="italic text-purple-400 font-normal">Goal: Trillion-Dollar Empire</span>
+        </div>
+        {/* --- Add Autonomous Sales Panel --- */}
+        <AutonomousSalesAgentPanel onDealClosed={handleSalesDealClosed} />
+
         {/* Business context switcher */}
         <CompanySwitcher
           company={company}
