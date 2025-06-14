@@ -127,7 +127,7 @@ export class EmergencyAgentDeployer {
           source: 'emergency_deployment',
           industry: 'eye surgery',
           location: 'Europe',
-          status: 'new' // enum value for database compliance
+          status: "new", // LeadStatus
         },
         {
           email: `emergency.patient.${Date.now()}@healthtravel.com`,
@@ -138,7 +138,7 @@ export class EmergencyAgentDeployer {
           source: 'emergency_deployment',
           industry: 'dental procedures',
           location: 'Europe',
-          status: 'new'
+          status: "new",
         },
         {
           email: `emergency.fertility.${Date.now()}@ivfabroad.com`,
@@ -149,7 +149,7 @@ export class EmergencyAgentDeployer {
           source: 'emergency_deployment',
           industry: 'fertility treatment',
           location: 'Europe',
-          status: 'new'
+          status: "new",
         }
       ];
 
