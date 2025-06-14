@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,14 +9,24 @@ import { Database, Users, Activity, Zap } from 'lucide-react';
 interface Lead {
   id: string;
   email: string;
-  first_name: string;
-  last_name: string;
-  company: string;
-  industry: string;
-  location: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  company?: string | null;
+  job_title?: string | null;
+  phone?: string | null;
+  linkedin_url?: string | null;
   source: string;
-  status: string;
+  industry?: string | null;
+  location?: string | null;
+  status: 
+    | 'new'
+    | 'contacted'
+    | 'replied'
+    | 'qualified'
+    | 'converted'
+    | 'unsubscribed';
   created_at: string;
+  updated_at?: string | null;
 }
 
 export default function LeadTestDashboard() {
@@ -69,7 +78,8 @@ export default function LeadTestDashboard() {
         source: 'manual_test',
         industry: 'medical tourism',
         location: 'Test Location',
-        status: 'new' as 'new', // fixed type
+        status: 'new',
+        updated_at: new Date().toISOString(),
       };
 
       const { data, error } = await supabase

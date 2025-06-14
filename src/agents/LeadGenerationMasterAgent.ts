@@ -24,7 +24,8 @@ export class LeadGenerationMasterAgent {
       const enrichedLeads = enricher.enrichSearchResults(searchResults, keyword);
       const leadsToInsert = enrichedLeads.map(lead => ({
         ...lead,
-        status: "new" as LeadStatus, // force type as LeadStatus
+        status: "new" as const, // match DB type
+        updated_at: new Date().toISOString(),
       }));
 
       const savedLeads = await databaseService.saveLeadsToDatabase(leadsToInsert, agentId);

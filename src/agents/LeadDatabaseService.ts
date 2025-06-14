@@ -11,7 +11,8 @@ export class LeadDatabaseService {
       // Ensure status is restricted to allowed enum
       const patchLeads = leads.map(lead => ({
         ...lead,
-        status: 'new'
+        status: 'new',
+        updated_at: new Date().toISOString(),
       }));
       for (let i = 0; i < patchLeads.length; i += batchSize) {
         const batch = patchLeads.slice(i, i + batchSize);
