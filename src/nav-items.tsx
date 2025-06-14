@@ -1,4 +1,5 @@
 
+// Only Home and AGI V5 tabs
 import { HomeIcon, Zap } from "lucide-react";
 
 export const navItems = [

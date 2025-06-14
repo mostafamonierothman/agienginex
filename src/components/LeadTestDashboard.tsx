@@ -69,7 +69,7 @@ export default function LeadTestDashboard() {
         source: 'manual_test',
         industry: 'medical tourism',
         location: 'Test Location',
-        status: 'new'
+        status: 'new' as 'new', // fixed type
       };
 
       const { data, error } = await supabase
