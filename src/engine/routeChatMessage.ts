@@ -42,6 +42,37 @@ export async function routeChatMessage(message: string): Promise<AgentResponse> 
       return await agentRegistry.deployLeadGenerationSwarm(context);
     }
 
+    if (lowerMessage.includes('emergency') || lowerMessage.includes('deploy')) {
+      console.log('🚨 Emergency deployment command detected');
+      
+      const context: AgentContext = {
+        input: { 
+          goal: 'emergency_deployment',
+          command: message,
+          mode: 'emergency_response'
+        },
+        user_id: 'emergency_chat_user',
+        timestamp: new Date().toISOString()
+      };
+
+      return await agentRegistry.runAgent('emergency_agent_deployer', context);
+    }
+
+    if (lowerMessage.includes('test leads') || lowerMessage.includes('test database')) {
+      console.log('🧪 Test command detected');
+      
+      const context: AgentContext = {
+        input: { 
+          keyword: 'LASIK surgery abroad UK test',
+          agentId: 'chat_test_agent'
+        },
+        user_id: 'test_chat_user',
+        timestamp: new Date().toISOString()
+      };
+
+      return await agentRegistry.runAgent('lead_generation_master_agent', context);
+    }
+
     if (lowerMessage.includes('ago') || lowerMessage.includes('core loop')) {
       console.log('🧠 AGO Core Loop command detected');
       

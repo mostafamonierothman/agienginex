@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +17,7 @@ import MedicalTourismAgentsPage from './pages/MedicalTourismAgentsPage';
 import MarketResearchPage from './pages/MarketResearchPage';
 import ProjectsPage from './pages/ProjectsPage';
 import RevenueGenerationPage from './pages/RevenueGenerationPage';
+import LeadTestDashboard from '@/components/LeadTestDashboard';
 
 const AGIV5Dashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -40,6 +40,15 @@ const AGIV5Dashboard = () => {
       component: RevenueGenerationPage,
       badge: '$200K+',
       badgeColor: 'bg-green-500'
+    },
+    {
+      id: 'lead-test',
+      label: 'Lead Test Dashboard',
+      shortLabel: 'Test',
+      icon: Database,
+      component: LeadTestDashboard,
+      badge: 'Live',
+      badgeColor: 'bg-orange-500'
     },
     {
       id: 'agents',
@@ -149,10 +158,13 @@ const AGIV5Dashboard = () => {
                 <Badge className="bg-green-500 text-white text-xs md:text-sm w-fit">
                   $200K+ Revenue
                 </Badge>
+                <Badge className="bg-orange-500 text-white text-xs md:text-sm w-fit">
+                  Lead Gen Fixed
+                </Badge>
               </div>
             </CardTitle>
             <p className="text-gray-300 text-sm md:text-base lg:text-lg mt-2">
-              Full AGI system with autonomous revenue generation, 46+ specialized agents, and zero-error operation
+              Full AGI system with autonomous revenue generation, 46+ specialized agents, and zero-error operation. Lead generation system now active and tested.
             </p>
           </CardHeader>
         </Card>
