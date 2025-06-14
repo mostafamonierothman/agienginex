@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { agiEngineX } from "@/services/AGIengineXService";
 import { Button } from "@/components/ui/button";
@@ -91,7 +90,7 @@ export const AGIChatLayout: React.FC = () => {
     } catch (e: any) {
       setMessages((prev) => [
         ...prev,
-        { role: "agi", content: "⚠️ Real AGI action failed. Please retry." },
+        { role: "agi", content: "⚠️ No AGI response" },
       ]);
     }
     setLoading(false);

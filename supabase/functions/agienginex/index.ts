@@ -507,7 +507,7 @@ serve(async (req) => {
         body = await req.json();
       } catch {
         return new Response(
-          JSON.stringify({ error: "Malformed JSON body" }),
+          JSON.stringify({ response: "Malformed JSON body" }),
           { status: 400, headers: corsHeaders }
         );
       }
@@ -540,7 +540,7 @@ serve(async (req) => {
             return new Response(JSON.stringify({ response: "OpenAI API error: " + errText, agent_used: "openai_llm", timestamp: new Date().toISOString() }), { headers: corsHeaders });
           }
           const data = await result.json();
-          const llmReply = data?.choices?.[0]?.message?.content ?? "Unable to generate a smart response right now.";
+          const llmReply = data?.choices?.[0]?.message?.content ?? "⚠️ No AGI response";
           return new Response(
             JSON.stringify({
               response: llmReply,
@@ -553,7 +553,7 @@ serve(async (req) => {
         // Fallback to old local response if no OpenAI key or message
         return new Response(
           JSON.stringify({
-            response: "🤖 I'm a TRUE AGI system with autonomous capabilities. Try asking me about 'current goals', 'reflect on performance', 'market opportunities', 'next strategic move', or 'run agent chain'. I can also respond to 'status' for system health.",
+            response: "⚠️ No AGI response",
             agent_used: 'general_agent'
           }),
           { headers: corsHeaders }
@@ -562,7 +562,7 @@ serve(async (req) => {
       // --- Goals GET
       if (endpoint === 'goals') {
         const goals = await getCurrentGoals();
-        return new Response(JSON.stringify({ goals }), { headers: corsHeaders });
+        return new Response(JSON.stringify({ response: goals }), { headers: corsHeaders });
       }
       // --- Goals CREATE
       if (endpoint === 'goals_create') {
@@ -571,7 +571,7 @@ serve(async (req) => {
           priority: body.priority || 5,
           status: 'active'
         });
-        return new Response(JSON.stringify({ success: true, goal: newGoal }), { headers: corsHeaders });
+        return new Response(JSON.stringify({ response: newGoal }), { headers: corsHeaders });
       }
       // --- Agents list
       if (endpoint === 'agents') {
@@ -592,12 +592,12 @@ serve(async (req) => {
             capabilities: ['System Analysis', 'Performance Evaluation', 'Self-Improvement', 'Quality Assessment']
           }
         ];
-        return new Response(JSON.stringify({ agents }), { headers: corsHeaders });
+        return new Response(JSON.stringify({ response: agents }), { headers: corsHeaders });
       }
       // --- Run agent chain
       if (endpoint === 'chain') {
         const results = await executeAgentChain(body.chain_name || 'standard_agi_loop');
-        return new Response(JSON.stringify({ chain_results: results }), { headers: corsHeaders });
+        return new Response(JSON.stringify({ response: results }), { headers: corsHeaders });
       }
       // --- Trigger webhook
       if (endpoint === 'webhook') {
@@ -611,7 +611,7 @@ serve(async (req) => {
         const result = await runAgent(agentName, body);
         return new Response(
           JSON.stringify({
-            message: 'Environment event processed',
+            response: 'Environment event processed',
             adaptive_response: result
           }),
           { headers: corsHeaders }
@@ -626,19 +626,21 @@ serve(async (req) => {
           : 'N/A';
         return new Response(
           JSON.stringify({
-            status: 'operational',
-            agi_loop_running: agiLoopRunning,
-            active_goals: goals.length,
-            performance_score: avgScore,
-            agents_active: 3,
-            timestamp: new Date().toISOString(),
-            version: '2.0.0',
-            agi_features: {
-              autonomy: true,
-              self_reflection: true,
-              goal_driven: true,
-              environment_adaptive: true,
-              agent_chaining: true
+            response: {
+              status: 'operational',
+              agi_loop_running: agiLoopRunning,
+              active_goals: goals.length,
+              performance_score: avgScore,
+              agents_active: 3,
+              timestamp: new Date().toISOString(),
+              version: '2.0.0',
+              agi_features: {
+                autonomy: true,
+                self_reflection: true,
+                goal_driven: true,
+                environment_adaptive: true,
+                agent_chaining: true
+              }
             }
           }),
           { headers: corsHeaders }
@@ -648,34 +650,34 @@ serve(async (req) => {
       if (endpoint === 'loop_start') {
         await startAGILoop();
         return new Response(
-          JSON.stringify({ success: true, message: 'TRUE AGI Loop started with autonomous capabilities' }),
+          JSON.stringify({ response: 'TRUE AGI Loop started with autonomous capabilities' }),
           { headers: corsHeaders }
         );
       }
       if (endpoint === 'loop_stop') {
         stopAGILoop();
         return new Response(
-          JSON.stringify({ success: true, message: 'TRUE AGI Loop stopped' }),
+          JSON.stringify({ response: 'TRUE AGI Loop stopped' }),
           { headers: corsHeaders }
         );
       }
-      // --- Catch all
+      // --- Catch all (invalid endpoint)
       return new Response(
-        JSON.stringify({ error: "Invalid endpoint provided", status: 404 }),
+        JSON.stringify({ response: "⚠️ No AGI response", status: 404 }),
         { status: 404, headers: corsHeaders }
       );
     }
 
     // --- Invalid method
     return new Response(
-      JSON.stringify({ error: 'Route not found' }),
+      JSON.stringify({ response: '⚠️ No AGI response: Route not found' }),
       { status: 404, headers: corsHeaders }
     );
   } catch (error) {
     console.error('AGIengineX V2 Error:', error);
     return new Response(
       JSON.stringify({ 
-        error: 'Internal server error',
+        response: '⚠️ No AGI response: Internal server error',
         message: error.message,
         timestamp: new Date().toISOString()
       }),
