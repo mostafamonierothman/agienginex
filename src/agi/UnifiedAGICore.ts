@@ -1,4 +1,3 @@
-
 import { PersistentMemory } from "@/core/PersistentMemory";
 import { v4 as uuidv4 } from "uuid";
 import { LessonManager } from "./LessonManager";
@@ -90,6 +89,12 @@ class UnifiedAGICore {
   public registerPlugin(plugin: Parameters<ActionPluginManager["register"]>[0]) {
     this.plugins.register(plugin);
     this.log(`🔌 Registered plugin "${plugin.name}" (${plugin.description})`);
+    this.notify();
+  }
+
+  public unregisterPlugin(name: string) {
+    this.plugins.unregister(name);
+    this.log(`❌ Unregistered plugin "${name}"`);
     this.notify();
   }
 
@@ -271,6 +276,3 @@ class UnifiedAGICore {
 }
 
 export const unifiedAGI = UnifiedAGICore.getInstance();
-
-// ... End of file
-

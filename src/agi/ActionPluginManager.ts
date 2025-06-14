@@ -20,6 +20,10 @@ export class ActionPluginManager {
     }
   }
 
+  unregister(name: string) {
+    this.plugins = this.plugins.filter(p => p.name !== name);
+  }
+
   getPlugins(): ActionPlugin[] {
     return [...this.plugins];
   }
