@@ -122,19 +122,30 @@ export const useAGIIntelligence = () => {
     }));
   }, []);
 
-  // Persist AGI state to database - fix TypeScript error
+  // Persist AGI state to database with improved error handling
   useEffect(() => {
     const saveAGIState = async () => {
       try {
-        // Convert AGIState to JSON-compatible format
-        const stateToSave = JSON.parse(JSON.stringify(agiState));
+        const stateToSave = {
+          intelligenceLevel: agiState.intelligenceLevel,
+          isLearning: agiState.isLearning,
+          autonomousMode: agiState.autonomousMode,
+          goals: agiState.goals,
+          achievements: agiState.achievements,
+          errorCount: agiState.errorCount,
+          learningRate: agiState.learningRate
+        };
         
-        await supabase
+        const { error } = await supabase
           .from('agi_state')
           .upsert({
             key: 'agi_intelligence',
             state: stateToSave
           });
+
+        if (error) {
+          console.error('Failed to save AGI state:', error);
+        }
       } catch (error) {
         console.error('Failed to save AGI state:', error);
       }
@@ -147,16 +158,22 @@ export const useAGIIntelligence = () => {
   useEffect(() => {
     const loadAGIState = async () => {
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('agi_state')
           .select('state')
           .eq('key', 'agi_intelligence')
-          .single();
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error loading AGI state:', error);
+          return;
+        }
 
         if (data?.state && typeof data.state === 'object' && !Array.isArray(data.state)) {
+          const loadedState = data.state as any;
+          
           // Validate that the loaded state has all required AGI properties
-          const loadedState = data.state as Record<string, any>;
-          if (
+          const isValidState = (
             typeof loadedState.intelligenceLevel === 'number' &&
             typeof loadedState.isLearning === 'boolean' &&
             typeof loadedState.autonomousMode === 'boolean' &&
@@ -164,8 +181,18 @@ export const useAGIIntelligence = () => {
             Array.isArray(loadedState.achievements) &&
             typeof loadedState.errorCount === 'number' &&
             typeof loadedState.learningRate === 'number'
-          ) {
-            setAgiState(loadedState as AGIState);
+          );
+
+          if (isValidState) {
+            setAgiState({
+              intelligenceLevel: loadedState.intelligenceLevel,
+              isLearning: loadedState.isLearning,
+              autonomousMode: loadedState.autonomousMode,
+              goals: loadedState.goals,
+              achievements: loadedState.achievements,
+              errorCount: loadedState.errorCount,
+              learningRate: loadedState.learningRate
+            });
           }
         }
       } catch (error) {
