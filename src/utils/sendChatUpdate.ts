@@ -12,7 +12,7 @@ export async function sendChatUpdate(message: string) {
 
     try {
       await supabase
-        .from('api.agent_memory')
+        .from('agent_memory')
         .insert({
           user_id: 'system_updates',
           agent_name: 'system',

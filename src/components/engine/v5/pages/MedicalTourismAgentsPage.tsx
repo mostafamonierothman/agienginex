@@ -33,20 +33,20 @@ const MedicalTourismAgentsPage = () => {
   const loadAgentStatus = async () => {
     try {
       const { data: supervisorData } = await supabase
-        .from('api.supervisor_queue')
+        .from('supervisor_queue')
         .select('*')
         .ilike('agent_name', '%Agent%')
         .eq('action', 'emergency_deployment')
         .order('timestamp', { ascending: false });
 
       const { data: memoryData } = await supabase
-        .from('api.agent_memory')
+        .from('agent_memory')
         .select('*')
         .eq('memory_key', 'lead_generation_knowledge')
         .order('timestamp', { ascending: false });
 
       const { data: leadsData } = await supabase
-        .from('api.leads')
+        .from('leads')
         .select('id, industry')
         .in('industry', ['eye surgery', 'dental procedures']);
 

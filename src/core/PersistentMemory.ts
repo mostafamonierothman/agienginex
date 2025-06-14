@@ -7,7 +7,7 @@ export class PersistentMemory {
     try {
       this.memoryCache.set(key, value);
       await supabase
-        .from('api.agent_memory')
+        .from('agent_memory')
         .upsert({
           user_id: 'persistent_memory',
           agent_name: 'system_memory',
@@ -28,7 +28,7 @@ export class PersistentMemory {
         return this.memoryCache.get(key);
       }
       const { data, error } = await supabase
-        .from('api.agent_memory')
+        .from('agent_memory')
         .select('memory_value')
         .eq('user_id', 'persistent_memory')
         .eq('agent_name', 'system_memory')
@@ -57,7 +57,7 @@ export class PersistentMemory {
     try {
       this.memoryCache.clear();
       await supabase
-        .from('api.agent_memory')
+        .from('agent_memory')
         .delete()
         .eq('user_id', 'persistent_memory')
         .eq('agent_name', 'system_memory');
@@ -70,7 +70,7 @@ export class PersistentMemory {
   async keys(): Promise<string[]> {
     try {
       const { data, error } = await supabase
-        .from('api.agent_memory')
+        .from('agent_memory')
         .select('memory_key')
         .eq('user_id', 'persistent_memory')
         .eq('agent_name', 'system_memory');

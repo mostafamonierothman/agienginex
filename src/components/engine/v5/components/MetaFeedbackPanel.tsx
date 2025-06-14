@@ -15,7 +15,7 @@ const MetaFeedbackPanel: React.FC = () => {
     setLoading(true);
 
     const { error } = await supabase
-      .from("api.supervisor_queue")
+      .from('supervisor_queue')
       .insert({
         agent_name: "user_feedback",
         action: "meta_suggestion",

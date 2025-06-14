@@ -23,7 +23,7 @@ const RevenueGenerationPage = () => {
     setIsLoading(true);
     try {
       const { data, error, count } = await supabase
-        .from('api.leads')
+        .from('leads')
         .select('industry', { count: 'exact' });
 
       if (error) {
