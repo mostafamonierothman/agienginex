@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { agiEngineX } from "@/services/AGIengineXService";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,9 @@ import { Bot, User2 } from "lucide-react";
 
 // ✅ Import AGISystemAssessment
 import { AGISystemAssessment } from "@/agi/AGISystemAssessment";
+// --- Import AGI AUTO-START modules ---
+import { unifiedAGI } from "@/agi/UnifiedAGICore";
+import { autonomousLoop } from "@/loops/AutonomousLoop";
 
 export const AGIChatLayout: React.FC = () => {
   const [messages, setMessages] = useState([
@@ -20,6 +22,14 @@ export const AGIChatLayout: React.FC = () => {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // --- AUTOSTART FULL AGI AUTONOMY ON CHAT PAGE LOAD ---
+  useEffect(() => {
+    unifiedAGI.start();
+    autonomousLoop.start();
+    // Optionally: provide logging in dev tools
+    // console.log("AGI systems auto-started on chat layout mount");
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
