@@ -8,6 +8,13 @@
  */
 
 export class AGIAdvancedCapabilities {
+  private researchEngine: any;
+  private systemIntegration: any;
+  private multiAGIOrchestrator: any;
+  private memoryConsolidator: any;
+  private selfModification: any;
+  private log: (msg: string) => void;
+
   constructor({
     researchEngine,
     systemIntegration,
@@ -46,6 +53,7 @@ export class AGIAdvancedCapabilities {
     await this.multiAGIOrchestrator.spawnAGIInstance('creative');
     await this.multiAGIOrchestrator.spawnAGIInstance('technical');
     this.log("🤖 Multi-AGI: Spawned 3 specialized AGI instances");
+
     const safetyStatus = this.selfModification.getSafetyStatus();
     this.log(`🔧 Self-Modification: ${safetyStatus.locksActive} safety locks active, system ready for safe evolution`);
   }

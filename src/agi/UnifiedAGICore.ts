@@ -205,8 +205,9 @@ class UnifiedAGICore {
     return this.systemIntegration.executeSystemAction(connector, action, params);
   }
 
-  public spawnSpecializedAGI(specialization: string) {
-    const instance = this.multiAGIOrchestrator.spawnAGIInstance(specialization);
+  public async spawnSpecializedAGI(specialization: string) {
+    const instancePromise = this.multiAGIOrchestrator.spawnAGIInstance(specialization);
+    const instance = await instancePromise;
     this.log(`🤖 Spawned specialized AGI: ${instance.name} (${specialization})`);
     return instance;
   }

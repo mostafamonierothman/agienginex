@@ -1,19 +1,17 @@
 
-import { createClient } from '@supabase/supabase-js';
+// Orchestrate AGI Chat through Supabase Edge Function.
+// This endpoint is public and does not require Authorization headers.
 
-// Use Supabase Edge Function to orchestrate AGIengineX
 const SUPABASE_URL = "https://hnudinfejowoxlybifqq.supabase.co";
-
 const EDGE_URL = `${SUPABASE_URL}/functions/v1/agienginex`;
 
 export async function sendAGIChatCommand(command: string, options: any = {}) {
-  // Command object is flexible: {cmd, type, ...fields}
   try {
     const resp = await fetch(EDGE_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
-        // If needed, add supabase auth (currently public)
+        // No auth header needed for public edge function
       },
       body: JSON.stringify({
         message: command,
