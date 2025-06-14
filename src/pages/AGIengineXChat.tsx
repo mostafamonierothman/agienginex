@@ -1,9 +1,8 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { agiEngineX } from "@/services/AGIengineXService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FounderInfoPanel } from "@/components/FounderInfoPanel";
-import { AGIActionsPanel } from "@/components/AGIActionsPanel";
 
 type Message = { role: "user" | "agi"; content: string };
 
@@ -14,10 +13,6 @@ const AGIengineXChat: React.FC = () => {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<string>("Testing connection...");
-  const [founderInfo, setFounderInfo] = useState<{ name: string; bio: string }>({
-    name: "Mostafa Monier Othman",
-    bio: "Founder of AGIengineX. Visionary driving advanced AGI capabilities."
-  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -30,26 +25,23 @@ const AGIengineXChat: React.FC = () => {
       const result = await agiEngineX.testConnection();
       setConnectionStatus(result.message);
     };
+    
     testConnection();
   }, []);
 
-  // Attach founder info to AGI prompt dynamically
-  const getPromptWithFounderInfo = (input: string) => {
-    return `The user interacting is ${founderInfo.name}, founder of AGIengineX. Bio: ${founderInfo.bio}.\n\n${input}`;
-  };
-
   const handleSend = async () => {
     if (!input.trim() || loading) return;
+    
     const userMsg = { role: "user" as const, content: input };
     setMessages(prev => [...prev, userMsg]);
     setInput("");
     setLoading(true);
-
+    
     try {
       console.log("💬 Sending message to AGI:", input);
-      const enrichedPrompt = getPromptWithFounderInfo(input);
-      const res = await agiEngineX.chat(enrichedPrompt);
-
+      const res = await agiEngineX.chat(input);
+      console.log("🤖 AGI response:", res);
+      
       setMessages(prev => [
         ...prev,
         { role: "agi", content: res.response }
@@ -75,40 +67,13 @@ const AGIengineXChat: React.FC = () => {
     setInput(question);
   };
 
-  const handleActionCommand = async (action: string) => {
-    setInput(""); // clear input for clarity
-    setLoading(true);
-    setMessages(prev => [...prev, { role: "user", content: action }]);
-    try {
-      const enrichedPrompt = getPromptWithFounderInfo(action);
-      const res = await agiEngineX.chat(enrichedPrompt);
-
-      setMessages(prev => [
-        ...prev,
-        { role: "agi", content: res.response }
-      ]);
-    } catch (e) {
-      setMessages(prev => [
-        ...prev,
-        { role: "agi", content: "⚠️ Failed to execute AGI command." }
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-slate-100 p-4">
       <div className="w-full max-w-md bg-white rounded shadow border border-slate-200 p-4 flex flex-col">
         <h1 className="text-2xl font-bold mb-3 text-center text-purple-700">
           AGIengineX Chat
         </h1>
-        {/* Editable Founder Info */}
-        <FounderInfoPanel onUpdate={setFounderInfo} />
-
-        {/* AGI Action Buttons */}
-        <AGIActionsPanel onAction={handleActionCommand} />
-
+        
         {/* Connection Status */}
         <div className="mb-3 p-2 bg-gray-50 rounded text-xs">
           <div className="flex justify-between items-center">
