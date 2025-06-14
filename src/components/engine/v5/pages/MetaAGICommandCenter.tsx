@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { agentRegistry } from "@/config/AgentRegistry";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -11,21 +12,42 @@ import MetaFeedbackPanel from "../components/MetaFeedbackPanel";
 import RequestAGIengineX from "../components/RequestAGIengineX";
 import AGIStatusPanel from "../components/AGIStatusPanel";
 
+// Helper type
+type AgentRow = {
+  agent_name?: string | null;
+  output?: string | null;
+  timestamp?: string | null;
+};
+
+// Type guard to filter only objects with expected keys
+function isAgentRow(row: any): row is AgentRow {
+  return typeof row === "object" && row !== null && typeof row.agent_name === "string" && typeof row.output === "string";
+}
+
 // Helper fetch for meta-agent recommendations
 const fetchMetaInsights = async () => {
   let metaText = "Thinking...";
   try {
     const { data, error } = await supabase
-      .from("api.supervisor_queue")
+      .from("supervisor_queue")
       .select("output, agent_name, timestamp")
       .order("timestamp", { ascending: false })
       .limit(10);
     if (error) throw error;
     if (data && data.length > 0) {
-      metaText = data
-        .filter((d) => d.agent_name && d.output && (d.agent_name.includes("meta_agent") || d.agent_name.includes("nexus_ai") || d.agent_name.includes("supervisor")))
-        .map((d) => `[${d.agent_name}] ${d.output}`)
-        .join("\n\n") || metaText;
+      metaText =
+        (data
+          .filter(isAgentRow)
+          .filter(
+            (d) =>
+              d.agent_name &&
+              d.output &&
+              (d.agent_name.includes("meta_agent") ||
+                d.agent_name.includes("nexus_ai") ||
+                d.agent_name.includes("supervisor"))
+          )
+          .map((d) => `[${d.agent_name}] ${d.output}`)
+          .join("\n\n")) || metaText;
     }
   } catch (e) {
     metaText = "No meta-agent output found.";
@@ -194,3 +216,4 @@ const MetaAGICommandCenter = () => {
 };
 
 export default MetaAGICommandCenter;
+
