@@ -15,7 +15,7 @@ interface AgentInfo {
 
 const AgentsPage = () => {
   const [agents, setAgents] = useState<AgentInfo[]>([]);
-  const [runningAgents, setRunningAgents] = useState(new Set());
+  const [runningAgents, setRunningAgents] = useState<Set<string>>(new Set<string>());
   const [systemStats, setSystemStats] = useState(null);
 
   useEffect(() => {
