@@ -14,8 +14,9 @@ export async function sendAGIChatCommand(command: string, options: any = {}) {
         // No auth header needed for public edge function
       },
       body: JSON.stringify({
+        // Use endpoint argument for backend
+        endpoint: options.endpoint || 'chat',
         message: command,
-        type: options.type || 'chat',
         ...options
       }),
     });
@@ -38,3 +39,4 @@ export async function fetchLiveAGIState() {
     return { success: false, error: e?.message || "Network error" };
   }
 }
+
