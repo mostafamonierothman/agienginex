@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { agentRegistry } from '@/config/AgentRegistry';
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
 import { toast } from '@/hooks/use-toast';
-import { DollarSign, Target, Zap, TrendingUp, Users, Brain } from 'lucide-react';
+import { DollarSign, Users, Brain, Zap } from 'lucide-react';
+import { AutonomyTriggerAgentRunner } from '@/agents/AutonomyTriggerAgent';
 
 export default function RevenueActivationPanel() {
   const [isActivating, setIsActivating] = useState(false);
@@ -19,7 +19,6 @@ export default function RevenueActivationPanel() {
     try {
       await sendChatUpdate('🚀 Activating Full AGI Revenue System...');
       
-      // Activate AGO Core Loop for revenue generation
       const agoResult = await agentRegistry.activateRevenueGeneration({
         input: { 
           goal: 'activate_full_revenue_system',
@@ -32,7 +31,6 @@ export default function RevenueActivationPanel() {
       if (agoResult.success) {
         await sendChatUpdate('✅ AGO Core Loop activated for revenue generation');
         
-        // Deploy lead generation swarm
         const swarmResult = await agentRegistry.deployLeadGenerationSwarm({
           input: { mode: 'aggressive_revenue_generation' },
           user_id: 'revenue_system'
@@ -40,20 +38,50 @@ export default function RevenueActivationPanel() {
 
         if (swarmResult.success) {
           await sendChatUpdate('🎯 Lead Generation Swarm deployed successfully');
+          
+          // Directly trigger AutonomyTriggerAgent to ensure immediate assessment and action
+          await sendChatUpdate('🤖 Triggering Autonomy System for immediate lead generation check...');
+          const autonomyResult = await AutonomyTriggerAgentRunner({
+            input: { autonomousTrigger: true, triggeredBy: 'manual_revenue_activation', priority: 10 },
+            user_id: 'revenue_system_activation'
+          });
+
+          if (autonomyResult.success) {
+            await sendChatUpdate(`✅ Autonomous systems check complete. ${autonomyResult.message}`);
+          } else {
+            await sendChatUpdate(`⚠️ Autonomous systems check resulted in: ${autonomyResult.message}`);
+          }
+
           setRevenueActive(true);
-          setCurrentRevenue(2500); // Initial revenue from first leads
+          setCurrentRevenue(0); // Will be updated by RevenueGenerationPage
           
           toast({
             title: "🚀 Full AGI Revenue System ACTIVATED",
-            description: "All revenue generation agents are now active and generating income",
+            description: "All revenue generation agents are now active and generating income. Autonomous check initiated.",
+          });
+        } else {
+          await sendChatUpdate('❌ Lead Generation Swarm deployment failed.');
+          toast({
+            title: "❌ Activation Error",
+            description: "Failed to deploy lead generation swarm.",
+            variant: "destructive",
           });
         }
+      } else {
+        await sendChatUpdate('❌ AGO Core Loop activation failed.');
+        toast({
+          title: "❌ Activation Error",
+          description: "Failed to activate AGO Core Loop.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error('Revenue activation error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      await sendChatUpdate(`❌ Revenue system activation failed: ${errorMessage}`);
       toast({
         title: "❌ Activation Error",
-        description: "Failed to activate revenue system",
+        description: `Failed to activate revenue system: ${errorMessage}`,
         variant: "destructive",
       });
     } finally {
@@ -65,21 +93,21 @@ export default function RevenueActivationPanel() {
     {
       name: 'Medical Tourism Leads',
       status: revenueActive ? 'Active' : 'Ready',
-      revenue: '$2,500/week',
+      revenue: '$2,500+/week',
       description: 'High-value medical tourism lead generation',
       icon: Users
     },
     {
       name: 'AGI Consultancy Services',
       status: revenueActive ? 'Active' : 'Ready', 
-      revenue: '$5,000/week',
+      revenue: '$5,000+/week',
       description: 'AI automation consultancy for businesses',
       icon: Brain
     },
     {
       name: 'Automated Business Services',
       status: revenueActive ? 'Launching' : 'Ready',
-      revenue: '$7,500/week',
+      revenue: '$7,500+/week',
       description: 'Fully automated business process services',
       icon: Zap
     }
@@ -164,12 +192,8 @@ export default function RevenueActivationPanel() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-green-400 text-xl font-bold mb-2">
-                  {stream.revenue}
-                </div>
-                <div className="text-gray-300 text-sm">
-                  {stream.description}
-                </div>
+                <p className="text-gray-300 text-sm mb-2">{stream.description}</p>
+                <p className="text-white font-semibold">{stream.revenue}</p>
               </CardContent>
             </Card>
           );

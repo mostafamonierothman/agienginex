@@ -17,6 +17,7 @@ import MedicalTourismAgentsPage from './pages/MedicalTourismAgentsPage';
 import MarketResearchPage from './pages/MarketResearchPage';
 import ProjectsPage from './pages/ProjectsPage';
 import RevenueGenerationPage from './pages/RevenueGenerationPage';
+import ConsultancyPage from './pages/ConsultancyPage';
 import LeadTestDashboard from '@/components/LeadTestDashboard';
 
 const AGIV5Dashboard = () => {
@@ -40,6 +41,15 @@ const AGIV5Dashboard = () => {
       component: RevenueGenerationPage,
       badge: '$200K+',
       badgeColor: 'bg-green-500'
+    },
+    {
+      id: 'consultancy',
+      label: 'AGI Consultancy',
+      shortLabel: 'Consult',
+      icon: FileText,
+      component: ConsultancyPage,
+      badge: 'New',
+      badgeColor: 'bg-cyan-500'
     },
     {
       id: 'lead-test',
