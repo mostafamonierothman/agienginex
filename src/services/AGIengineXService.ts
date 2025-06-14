@@ -38,11 +38,9 @@ class AGIengineXService {
 
   async testConnection(): Promise<{ connected: boolean; message: string }> {
     try {
-      console.log('🔍 Testing AGI connection...');
       const response = await fetch(this.baseUrl, {
-        headers: this.getHeaders()
+        headers: this.getHeaders(),
       });
-
       if (response.ok) {
         const data = await response.json();
         return {
@@ -70,19 +68,14 @@ class AGIengineXService {
 
   async chat(message: string): Promise<AGIResponse> {
     try {
-      console.log('🚀 AGIengineX: Sending chat message:', message);
-
-      const response = await fetch(`${this.baseUrl}/chat`, {
+      const response = await fetch(`${this.baseUrl}`, {
         method: 'POST',
         headers: this.getHeaders(),
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ endpoint: 'chat', message }),
       });
-
-      console.log('📡 AGIengineX: Response status:', response.status);
 
       if (!response.ok) {
         const errorText = await response.text();
-        // Parse error payload if available, to provide clear feedback to user
         let errorPayload;
         try {
           errorPayload = JSON.parse(errorText);
@@ -92,17 +85,13 @@ class AGIengineXService {
         const detailedError = typeof errorPayload === "string"
           ? errorPayload
           : (errorPayload?.error || errorPayload?.message || JSON.stringify(errorPayload));
-
-        // Show detailed diagnosis in chat
         return {
           response: `❗️Chat API error (${response.status}): ${detailedError}`,
           agent_used: "system_error",
           timestamp: new Date().toISOString()
         };
       }
-
       const data = await response.json();
-      console.log('✅ AGIengineX: Success response:', data);
 
       return {
         response: data.response || data.message || 'AGI processed your message',
@@ -110,11 +99,7 @@ class AGIengineXService {
         timestamp: new Date().toISOString()
       };
     } catch (error: any) {
-      console.error('💥 AGIengineX: Chat error:', error);
-
-      // Enhanced fallback to local AGI simulation
       const fallbackResponse = this.generateEnhancedLocalAGIResponse(message);
-
       return {
         response: `💥 Unable to reach AGIengineX. Details: ${error.message || error}`,
         agent_used: 'local_agi_enhanced',
@@ -152,13 +137,13 @@ class AGIengineXService {
 
   async getAvailableAgents(): Promise<AgentInfo[]> {
     try {
-      const response = await fetch(`${this.baseUrl}/agents`, {
-        headers: this.getHeaders()
+      const response = await fetch(this.baseUrl, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({ endpoint: 'agents' }),
       });
-      
       if (!response.ok) throw new Error('Failed to get agents');
       const data = await response.json();
-      
       return data.agents;
     } catch (error) {
       console.error('Get agents error:', error);
@@ -184,13 +169,13 @@ class AGIengineXService {
 
   async getCurrentGoals(): Promise<AGIGoal[]> {
     try {
-      const response = await fetch(`${this.baseUrl}/goals`, {
-        headers: this.getHeaders()
+      const response = await fetch(this.baseUrl, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({ endpoint: 'goals' }),
       });
-      
       if (!response.ok) throw new Error('Failed to get goals');
       const data = await response.json();
-      
       return data.goals || [];
     } catch (error) {
       console.error('Get goals error:', error);
@@ -200,15 +185,11 @@ class AGIengineXService {
 
   async createGoal(goalText: string, priority: number = 5): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}/goals`, {
+      const response = await fetch(this.baseUrl, {
         method: 'POST',
         headers: this.getHeaders(),
-        body: JSON.stringify({
-          goal_text: goalText,
-          priority: priority
-        })
+        body: JSON.stringify({ endpoint: 'goals_create', goal_text: goalText, priority }),
       });
-      
       return response.ok;
     } catch (error) {
       console.error('Create goal error:', error);
@@ -218,14 +199,11 @@ class AGIengineXService {
 
   async runAgentChain(chainName: string = 'standard_agi_loop'): Promise<any> {
     try {
-      const response = await fetch(`${this.baseUrl}/chain`, {
+      const response = await fetch(this.baseUrl, {
         method: 'POST',
         headers: this.getHeaders(),
-        body: JSON.stringify({
-          chain_name: chainName
-        })
+        body: JSON.stringify({ endpoint: 'chain', chain_name: chainName }),
       });
-      
       if (!response.ok) throw new Error('Failed to run agent chain');
       return await response.json();
     } catch (error) {
@@ -236,15 +214,11 @@ class AGIengineXService {
 
   async triggerWebhook(eventType: string, eventData: any): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}/webhook`, {
+      const response = await fetch(this.baseUrl, {
         method: 'POST',
         headers: this.getHeaders(),
-        body: JSON.stringify({
-          event_type: eventType,
-          ...eventData
-        })
+        body: JSON.stringify({ endpoint: 'webhook', event_type: eventType, ...eventData }),
       });
-      
       return response.ok;
     } catch (error) {
       console.error('Webhook trigger error:', error);
@@ -254,10 +228,11 @@ class AGIengineXService {
 
   async getSystemStatus(): Promise<any> {
     try {
-      const response = await fetch(`${this.baseUrl}/status`, {
-        headers: this.getHeaders()
+      const response = await fetch(this.baseUrl, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({ endpoint: 'status' }),
       });
-      
       if (!response.ok) throw new Error('Status check failed');
       return await response.json();
     } catch (error) {
@@ -280,11 +255,11 @@ class AGIengineXService {
 
   async startLoop(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}/loop/start`, {
+      const response = await fetch(this.baseUrl, {
         method: 'POST',
-        headers: this.getHeaders()
+        headers: this.getHeaders(),
+        body: JSON.stringify({ endpoint: 'loop_start' }),
       });
-      
       return response.ok;
     } catch (error) {
       console.error('Start loop error:', error);
@@ -294,11 +269,11 @@ class AGIengineXService {
 
   async stopLoop(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}/loop/stop`, {
+      const response = await fetch(this.baseUrl, {
         method: 'POST',
-        headers: this.getHeaders()
+        headers: this.getHeaders(),
+        body: JSON.stringify({ endpoint: 'loop_stop' }),
       });
-      
       return response.ok;
     } catch (error) {
       console.error('Stop loop error:', error);

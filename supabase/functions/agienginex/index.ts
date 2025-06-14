@@ -1,4 +1,4 @@
-// 🚀 Triggered redeployment by Lovable AI – Jun 14, 2025 - trivial edit to force redeploy
+// 🚀 Updated for root-only endpoint pattern (no subpaths) by Lovable AI
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -424,12 +424,12 @@ serve(async (req) => {
   const path = url.pathname;
 
   try {
-    // === ROOT ENDPOINT === 🚀
+    // === ROOT HANDLER - NO SUBPATHS (for Lovable's frontend) ===
     if (path === '/' && req.method === 'GET') {
       const goals = await getCurrentGoals();
       return new Response(
-        JSON.stringify({ 
-          message: "🚀 AGIengineX V2 - TRUE AGI Platform - MONETIZATION READY!", 
+        JSON.stringify({
+          message: "🚀 AGIengineX V2 - TRUE AGI Platform - MONETIZATION READY!",
           status: "operational",
           timestamp: new Date().toISOString(),
           agi_loop_running: agiLoopRunning,
@@ -442,216 +442,137 @@ serve(async (req) => {
       );
     }
 
-    // === CHAT ENDPOINT === 🚀
-    if (path === '/chat' && req.method === 'POST') {
-      const data = await req.json();
-      const message = data.message || '';
-      
-      const result = await processChat(message);
-      
-      return new Response(
-        JSON.stringify(result),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // === GOALS ENDPOINTS === 🚀
-    if (path === '/goals' && req.method === 'GET') {
-      const goals = await getCurrentGoals();
-      return new Response(
-        JSON.stringify({ goals }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (path === '/goals' && req.method === 'POST') {
-      const data = await req.json();
-      const newGoal = await supabaseInsert('agi_goals', {
-        goal_text: data.goal_text,
-        priority: data.priority || 5,
-        status: 'active'
-      });
-      
-      return new Response(
-        JSON.stringify({ success: true, goal: newGoal }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // === AGENTS LIST ENDPOINT === 🚀
-    if (path === '/agents' && req.method === 'GET') {
-      const agents = [
-        {
-          name: 'next_move_agent',
-          description: 'Strategic Decision Making with Goal Context',
-          capabilities: ['Strategic Planning', 'Business Analysis', 'Goal-Driven Decision Making']
-        },
-        {
-          name: 'opportunity_agent',
-          description: 'Market Opportunity Detection with Environment Awareness',
-          capabilities: ['Market Analysis', 'Opportunity Detection', 'Revenue Optimization', 'Environment Adaptation']
-        },
-        {
-          name: 'critic_agent',
-          description: 'Self-Reflection and Performance Evaluation',
-          capabilities: ['System Analysis', 'Performance Evaluation', 'Self-Improvement', 'Quality Assessment']
-        }
-      ];
-      
-      return new Response(
-        JSON.stringify({ agents }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // === MONETIZED RUN_AGENT ENDPOINT === 🚀
-    if (path === '/run_agent' && req.method === 'POST') {
-      const data = await req.json();
-      const apiKey = req.headers.get('X-API-Key');
-      
-      // Validate API access for monetization
-      const hasAccess = await validateApiAccess(apiKey || '');
-      if (!hasAccess) {
+    // --- POST: All routing is now done by body.endpoint
+    if (req.method === 'POST') {
+      let body: any = {};
+      try {
+        body = await req.json();
+      } catch {
         return new Response(
-          JSON.stringify({ 
-            error: 'Invalid or expired API key. Subscribe to access AGI agents.',
-            monetization_info: 'Visit our pricing page for API access'
-          }),
-          { 
-            status: 401,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
+          JSON.stringify({ error: "Malformed JSON body" }),
+          { status: 400, headers: corsHeaders }
         );
       }
-      
-      const agentName = data.agent_name;
-      const inputData = data.input || {};
-      
-      const result = await runAgent(agentName, inputData);
-      
-      return new Response(
-        JSON.stringify(result),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
 
-    // === WEBHOOK ENDPOINT - ENVIRONMENT ADAPTATION === 🚀
-    if (path === '/webhook' && req.method === 'POST') {
-      const data = await req.json();
-      
-      // Store environment event
-      await supabaseInsert('agi_environment_events', {
-        event_type: data.event_type || 'webhook_trigger',
-        event_data: data,
-        source: data.source || 'webhook',
-        processed: false
-      });
-      
-      // Trigger adaptive response
-      const agentName = data.agent_name || 'next_move_agent';
-      const result = await runAgent(agentName, data);
-      
-      return new Response(
-        JSON.stringify({ 
-          message: 'Environment event processed', 
-          adaptive_response: result
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+      const endpoint = (body.endpoint || '').toLowerCase();
 
-    // === AGENT CHAIN ENDPOINT === 🚀
-    if (path === '/chain' && req.method === 'POST') {
-      const data = await req.json();
-      const chainName = data.chain_name || 'standard_agi_loop';
-      
-      const results = await executeAgentChain(chainName);
-      
-      return new Response(
-        JSON.stringify({ chain_results: results }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // === SYSTEM STATUS ENDPOINT === 🚀
-    if (path === '/status' && req.method === 'GET') {
-      const goals = await getCurrentGoals();
-      const recentEvals = await supabaseQuery('agi_critic_evaluations', 'score');
-      const avgScore = recentEvals.length > 0 ? 
-        (recentEvals.reduce((sum, e) => sum + e.score, 0) / recentEvals.length).toFixed(1) : 'N/A';
-      
-      return new Response(
-        JSON.stringify({
-          status: 'operational',
-          agi_loop_running: agiLoopRunning,
-          active_goals: goals.length,
-          performance_score: avgScore,
-          agents_active: 3,
-          timestamp: new Date().toISOString(),
-          version: '2.0.0',
-          agi_features: {
-            autonomy: true,
-            self_reflection: true,
-            goal_driven: true,
-            environment_adaptive: true,
-            agent_chaining: true
+      // --- Chat
+      if (endpoint === 'chat') {
+        const result = await processChat(body.message || '');
+        return new Response(JSON.stringify(result), { headers: corsHeaders });
+      }
+      // --- Goals GET
+      if (endpoint === 'goals') {
+        const goals = await getCurrentGoals();
+        return new Response(JSON.stringify({ goals }), { headers: corsHeaders });
+      }
+      // --- Goals CREATE
+      if (endpoint === 'goals_create') {
+        const newGoal = await supabaseInsert('agi_goals', {
+          goal_text: body.goal_text,
+          priority: body.priority || 5,
+          status: 'active'
+        });
+        return new Response(JSON.stringify({ success: true, goal: newGoal }), { headers: corsHeaders });
+      }
+      // --- Agents list
+      if (endpoint === 'agents') {
+        const agents = [
+          {
+            name: 'next_move_agent',
+            description: 'Strategic Decision Making with Goal Context',
+            capabilities: ['Strategic Planning', 'Business Analysis', 'Goal-Driven Decision Making']
+          },
+          {
+            name: 'opportunity_agent',
+            description: 'Market Opportunity Detection with Environment Awareness',
+            capabilities: ['Market Analysis', 'Opportunity Detection', 'Revenue Optimization', 'Environment Adaptation']
+          },
+          {
+            name: 'critic_agent',
+            description: 'Self-Reflection and Performance Evaluation',
+            capabilities: ['System Analysis', 'Performance Evaluation', 'Self-Improvement', 'Quality Assessment']
           }
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // === LOOP CONTROL ENDPOINTS === 🚀
-    if (path === '/loop/start' && req.method === 'POST') {
-      await startAGILoop();
+        ];
+        return new Response(JSON.stringify({ agents }), { headers: corsHeaders });
+      }
+      // --- Run agent chain
+      if (endpoint === 'chain') {
+        const results = await executeAgentChain(body.chain_name || 'standard_agi_loop');
+        return new Response(JSON.stringify({ chain_results: results }), { headers: corsHeaders });
+      }
+      // --- Trigger webhook
+      if (endpoint === 'webhook') {
+        await supabaseInsert('agi_environment_events', {
+          event_type: body.event_type || 'webhook_trigger',
+          event_data: body,
+          source: body.source || 'webhook',
+          processed: false
+        });
+        const agentName = body.agent_name || 'next_move_agent';
+        const result = await runAgent(agentName, body);
+        return new Response(
+          JSON.stringify({
+            message: 'Environment event processed',
+            adaptive_response: result
+          }),
+          { headers: corsHeaders }
+        );
+      }
+      // --- System status
+      if (endpoint === 'status') {
+        const goals = await getCurrentGoals();
+        const recentEvals = await supabaseQuery('agi_critic_evaluations', 'score');
+        const avgScore = recentEvals.length > 0
+          ? (recentEvals.reduce((sum, e) => sum + e.score, 0) / recentEvals.length).toFixed(1)
+          : 'N/A';
+        return new Response(
+          JSON.stringify({
+            status: 'operational',
+            agi_loop_running: agiLoopRunning,
+            active_goals: goals.length,
+            performance_score: avgScore,
+            agents_active: 3,
+            timestamp: new Date().toISOString(),
+            version: '2.0.0',
+            agi_features: {
+              autonomy: true,
+              self_reflection: true,
+              goal_driven: true,
+              environment_adaptive: true,
+              agent_chaining: true
+            }
+          }),
+          { headers: corsHeaders }
+        );
+      }
+      // --- Loop controls
+      if (endpoint === 'loop_start') {
+        await startAGILoop();
+        return new Response(
+          JSON.stringify({ success: true, message: 'TRUE AGI Loop started with autonomous capabilities' }),
+          { headers: corsHeaders }
+        );
+      }
+      if (endpoint === 'loop_stop') {
+        stopAGILoop();
+        return new Response(
+          JSON.stringify({ success: true, message: 'TRUE AGI Loop stopped' }),
+          { headers: corsHeaders }
+        );
+      }
+      // --- Catch all
       return new Response(
-        JSON.stringify({ success: true, message: 'TRUE AGI Loop started with autonomous capabilities' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: "Invalid endpoint provided", status: 404 }),
+        { status: 404, headers: corsHeaders }
       );
     }
 
-    if (path === '/loop/stop' && req.method === 'POST') {
-      stopAGILoop();
-      return new Response(
-        JSON.stringify({ success: true, message: 'TRUE AGI Loop stopped' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // === LEGACY ENDPOINTS === 🚀
-    if (path === '/next_move' && req.method === 'GET') {
-      const result = await getNextMove();
-      return new Response(
-        JSON.stringify({ next_move: result }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (path === '/opportunity' && req.method === 'GET') {
-      const result = await getOpportunity();
-      return new Response(
-        JSON.stringify({ opportunity: result }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (path === '/loop_interval' && req.method === 'GET') {
-      const interval = 15.0; // Adaptive interval for AGI loop
-      return new Response(
-        JSON.stringify({ dynamic_interval_sec: interval }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // 404 for unknown routes
+    // --- Invalid method
     return new Response(
       JSON.stringify({ error: 'Route not found' }),
-      { 
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      { status: 404, headers: corsHeaders }
     );
-
   } catch (error) {
     console.error('AGIengineX V2 Error:', error);
     return new Response(
