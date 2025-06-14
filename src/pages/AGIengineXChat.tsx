@@ -3,6 +3,8 @@ import { agiEngineX } from "@/services/AGIengineXService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AGIRevenueStats } from "@/components/AGIRevenueStats";
+import { useCompanyPerformance } from "@/hooks/useCompanyPerformance";
+import { CompanySwitcher } from "@/components/CompanySwitcher";
 
 type Message = { role: "user" | "agi"; content: string };
 
@@ -56,6 +58,16 @@ You are AGIengineX, the official AI business executive, sales director, and auto
 `;
 
 const AGIengineXChat: React.FC = () => {
+  // Use our new company performance hook for clean state management
+  const {
+    company,
+    setCompany,
+    performance,
+    setPerformance,
+    performanceMap,
+    setPerformanceMap
+  } = useCompanyPerformance("medical_tourism");
+
   const [messages, setMessages] = useState<Message[]>([
     { role: "agi", content: "🚀 Hello! I'm AGIengineX - your advanced AI assistant with autonomous capabilities. I can help with strategic planning, opportunity detection, goal management, and self-reflection. Ask me anything!" }
   ]);
@@ -63,21 +75,6 @@ const AGIengineXChat: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<string>("Testing connection...");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Add business state to track revenue, deals, leads etc.
-  const [performance, setPerformance] = useState<{
-    revenue: number;
-    deals: number;
-    leads: number;
-    velocity: number;
-  }>({
-    revenue: 0,
-    deals: 0,
-    leads: 0,
-    velocity: 0,
-  });
-  // AGI business context (company selection) for multi-business support
-  const [company, setCompany] = useState<"medical_tourism" | "health_consultancy">("medical_tourism");
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -329,25 +326,11 @@ const AGIengineXChat: React.FC = () => {
         </h1>
         
         {/* Business context switcher */}
-        <div className="flex gap-2 mb-1 justify-end">
-          <Button
-            variant={company === "medical_tourism" ? "default" : "outline"}
-            size="sm"
-            className="text-xs px-2 py-1 h-6"
-            onClick={() => setCompany("medical_tourism")}
-          >
-            🏥 Medical Tourism
-          </Button>
-          <Button
-            variant={company === "health_consultancy" ? "default" : "outline"}
-            size="sm"
-            className="text-xs px-2 py-1 h-6"
-            onClick={() => setCompany("health_consultancy")}
-          >
-            🩺 Health Consultancy
-          </Button>
-        </div>
-        
+        <CompanySwitcher
+          company={company}
+          onSwitch={setCompany}
+        />
+
         {/* Connection Status */}
         <div className="mb-3 p-2 bg-gray-50 rounded text-xs">
           <div className="flex justify-between items-center">
