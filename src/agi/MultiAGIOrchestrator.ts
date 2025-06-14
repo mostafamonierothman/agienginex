@@ -1,6 +1,4 @@
 
-import { UnifiedAGICore } from "./UnifiedAGICore";
-
 export interface AGIInstance {
   id: string;
   name: string;
