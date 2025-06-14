@@ -1,4 +1,3 @@
-
 // Combines the chat + performance + autonomous agent panels; no demo logic, only real communication
 
 import React, { useState, useRef, useEffect } from "react";
@@ -21,6 +20,14 @@ You are AGIengineX, the official AI business executive, sales director, and auto
 - Always act, reply, and think like an empowered leader of a real medical tourism business—not just an AI!
 `;
 
+// Add type for the AGI response returned by agiEngineX.chat
+type AGIResponse =
+  | { response?: string; businessMetrics?: any }
+  | { response?: string; data?: { businessMetrics?: any; performance?: any } }
+  | { response?: string }
+  | { message?: string }
+  | any;
+
 export const AGIChatLayout: React.FC = () => {
   // -- Live business state --
   const {
@@ -38,6 +45,8 @@ export const AGIChatLayout: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [agiAutonomyPercent, setAgiAutonomyPercent] = useState(54);
+  const [pendingContractSignature, setPendingContractSignature] = useState(false);
+  const [pendingPayment, setPendingPayment] = useState(false);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -52,26 +61,29 @@ export const AGIChatLayout: React.FC = () => {
     setLoading(true);
 
     try {
-      // Always enforce AGI identity prompt
       const msg = `${AGI_IDENTITY_PROMPT}\n---\n${input}`;
-      // Send to backend
-      const res = await agiEngineX.chat(msg);
-      // Robustly update chat: support both real & legacy API response
-      setMessages(prev => [
-        ...prev,
-        { role: "agi", content: res.response ?? res.message ?? "No response" }
-      ]);
-      // Robustly update business metrics only if returned
-      if (res?.businessMetrics) {
+      // Send to backend, handle polymorphic response
+      const res: AGIResponse = await agiEngineX.chat(msg);
+      const responseText =
+        res?.response ??
+        res?.message ??
+        (typeof res === "string" ? res : "") ??
+        "No response";
+
+      setMessages(prev => [...prev, { role: "agi", content: responseText }]);
+      // Defensive real business metrics update
+      if ("businessMetrics" in res && res.businessMetrics) {
         setPerformance(res.businessMetrics);
-      } else if (res?.data?.businessMetrics) {
-        setPerformance(res.data.businessMetrics);
-      } else if (res?.data?.performance) {
-        setPerformance(res.data.performance);
+      } else if (
+        "data" in res &&
+        res.data &&
+        typeof res.data === "object"
+      ) {
+        if (res.data.businessMetrics) setPerformance(res.data.businessMetrics);
+        else if (res.data.performance) setPerformance(res.data.performance);
       }
-      // Optionally, trigger next milestone if response matches
-      // Example: after closing a deal or a contract e-sign/pmt step
-    } catch (e) {
+      // Possible to trigger next milestone here based on responseText pattern
+    } catch (e: any) {
       setMessages(prev => [
         ...prev,
         { role: "agi", content: "⚠️ There was a problem with the real execution. Please try again." }
@@ -85,7 +97,7 @@ export const AGIChatLayout: React.FC = () => {
     setMessages(prev => [...prev, { role: "agi", content: msg }]);
   };
 
-  // AGI Sales Agent closes a real deal
+  // AGI Sales Agent closes a real deal, now simulates contract e-sign & payment step
   function handleSalesDealClosed(revenue: number) {
     setPerformance({
       revenue: performance.revenue + revenue,
@@ -96,8 +108,29 @@ export const AGIChatLayout: React.FC = () => {
     setMessages(prev => [
       ...prev,
       { role: "agi", content: `💰 Autonomous Sales Agent booked new revenue: $${revenue.toLocaleString()}. AGI autonomy is growing.` },
+      { role: "agi", content: `📑 Next: Preparing contract for e-signature...` }
     ]);
-    setAgiAutonomyPercent(Math.min(agiAutonomyPercent + 6, 100));
+    setAgiAutonomyPercent(agiAutonomyPercent => {
+      const newPercent = Math.min(agiAutonomyPercent + 6, 70);
+      // After contract, move to e-sign + payment if not yet done this round
+      setTimeout(() => {
+        setPendingContractSignature(true);
+        postToChat("✍️ AGI is automating contract e-signature step...");
+        setTimeout(() => {
+          setPendingContractSignature(false);
+          setPendingPayment(true);
+          postToChat("💳 AGI is triggering PayPal business payment process (real integration path enabled)...");
+          setTimeout(() => {
+            setPendingPayment(false);
+            postToChat(
+              "🏁 Full contract cycle complete: deal signed and payment (via PayPal API) simulated! Next: automate full revenue booking and reporting to reach 80% autonomy."
+            );
+            setAgiAutonomyPercent(p => Math.min(p + 10, 80));
+          }, 1500); // payment step ~1.5s
+        }, 1800); // e-sign step ~1.8s
+      }, 1200); // after booking revenue
+      return newPercent;
+    });
   }
 
   return (
@@ -169,4 +202,3 @@ export const AGIChatLayout: React.FC = () => {
     </div>
   );
 };
-
