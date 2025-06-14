@@ -18,7 +18,7 @@ export const useAGIIntelligence = () => {
     intelligenceLevel: 0,
     isLearning: false,
     autonomousMode: false,
-    goals: ['generate_leads', 'optimize_performance', 'self_improve'],
+    goals: ['generate_leads', 'optimize_performance', 'self_improve', 'enhance_meta_cognition'],
     achievements: [],
     errorCount: 0,
     learningRate: 1.0
@@ -122,15 +122,18 @@ export const useAGIIntelligence = () => {
     }));
   }, []);
 
-  // Persist AGI state to database with proper type safety
+  // Persist AGI state to database - fix TypeScript error
   useEffect(() => {
     const saveAGIState = async () => {
       try {
+        // Convert AGIState to JSON-compatible format
+        const stateToSave = JSON.parse(JSON.stringify(agiState));
+        
         await supabase
           .from('agi_state')
           .upsert({
             key: 'agi_intelligence',
-            state: agiState
+            state: stateToSave
           });
       } catch (error) {
         console.error('Failed to save AGI state:', error);
