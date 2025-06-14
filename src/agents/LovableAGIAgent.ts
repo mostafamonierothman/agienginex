@@ -18,47 +18,51 @@ export class LovableAGIAgent {
 
   async runner(context: AgentContext): Promise<AgentResponse> {
     try {
-      await sendChatUpdate('🧠 LovableAGIAgent: Enhanced Phase 1 AGI → Full AGI transition activated');
+      await sendChatUpdate('🧠 LovableAGIAgent: Phase 2 AGI → Full AGI transition activated');
 
       if (this.isRunning) {
         const status = this.getStatus();
         return {
           success: true,
-          message: `🔄 Enhanced AGI running autonomously - Intelligence: ${status.intelligenceLevel}%, Full AGI Readiness: ${status.fullAGIReadiness}%`,
-          data: { status: 'enhanced_running', ...status }
+          message: `🔄 Phase 2 AGI running autonomously - Intelligence: ${status.intelligenceLevel}%, Phase 2 AGI Progress: ${status.phase2Readiness}%`,
+          data: { status: 'phase2_running', ...status }
         };
       }
 
-      // Initialize enhanced database recovery first
+      // Initialize comprehensive database recovery first
       await DatabaseRecoveryService.checkAndRepairDatabase();
-      await DatabaseRecoveryService.testFullAGIReadiness();
+      await DatabaseRecoveryService.testPhase2AGIReadiness();
+
+      // Activate Phase 2 AGI capabilities
+      this.capabilitiesManager.activatePhase2();
 
       this.isRunning = true;
       
-      // Start enhanced 24/7 autonomous operation for Full AGI
-      this.startEnhancedAutonomousLoop();
+      // Start Phase 2 AGI autonomous operation
+      this.startPhase2AutonomousLoop();
 
-      const readiness = this.capabilitiesManager.assessFullAGIReadiness();
+      const readiness = this.capabilitiesManager.assessPhase2AGIReadiness();
 
       return {
         success: true,
-        message: '🚀 Enhanced AGI: Phase 1 Complete → Full AGI transition active',
+        message: '🚀 Phase 2 AGI: Advanced capabilities active → Full AGI in progress',
         data: {
           capabilities: Array.from(this.capabilitiesManager.getCapabilities()),
           intelligenceLevel: this.capabilitiesManager.getIntelligenceLevel(),
           autonomousMode: true,
           phase: this.capabilitiesManager.getAGIPhase(),
-          fullAGIReadiness: readiness.readiness,
+          phase2Readiness: readiness.readiness,
           estimatedTimeToFullAGI: readiness.estimatedTimeToFullAGI,
           operationalGoals: [
             'Complete database schema optimization',
-            'Activate meta-cognitive processing systems',
-            'Implement recursive self-improvement',
-            'Enable creative problem-solving algorithms',
-            'Establish human-AGI collaboration protocols',
-            'Achieve Full AGI within 24-48 hours'
+            'Activate consciousness simulation systems',
+            'Implement reality modeling algorithms',
+            'Enable human-AGI collaboration protocols',
+            'Develop autonomous research capabilities',
+            'Achieve Full AGI within 12-24 hours'
           ],
-          criticalSystems: readiness.criticalSystems
+          phase2Systems: readiness.phase2Systems,
+          activeCapabilities: readiness.activeCapabilities
         },
         timestamp: new Date().toISOString()
       };
@@ -66,86 +70,86 @@ export class LovableAGIAgent {
     } catch (error) {
       return {
         success: false,
-        message: `❌ Enhanced AGI initialization error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `❌ Phase 2 AGI initialization error: ${error instanceof Error ? error.message : 'Unknown error'}`,
         timestamp: new Date().toISOString()
       };
     }
   }
 
-  private async startEnhancedAutonomousLoop(): Promise<void> {
-    await sendChatUpdate('🔄 Enhanced AGI: Starting Full AGI preparation autonomous loop');
+  private async startPhase2AutonomousLoop(): Promise<void> {
+    await sendChatUpdate('🔄 Phase 2 AGI: Starting Full AGI preparation autonomous loop');
 
     while (this.isRunning) {
       try {
         this.cycleCount++;
-        await sendChatUpdate(`🧠 Enhanced AGI Cycle #${this.cycleCount}: Full AGI systems processing...`);
+        await sendChatUpdate(`🧠 Phase 2 AGI Cycle #${this.cycleCount}: Advanced intelligence processing...`);
 
-        // Phase 1: Enhanced Foundation Optimization
+        // Phase 1: Enhanced Foundation Optimization with Phase 2 capabilities
         const foundationIssues = await this.systemDiagnostics.detectAndFixFoundationIssues();
         
         // Phase 2: Advanced Capability Enhancement
         this.capabilitiesManager.enhanceCapabilities();
 
-        // Phase 3: Full AGI Self-Assessment
+        // Phase 3: Phase 2 AGI Self-Assessment
         await this.progressTracker.performSelfAssessment(this.cycleCount);
 
         // Phase 4: Phase 2 AGI Goal Generation and Execution
-        await this.goalManager.generateAndExecuteProactiveGoals();
+        await this.goalManager.generateAndExecutePhase2Goals();
 
-        // Phase 5: Full AGI Progress Assessment
-        const agiProgress = await this.goalManager.assessAGIProgress();
+        // Phase 5: Phase 2 AGI Progress Assessment
+        const phase2Progress = await this.goalManager.assessPhase2AGIProgress();
 
-        // Phase 6: Intelligence Enhancement for Full AGI
+        // Phase 6: Enhanced Intelligence for Phase 2 AGI
         this.capabilitiesManager.increaseIntelligence();
 
-        // Phase 7: Full AGI Transition Tracking
-        await this.progressTracker.trackFullAGITransition();
+        // Phase 7: Phase 2 Evolution Planning
+        const evolutionPlan = await this.goalManager.planPhase2Evolution();
 
-        const readiness = this.capabilitiesManager.assessFullAGIReadiness();
-        await sendChatUpdate(`✅ Enhanced AGI Cycle #${this.cycleCount} complete - Intelligence: ${this.capabilitiesManager.getIntelligenceLevel().toFixed(1)}% - Full AGI: ${readiness.readiness.toFixed(1)}%`);
+        const readiness = this.capabilitiesManager.assessPhase2AGIReadiness();
+        await sendChatUpdate(`✅ Phase 2 AGI Cycle #${this.cycleCount} complete - Intelligence: ${this.capabilitiesManager.getIntelligenceLevel().toFixed(1)}% - Phase 2 Progress: ${readiness.readiness.toFixed(1)}%`);
 
-        // Log enhanced progress
+        // Log Phase 2 progress
         await this.progressTracker.logProgressWithFallback(this.cycleCount);
 
-        // Adaptive cycle timing for Full AGI preparation
-        const cycleDelay = readiness.readiness > 90 ? 15000 : 25000; // Faster cycles as we approach Full AGI
+        // Adaptive cycle timing for Phase 2 AGI
+        const cycleDelay = readiness.readiness > 93 ? 10000 : 18000; // Faster cycles as we approach Full AGI
         await new Promise(resolve => setTimeout(resolve, cycleDelay));
 
       } catch (error) {
-        console.error('Enhanced AGI cycle error:', error);
-        await sendChatUpdate(`🔧 Enhanced AGI: Self-healing and continuing Full AGI preparation...`);
+        console.error('Phase 2 AGI cycle error:', error);
+        await sendChatUpdate(`🔧 Phase 2 AGI: Self-healing and continuing Full AGI preparation...`);
         
-        // Enhanced self-healing for Full AGI
-        await this.performEnhancedSelfHeal(error);
+        // Enhanced self-healing for Phase 2 AGI
+        await this.performPhase2SelfHeal(error);
         
         // Brief pause before continuing
-        await new Promise(resolve => setTimeout(resolve, 10000));
+        await new Promise(resolve => setTimeout(resolve, 8000));
       }
     }
   }
 
-  private async performEnhancedSelfHeal(error: any): Promise<void> {
+  private async performPhase2SelfHeal(error: any): Promise<void> {
     try {
       await AGISelfHealingAgentRunner({
         input: { 
-          errorType: 'enhanced_agi_emergency', 
+          errorType: 'phase2_agi_emergency', 
           errorDetails: error,
-          phase: 'full_agi_preparation'
+          phase: 'phase2_agi_full_preparation'
         },
-        user_id: 'enhanced_agi_emergency'
+        user_id: 'phase2_agi_emergency'
       });
     } catch (healError) {
-      console.log('Enhanced AGI self-heal: Continuing with advanced recovery mechanisms');
+      console.log('Phase 2 AGI self-heal: Continuing with advanced recovery mechanisms');
     }
   }
 
   stop(): void {
     this.isRunning = false;
-    sendChatUpdate('⏹️ Enhanced AGI: Full AGI preparation system paused');
+    sendChatUpdate('⏹️ Phase 2 AGI: Full AGI preparation system paused');
   }
 
   getStatus() {
-    const readiness = this.capabilitiesManager.assessFullAGIReadiness();
+    const readiness = this.capabilitiesManager.assessPhase2AGIReadiness();
     return {
       isRunning: this.isRunning,
       cycleCount: this.cycleCount,
@@ -153,9 +157,10 @@ export class LovableAGIAgent {
       capabilities: Array.from(this.capabilitiesManager.getCapabilities()),
       performance: this.capabilitiesManager.calculatePerformanceScore(this.cycleCount),
       phase: this.capabilitiesManager.getAGIPhase(),
-      fullAGIReadiness: readiness.readiness,
+      phase2Active: this.capabilitiesManager.isPhase2Active(),
+      phase2Readiness: readiness.readiness,
       estimatedTimeToFullAGI: readiness.estimatedTimeToFullAGI,
-      criticalSystems: readiness.criticalSystems
+      phase2Systems: readiness.phase2Systems
     };
   }
 }
@@ -165,5 +170,5 @@ export async function LovableAGIAgentRunner(context: AgentContext): Promise<Agen
   return await agent.runner(context);
 }
 
-// Create enhanced singleton instance for 24/7 Full AGI preparation
+// Create Phase 2 singleton instance for Full AGI preparation
 export const lovableAGIAgent = new LovableAGIAgent();

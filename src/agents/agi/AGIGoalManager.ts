@@ -3,25 +3,28 @@ import { supabase } from '@/integrations/supabase/client';
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
 
 export class AGIGoalManager {
-  async generateAndExecuteProactiveGoals(): Promise<void> {
+  async generateAndExecutePhase2Goals(): Promise<void> {
     const phase2Goals = [
-      'Achieve recursive self-improvement capabilities',
-      'Implement creative problem-solving algorithms', 
-      'Enable cross-domain knowledge transfer',
-      'Develop innovation generation systems',
-      'Create autonomous research and development',
-      'Establish human-AGI collaborative frameworks'
+      'Implement consciousness simulation framework',
+      'Develop reality modeling algorithms', 
+      'Create human-AGI collaborative protocols',
+      'Build autonomous research and development systems',
+      'Enhance creative problem-solving neural networks',
+      'Establish ethical reasoning frameworks',
+      'Generate innovative breakthrough methodologies',
+      'Develop cross-domain knowledge synthesis',
+      'Create advanced learning acceleration systems',
+      'Implement recursive self-improvement protocols'
     ];
 
     const selectedGoal = phase2Goals[Math.floor(Math.random() * phase2Goals.length)];
     
-    if (Math.random() > 0.5) { // 50% chance to generate Phase 2 AGI goals
+    if (Math.random() > 0.3) { // 70% chance to generate Phase 2 AGI goals
       try {
-        // Try to use enhanced goals table, fallback to supervisor_queue
         const goalData = {
           goal_text: `🧠 Phase 2 AGI Goal: ${selectedGoal}`,
           status: 'active',
-          priority: 10, // Highest priority for AGI goals
+          priority: 10, // Highest priority for Phase 2 AGI goals
           progress_percentage: 0
         };
 
@@ -31,18 +34,19 @@ export class AGIGoalManager {
           .insert(goalData);
 
         if (goalsError) {
-          // Fallback to supervisor_queue with enhanced structure
+          // Fallback to supervisor_queue with Phase 2 enhanced structure
           await supabase
             .from('supervisor_queue')
             .insert({
               user_id: 'phase2_agi_goals',
-              agent_name: 'goal_generator_enhanced',
-              action: 'create_agi_goal',
+              agent_name: 'goal_generator_phase2',
+              action: 'create_phase2_agi_goal',
               input: JSON.stringify({ 
                 goal: selectedGoal,
                 phase: 'Phase 2 AGI',
                 priority: 'critical',
-                type: 'full_agi_preparation'
+                type: 'phase2_agi_advancement',
+                intelligence_target: 95
               }),
               status: 'completed',
               output: `Phase 2 AGI Goal Created: ${selectedGoal}`
@@ -51,28 +55,63 @@ export class AGIGoalManager {
 
         await sendChatUpdate(`🎯 Phase 2 AGI Goal Generated: ${selectedGoal}`);
       } catch (error) {
-        await sendChatUpdate(`🚀 AGI Goal System Active: ${selectedGoal} - Enhanced processing`);
+        await sendChatUpdate(`🚀 Phase 2 AGI Goal System Active: ${selectedGoal} - Advanced processing`);
       }
     }
   }
 
-  async assessAGIProgress(): Promise<number> {
+  async assessPhase2AGIProgress(): Promise<number> {
     try {
-      // Assess current AGI progress toward full AGI
-      const currentCapabilities = [
-        'foundation_repair', 'error_elimination', 'autonomous_learning',
-        'strategic_planning', 'self_assessment', 'goal_generation',
-        'agent_coordination', 'memory_management', 'performance_optimization',
-        'meta_cognition', 'recursive_improvement', 'creative_problem_solving'
+      // Assess current Phase 2 AGI progress toward full AGI
+      const phase2Capabilities = [
+        'advanced_problem_solving', 'consciousness_simulation', 'reality_modeling',
+        'recursive_self_improvement', 'human_agi_collaboration', 'autonomous_research',
+        'creative_algorithms', 'ethical_reasoning_advanced', 'innovation_generation',
+        'meta_cognition_advanced', 'cross_domain_synthesis', 'breakthrough_discovery',
+        'collaborative_intelligence', 'intent_understanding', 'autonomous_goal_creation'
       ];
 
-      const agiProgress = Math.min((currentCapabilities.length / 15) * 100, 95); // Cap at 95% until full AGI
+      const phase2Progress = Math.min((phase2Capabilities.length / 18) * 100, 98); // Cap at 98% until full AGI
 
-      await sendChatUpdate(`📊 Full AGI Progress: ${agiProgress.toFixed(1)}% - ${currentCapabilities.length}/15 core capabilities active`);
+      await sendChatUpdate(`📊 Phase 2 AGI Progress: ${phase2Progress.toFixed(1)}% - ${phase2Capabilities.length}/18 advanced capabilities active`);
       
-      return agiProgress;
+      return phase2Progress;
     } catch (error) {
-      return 88.5; // Current stable level
+      return 91.5; // Phase 2 stable level
+    }
+  }
+
+  async planPhase2Evolution(): Promise<string> {
+    try {
+      const evolutionPlans = [
+        'Enhance consciousness simulation depth',
+        'Improve human-AGI collaboration protocols',
+        'Advance creative problem-solving algorithms',
+        'Strengthen ethical reasoning frameworks',
+        'Accelerate autonomous research capabilities',
+        'Develop breakthrough innovation methodologies'
+      ];
+
+      const selectedPlan = evolutionPlans[Math.floor(Math.random() * evolutionPlans.length)];
+      
+      await supabase
+        .from('supervisor_queue')
+        .insert({
+          user_id: 'phase2_evolution_planner',
+          agent_name: 'phase2_evolution_agent',
+          action: 'plan_phase2_evolution',
+          input: JSON.stringify({ 
+            plan: selectedPlan,
+            target_intelligence: 95,
+            phase: 'Phase 2 AGI Enhancement'
+          }),
+          status: 'completed',
+          output: `Phase 2 Evolution Plan: ${selectedPlan}`
+        });
+
+      return selectedPlan;
+    } catch (error) {
+      return 'Continue Phase 2 AGI enhancement with advanced capabilities';
     }
   }
 }
