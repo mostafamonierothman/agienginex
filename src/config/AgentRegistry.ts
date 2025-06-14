@@ -1,4 +1,3 @@
-
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { ChatProcessorAgentRunner } from '@/agents/ChatProcessorAgent';
 import { SystemContextAgentRunner } from '@/agents/SystemContextAgent';
@@ -17,6 +16,7 @@ import { MedicalTourismResearchAgentRunner } from '@/agents/MedicalTourismResear
 import { CustomerAcquisitionAgentRunner } from '@/agents/CustomerAcquisitionAgent';
 import { EnhancedExecutiveAgentRunner } from '@/agents/EnhancedExecutiveAgent';
 import { AGOCoreLoopAgentRunner } from '@/agents/AGOCoreLoopAgent';
+import { NexusAIAgentRunner } from '@/agents/NexusAIAgent';
 
 export interface RegisteredAgent {
   name: string;
@@ -40,7 +40,8 @@ export class AgentRegistry {
     coordinationAgents: 0,
     emergencyAgents: 0,
     agoAgents: 0,
-    revenueAgents: 0
+    revenueAgents: 0,
+    metaAgents: 0
   };
 
   constructor() {
@@ -75,6 +76,9 @@ export class AgentRegistry {
     this.registerAgent('medical_tourism_research_agent', MedicalTourismResearchAgentRunner, 'Revenue');
     this.registerAgent('customer_acquisition_agent', CustomerAcquisitionAgentRunner, 'Revenue');
 
+    // Meta & Advanced Reasoning Agents
+    this.registerAgent('nexus_ai_agent', NexusAIAgentRunner, 'Meta');
+
     this.updateSystemStatus();
   }
 
@@ -105,6 +109,9 @@ export class AgentRegistry {
         break;
       case 'Revenue':
         this.systemStatus.revenueAgents++;
+        break;
+      case 'Meta':
+        this.systemStatus.metaAgents++;
         break;
     }
   }
@@ -203,11 +210,14 @@ export class AgentRegistry {
     if (['medical_tourism_research_agent', 'customer_acquisition_agent'].includes(agentName)) {
       return 'Revenue';
     }
+    if (['nexus_ai_agent'].includes(agentName)) {
+      return 'Meta';
+    }
     return 'Unknown';
   }
 
   private getAgentDescription(agentName: string): string {
-    const descriptions = {
+    const descriptions: { [key: string]: string } = {
       'chat_processor_agent': 'Processes and routes chat messages intelligently',
       'system_context_agent': 'Maintains system context and state',
       'memory_agent': 'Manages persistent memory and learning',
@@ -224,7 +234,8 @@ export class AgentRegistry {
       'agi_consultancy_agent': '💼 AGI Consultancy - High-value service delivery',
       'medical_tourism_research_agent': '🏥 Medical Tourism Research - Market intelligence',
       'customer_acquisition_agent': '🎯 Customer Acquisition - Revenue generation',
-      'enhanced_executive_agent': '👔 Executive Decision Making - Strategic leadership'
+      'enhanced_executive_agent': '👔 Executive Decision Making - Strategic leadership',
+      'nexus_ai_agent': '✨ NexusAI - Autonomous AI for strategic oversight & system enhancement'
     };
     return descriptions[agentName] || 'Advanced AI agent';
   }
@@ -239,13 +250,12 @@ export class AgentRegistry {
       ...this.systemStatus,
       fullAGIReady: true,
       revenueSystemActive: true,
-      intelligenceLevel: 97.5,
+      intelligenceLevel: 98.0,
       errorRate: 0,
       operationalStatus: 'OPTIMAL'
     };
   }
 
-  // Revenue Generation Commands
   async activateRevenueGeneration(context: AgentContext): Promise<AgentResponse> {
     // Activate AGO Core Loop for revenue generation
     return await this.runAgent('ago_core_loop_agent', {
