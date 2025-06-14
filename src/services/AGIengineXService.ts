@@ -71,46 +71,52 @@ class AGIengineXService {
   async chat(message: string): Promise<AGIResponse> {
     try {
       console.log('🚀 AGIengineX: Sending chat message:', message);
-      
+
       const response = await fetch(`${this.baseUrl}/chat`, {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify({ message }),
       });
-      
+
       console.log('📡 AGIengineX: Response status:', response.status);
 
-      if (response.status === 404) {
-        // Surface a specific message
+      if (!response.ok) {
+        const errorText = await response.text();
+        // Parse error payload if available, to provide clear feedback to user
+        let errorPayload;
+        try {
+          errorPayload = JSON.parse(errorText);
+        } catch {
+          errorPayload = errorText;
+        }
+        const detailedError = typeof errorPayload === "string"
+          ? errorPayload
+          : (errorPayload?.error || errorPayload?.message || JSON.stringify(errorPayload));
+
+        // Show detailed diagnosis in chat
         return {
-          response: "❌ 404: Supabase Edge Function for AGIengineX not found. Please check your deployment or function settings.",
+          response: `❗️Chat API error (${response.status}): ${detailedError}`,
           agent_used: "system_error",
           timestamp: new Date().toISOString()
         };
       }
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ AGIengineX: Request failed:', errorText);
-        throw new Error(`AGI request failed: ${response.status} - ${errorText}`);
-      }
-      
+
       const data = await response.json();
       console.log('✅ AGIengineX: Success response:', data);
-      
+
       return {
         response: data.response || data.message || 'AGI processed your message',
         agent_used: data.agent_used || 'agienginex',
         timestamp: new Date().toISOString()
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('💥 AGIengineX: Chat error:', error);
-      
+
       // Enhanced fallback to local AGI simulation
       const fallbackResponse = this.generateEnhancedLocalAGIResponse(message);
-      
+
       return {
-        response: fallbackResponse,
+        response: `💥 Unable to reach AGIengineX. Details: ${error.message || error}`,
         agent_used: 'local_agi_enhanced',
         timestamp: new Date().toISOString()
       };
