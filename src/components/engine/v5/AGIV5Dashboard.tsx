@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -191,36 +192,34 @@ const AGIV5Dashboard = () => {
 
         {/* Main Dashboard */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
-          {/* Enhanced TabsList for better visibility */}
-          <div className="w-full overflow-x-auto">
-            <TabsList className="flex flex-nowrap w-full min-w-max bg-slate-800/50 border border-slate-600/30 p-1 h-auto">
-              <div className="flex flex-nowrap gap-1 md:gap-2">
-                {tabs.map((tab) => {
-                  const IconComponent = tab.icon;
-                  return (
-                    <TabsTrigger
-                      key={tab.id}
-                      value={tab.id}
-                      className="flex flex-col items-center gap-1 p-2 md:p-3 min-w-[80px] md:min-w-[100px] data-[state=active]:bg-purple-600 data-[state=active]:text-white transition-all duration-200 hover:bg-slate-700"
-                    >
-                      <div className="flex items-center gap-1">
-                        <IconComponent className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
-                        {tab.badge && (
-                          <Badge 
-                            className={`text-xs px-1 py-0 ${tab.badgeColor} text-white hidden sm:inline-flex`}
-                          >
-                            {tab.badge}
-                          </Badge>
-                        )}
-                      </div>
-                      <span className="text-xs md:text-sm leading-tight text-center break-words">
-                        <span className="hidden md:inline">{tab.label}</span>
-                        <span className="md:hidden">{tab.shortLabel}</span>
-                      </span>
-                    </TabsTrigger>
-                  );
-                })}
-              </div>
+          {/* Enhanced TabsList with better responsive design */}
+          <div className="w-full overflow-x-auto bg-slate-800/50 border border-slate-600/30 rounded-lg p-2">
+            <TabsList className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-8 lg:grid-cols-15 gap-1 bg-transparent w-full h-auto">
+              {tabs.map((tab) => {
+                const IconComponent = tab.icon;
+                return (
+                  <TabsTrigger
+                    key={tab.id}
+                    value={tab.id}
+                    className="flex flex-col items-center justify-center gap-1 p-2 md:p-3 min-h-[80px] md:min-h-[100px] data-[state=active]:bg-purple-600 data-[state=active]:text-white transition-all duration-200 hover:bg-slate-700 text-center relative"
+                  >
+                    <div className="flex flex-col items-center gap-1">
+                      <IconComponent className="h-4 w-4 md:h-5 md:w-5 flex-shrink-0" />
+                      {tab.badge && (
+                        <Badge 
+                          className={`text-xs px-1 py-0 ${tab.badgeColor} text-white`}
+                        >
+                          {tab.badge}
+                        </Badge>
+                      )}
+                    </div>
+                    <span className="text-xs leading-tight text-center break-words max-w-full">
+                      <span className="hidden lg:inline">{tab.label}</span>
+                      <span className="lg:hidden">{tab.shortLabel}</span>
+                    </span>
+                  </TabsTrigger>
+                );
+              })}
             </TabsList>
           </div>
 
