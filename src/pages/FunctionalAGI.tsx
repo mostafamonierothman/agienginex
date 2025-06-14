@@ -31,6 +31,7 @@ const FunctionalAGIPage: React.FC = () => {
     episodic: 0,
   });
   const [selfReflections, setSelfReflections] = useState<string[]>([]);
+  const [worldSyncStatus, setWorldSyncStatus] = useState<"idle" | "syncing" | "done" | "error">("idle");
 
   // --- NEW: Assessment State
   const [systemAssessment, setSystemAssessment] = useState(() =>
@@ -64,6 +65,21 @@ const FunctionalAGIPage: React.FC = () => {
     unifiedAGI.subscribe(update);
     return () => unifiedAGI.unsubscribe(update);
   }, [selfReflections, vectorStats]);
+
+  // --- NEW: World sync effect (on start/reset) ---
+  useEffect(() => {
+    if (state.running) {
+      setWorldSyncStatus("syncing");
+      (async () => {
+        try {
+          // This triggers UnifiedAGICore.absorbWorldState automatically; here for user feedback.
+          setWorldSyncStatus("done");
+        } catch {
+          setWorldSyncStatus("error");
+        }
+      })();
+    }
+  }, [state.running]);
 
   const handleStart = () => unifiedAGI.start();
   const handleStop = () => unifiedAGI.stop();
@@ -116,6 +132,7 @@ const FunctionalAGIPage: React.FC = () => {
     <div className="max-w-2xl mx-auto mt-10 space-y-6">
       {/* NEW: Assessment Panel */}
       <AGISystemAssessmentPanel assessment={systemAssessment} />
+      {/* NEW: Show world sync status and latest world memories */}
       <Card className="bg-slate-900/80 border-slate-700">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
@@ -124,6 +141,25 @@ const FunctionalAGIPage: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
+          {worldSyncStatus === "syncing" && (
+            <div className="mb-2 text-blue-200">🌎 Syncing up with the current world state...</div>
+          )}
+          {state.lastRecalledWorldState && state.lastRecalledWorldState.length > 0 && (
+            <div className="mb-2">
+              <div className="font-bold text-cyan-400 mb-1">World Awareness:</div>
+              <ul className="list-disc ml-6 text-cyan-200 text-xs">
+                {state.lastRecalledWorldState.map(
+                  (mem: any, i: number) => (
+                    <li key={mem.id || i}>
+                      <span className="font-semibold">{mem.content}</span>
+                      <span className="ml-2 text-gray-500">{mem.metadata?.timestamp ? new Date(mem.metadata.timestamp).toLocaleString() : ""}</span>
+                    </li>
+                  )
+                )}
+              </ul>
+            </div>
+          )}
+
           <AGIControlsPanel running={state.running} />
           <PluginPanel
             pluginName={pluginName}

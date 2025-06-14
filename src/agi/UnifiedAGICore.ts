@@ -1,4 +1,3 @@
-
 import { AGIState } from "./AGIState";
 import { AGIStateManagement } from "./AGIStateManagement";
 import { LessonManager } from "./LessonManager";
@@ -9,6 +8,8 @@ import { AGIMemoryOps } from "./AGIMemoryOps";
 import { AGINotificationManager } from "./AGINotification";
 import { AGIAgentLoop } from "./AGIAgentLoop";
 import { AgentTeamManager } from "./AgentTeamManager";
+import { DataFusionEngine } from "@/utils/data_fusion";
+import { vectorMemoryService } from "@/services/VectorMemoryService";
 
 class UnifiedAGICore {
   private static instance: UnifiedAGICore;
@@ -46,18 +47,6 @@ class UnifiedAGICore {
     return UnifiedAGICore.instance;
   }
 
-  getState() {
-    return {
-      ...this.stateManager.getState(),
-      lessonsLearned: this.lessons.getLessons(),
-      plugins: this.pluginHandler.getPlugins().map((p) => p.name),
-      goalQueue: this.goalScheduler.getQueue(),
-      recentCollaborationFeedback: this.stateManager.getState()["recentCollaborationFeedback"] || [],
-      // Add last recalled vector memories to state for UI
-      lastRecalledVectorMemories: this.stateManager.getState()["lastRecalledVectorMemories"] || [],
-    };
-  }
-
   async start() {
     if (this.stateManager.getState().running) {
       this.log("AGI already running.");
@@ -65,6 +54,8 @@ class UnifiedAGICore {
     }
     this.stateManager.setState({ running: true });
     this.log("🔄 Unified Functional AGI Started.");
+    // NEW: Put recent world state into AGI memory before loop starts
+    await this.absorbWorldState();
     await this.stateManager.persistState();
     this.loop();
     this.notify();
@@ -133,6 +124,8 @@ class UnifiedAGICore {
     this.lessons.clear();
     this.pluginHandler.clear();
     this.goalScheduler.clear();
+    // NEW: Absorb world state
+    await this.absorbWorldState();
     this.log("🔄 AGI memory, goals, lessons, plugins, and queue cleared. State reset.");
     this.stateManager.persistState();
     this.notify();
@@ -157,7 +150,47 @@ class UnifiedAGICore {
     }
     this.notify();
   }
+
+  // NEW: Method to fuse world data
+  private async absorbWorldState() {
+    this.log("🌎 Absorbing real-world state: fetching news, RSS, and APIs.");
+    // Demo: use processRSSFeed for world news/tech
+    try {
+      await DataFusionEngine.processRSSFeed(
+        "https://www.cnbc.com/id/100003114/device/rss/rss.html",
+        "core-agi-agent"
+      );
+      await DataFusionEngine.processRSSFeed(
+        "https://www.reutersagency.com/feed/?best-sectors=technology",
+        "core-agi-agent"
+      );
+      this.log("🌎 World data fused into agent memory.");
+      // Optionally: surface in state
+      const latestMemories = await vectorMemoryService.retrieveMemories(
+        "core-agi-agent",
+        "world news",
+        5
+      );
+      this.stateManager.setState({
+        lastRecalledWorldState: latestMemories
+      });
+    } catch (e) {
+      this.log("Warning: Could not fuse world state: " + (e.message || e));
+    }
+  }
+
+  getState() {
+    return {
+      ...this.stateManager.getState(),
+      lessonsLearned: this.lessons.getLessons(),
+      plugins: this.pluginHandler.getPlugins().map((p) => p.name),
+      goalQueue: this.goalScheduler.getQueue(),
+      recentCollaborationFeedback: this.stateManager.getState()["recentCollaborationFeedback"] || [],
+      lastRecalledVectorMemories: this.stateManager.getState()["lastRecalledVectorMemories"] || [],
+      // NEW: expose world state knowledge
+      lastRecalledWorldState: this.stateManager.getState()["lastRecalledWorldState"] || [],
+    };
+  }
 }
 
 export const unifiedAGI = UnifiedAGICore.getInstance();
-
