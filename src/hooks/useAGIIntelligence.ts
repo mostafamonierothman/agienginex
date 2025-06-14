@@ -122,7 +122,7 @@ export const useAGIIntelligence = () => {
     }));
   }, []);
 
-  // Persist AGI state to database
+  // Persist AGI state to database with proper JSON serialization
   useEffect(() => {
     const saveAGIState = async () => {
       try {
@@ -130,7 +130,7 @@ export const useAGIIntelligence = () => {
           .from('agi_state')
           .upsert({
             key: 'agi_intelligence',
-            state: agiState
+            state: agiState as any // Cast to any to match Json type
           });
       } catch (error) {
         console.error('Failed to save AGI state:', error);
@@ -140,7 +140,7 @@ export const useAGIIntelligence = () => {
     saveAGIState();
   }, [agiState]);
 
-  // Load AGI state on initialization
+  // Load AGI state on initialization with proper type handling
   useEffect(() => {
     const loadAGIState = async () => {
       try {
@@ -150,8 +150,8 @@ export const useAGIIntelligence = () => {
           .eq('key', 'agi_intelligence')
           .single();
 
-        if (data?.state) {
-          setAgiState(data.state);
+        if (data?.state && typeof data.state === 'object') {
+          setAgiState(data.state as AGIState);
         }
       } catch (error) {
         console.log('No previous AGI state found, starting fresh');

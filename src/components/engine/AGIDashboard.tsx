@@ -4,6 +4,7 @@ import AGIChatInterface from './AGIChatInterface';
 import AGISystemControls from './AGISystemControls';
 import DynamicAgentRunner from './multi-agent/DynamicAgentRunner';
 import LiveBackendData from './multi-agent/LiveBackendData';
+import LovableAGIStatus from './LovableAGIStatus';
 import { useBackendPolling } from '@/hooks/useBackendPolling';
 
 const AGIDashboard = () => {
@@ -13,8 +14,11 @@ const AGIDashboard = () => {
     <div className="space-y-6">
       <div className="text-center mb-6">
         <h2 className="text-3xl font-bold text-white mb-2">🚀 AGIengineX Full System</h2>
-        <p className="text-gray-400">Complete AI Agent System with Chat, Controls, and Automation</p>
+        <p className="text-gray-400">Complete AI Agent System with Autonomous Enhancement</p>
       </div>
+
+      {/* LovableAGIAgent Status - Priority Display */}
+      <LovableAGIStatus />
 
       <AGISystemControls />
 
