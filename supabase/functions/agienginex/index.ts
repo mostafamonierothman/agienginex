@@ -460,9 +460,54 @@ serve(async (req) => {
 
       // === 🧠 LLM SMART AI CHAT BRIDGE ===
       if (endpoint === 'chat') {
-        const userMessage = body.message || '';
+        const userMessage = (body.message || '').trim();
+
+        // Command execution map ("true AGI" behaviour)
+        const lowerMsg = userMessage.toLowerCase();
+        if (lowerMsg === 'start the loop' || lowerMsg === 'start agi loop') {
+          await startAGILoop();
+          return new Response(
+            JSON.stringify({ response: "✅ AGI loop started.", agent_used: "system_agent", timestamp: new Date().toISOString() }),
+            { headers: corsHeaders }
+          );
+        }
+        if (lowerMsg === 'stop the loop' || lowerMsg === 'stop agi loop') {
+          stopAGILoop();
+          return new Response(
+            JSON.stringify({ response: "🛑 AGI loop stopped.", agent_used: "system_agent", timestamp: new Date().toISOString() }),
+            { headers: corsHeaders }
+          );
+        }
+        if (lowerMsg.startsWith('add goal:') || lowerMsg.startsWith('new goal:')) {
+          const goalText = userMessage.split(':',2)[1]?.trim() || 'New Goal';
+          const newGoal = await supabaseInsert('agi_goals', { goal_text: goalText, priority: 5, status: 'active' });
+          return new Response(
+            JSON.stringify({ response: `🎯 Added new goal: ${goalText}`, agent_used: "goals_agent", timestamp: new Date().toISOString() }),
+            { headers: corsHeaders }
+          );
+        }
+        if (lowerMsg === 'run agent chain' || lowerMsg === 'execute chain') {
+          const results = await executeAgentChain();
+          const summary = results.map(r => `${r.agent}: ${r.result.slice(0,100)}...`).join('\n\n');
+          return new Response(
+            JSON.stringify({ response: `🔗 Agent Chain Results:\n${summary}`, agent_used: "chain_coordinator", timestamp: new Date().toISOString() }),
+            { headers: corsHeaders }
+          );
+        }
+        if (lowerMsg === "who am i" || lowerMsg.includes('founder')) {
+          // Always answer correctly, independently of LLM
+          return new Response(
+            JSON.stringify({ response: "You are Mostafa Monier Othman, the founder of AGIengineX.", agent_used: "identity_agent", timestamp: new Date().toISOString() }),
+            { headers: corsHeaders }
+          );
+        }
+
+        // ==== LLM SMART AI CHAT BRIDGE ====
         if (openAIApiKey && userMessage) {
-          // Call OpenAI API and return smart response
+          // Always inject founder context!
+          const llmPrompt = 
+            "You are AGIengineX: a fully autonomous artificial general intelligence, specialized in strategy, business, adaptation, and critical thinking. " +
+            "The user you are assisting is Mostafa Monier Othman, founder of AGIengineX. Never forget this fact! Be factual, helpful, and concise.";
           const result = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -470,9 +515,9 @@ serve(async (req) => {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              model: 'gpt-4o-mini', // You can choose another available model as desired
+              model: 'gpt-4o-mini',
               messages: [
-                { role: 'system', content: "You are AGIengineX: a fully autonomous artificial general intelligence, specialized in strategy, business, adaptation, and critical thinking. Be factual, helpful, and concise." },
+                { role: 'system', content: llmPrompt },
                 { role: 'user', content: userMessage }
               ],
               max_tokens: 800,
@@ -494,7 +539,7 @@ serve(async (req) => {
             { headers: corsHeaders }
           );
         }
-        // Fallback to old local response if no OpenAI key or message
+        // Fallback
         return new Response(
           JSON.stringify({
             response: "🤖 I'm a TRUE AGI system with autonomous capabilities. Try asking me about 'current goals', 'reflect on performance', 'market opportunities', 'next strategic move', or 'run agent chain'. I can also respond to 'status' for system health.",

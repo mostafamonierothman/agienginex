@@ -110,33 +110,6 @@ class AGIengineXService {
     }
   }
 
-  private generateEnhancedLocalAGIResponse(message: string): string {
-    const lowerMessage = message.toLowerCase();
-    
-    // Identity and founder questions
-    if (lowerMessage.includes('who am i') || lowerMessage.includes('who are you')) {
-      return "🤖 I am AGIengineX, an advanced Artificial General Intelligence system created by the AGIengineX development team. I'm designed with autonomous capabilities for strategic planning, opportunity detection, goal management, and self-reflection. I can help you with business strategy, goal setting, market analysis, and decision-making.";
-    } else if (lowerMessage.includes('founder') || lowerMessage.includes('creator') || lowerMessage.includes('who created')) {
-      return "🚀 AGIengineX was founded and developed by a team of AI researchers and engineers focused on creating true AGI systems. The project aims to build autonomous AI that can think strategically, adapt to environments, and continuously improve itself while helping users achieve their goals.";
-    } else if (lowerMessage.includes('what are you') || lowerMessage.includes('introduce yourself')) {
-      return "🧠 I'm AGIengineX - an Artificial General Intelligence platform with autonomous agents, self-reflection capabilities, and goal-driven behavior. Unlike narrow AI, I can think strategically across multiple domains, learn from interactions, and adapt my approach based on your needs and environmental changes.";
-    } else if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
-      return "👋 Hello! I'm AGIengineX - your advanced AI assistant with autonomous capabilities. I specialize in strategic planning, opportunity detection, goal management, and self-reflection. How can I help you achieve your objectives today?";
-    } else if (lowerMessage.includes('status') || lowerMessage.includes('health')) {
-      return "🎯 AGI Status: All core systems operational. Currently running in local mode due to connectivity issues. Features active: ✅ Strategic Planning ✅ Goal Management ✅ Self-Reflection ✅ Opportunity Analysis. Ready to assist with your strategic objectives!";
-    } else if (lowerMessage.includes('goal') || lowerMessage.includes('objective')) {
-      return "🎯 Goal Management: I can help you define, track, and achieve your objectives through strategic planning and continuous monitoring. My autonomous agents work to identify opportunities and optimize paths to success. What goals would you like to work on?";
-    } else if (lowerMessage.includes('opportunity') || lowerMessage.includes('market')) {
-      return "💡 Opportunity Analysis: I continuously scan for market opportunities, business potential, and strategic advantages. Current focus areas include AI automation, digital transformation, and emerging technologies. What sector interests you?";
-    } else if (lowerMessage.includes('reflect') || lowerMessage.includes('evaluate')) {
-      return "🧠 Self-Reflection Mode: I regularly evaluate my performance, learn from interactions, and adapt strategies. Current assessment: Operating efficiently in local mode, maintaining strategic capabilities while working to restore full connectivity.";
-    } else if (lowerMessage.includes('capabilities') || lowerMessage.includes('what can you do')) {
-      return "⚡ AGIengineX Capabilities:\n🎯 Strategic Planning & Decision Making\n💡 Opportunity Detection & Market Analysis\n🧠 Self-Reflection & Performance Optimization\n📊 Goal Setting & Progress Tracking\n🤝 Multi-Agent Collaboration\n🔄 Autonomous Learning & Adaptation\n\nWhat would you like to explore?";
-    } else {
-      return `🤖 AGIengineX Processing: "${message}"\n\nI understand your query and can provide strategic insights on this topic. As an AGI system, I approach problems holistically, considering multiple perspectives and potential outcomes. Would you like me to:\n\n• Analyze strategic implications\n• Identify opportunities\n• Suggest actionable steps\n• Evaluate potential risks\n\nWhat specific aspect interests you most?`;
-    }
-  }
-
   async getAvailableAgents(): Promise<AgentInfo[]> {
     try {
       // POST to root
@@ -284,33 +257,6 @@ class AGIengineXService {
     } catch (error) {
       console.error('Stop loop error:', error);
       return false;
-    }
-  }
-
-  private generateEnhancedLocalAGIResponse(message: string): string {
-    const lowerMessage = message.toLowerCase();
-    
-    // Identity and founder questions
-    if (lowerMessage.includes('who am i') || lowerMessage.includes('who are you')) {
-      return "🤖 I am AGIengineX, an advanced Artificial General Intelligence system created by the AGIengineX development team. I'm designed with autonomous capabilities for strategic planning, opportunity detection, goal management, and self-reflection. I can help you with business strategy, goal setting, market analysis, and decision-making.";
-    } else if (lowerMessage.includes('founder') || lowerMessage.includes('creator') || lowerMessage.includes('who created')) {
-      return "🚀 AGIengineX was founded and developed by a team of AI researchers and engineers focused on creating true AGI systems. The project aims to build autonomous AI that can think strategically, adapt to environments, and continuously improve itself while helping users achieve their goals.";
-    } else if (lowerMessage.includes('what are you') || lowerMessage.includes('introduce yourself')) {
-      return "🧠 I'm AGIengineX - an Artificial General Intelligence platform with autonomous agents, self-reflection capabilities, and goal-driven behavior. Unlike narrow AI, I can think strategically across multiple domains, learn from interactions, and adapt my approach based on your needs and environmental changes.";
-    } else if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
-      return "👋 Hello! I'm AGIengineX - your advanced AI assistant with autonomous capabilities. I specialize in strategic planning, opportunity detection, goal management, and self-reflection. How can I help you achieve your objectives today?";
-    } else if (lowerMessage.includes('status') || lowerMessage.includes('health')) {
-      return "🎯 AGI Status: All core systems operational. Currently running in local mode due to connectivity issues. Features active: ✅ Strategic Planning ✅ Goal Management ✅ Self-Reflection ✅ Opportunity Analysis. Ready to assist with your strategic objectives!";
-    } else if (lowerMessage.includes('goal') || lowerMessage.includes('objective')) {
-      return "🎯 Goal Management: I can help you define, track, and achieve your objectives through strategic planning and continuous monitoring. My autonomous agents work to identify opportunities and optimize paths to success. What goals would you like to work on?";
-    } else if (lowerMessage.includes('opportunity') || lowerMessage.includes('market')) {
-      return "💡 Opportunity Analysis: I continuously scan for market opportunities, business potential, and strategic advantages. Current focus areas include AI automation, digital transformation, and emerging technologies. What sector interests you?";
-    } else if (lowerMessage.includes('reflect') || lowerMessage.includes('evaluate')) {
-      return "🧠 Self-Reflection Mode: I regularly evaluate my performance, learn from interactions, and adapt strategies. Current assessment: Operating efficiently in local mode, maintaining strategic capabilities while working to restore full connectivity.";
-    } else if (lowerMessage.includes('capabilities') || lowerMessage.includes('what can you do')) {
-      return "⚡ AGIengineX Capabilities:\n🎯 Strategic Planning & Decision Making\n💡 Opportunity Detection & Market Analysis\n🧠 Self-Reflection & Performance Optimization\n📊 Goal Setting & Progress Tracking\n🤝 Multi-Agent Collaboration\n🔄 Autonomous Learning & Adaptation\n\nWhat would you like to explore?";
-    } else {
-      return `🤖 AGIengineX Processing: "${message}"\n\nI understand your query and can provide strategic insights on this topic. As an AGI system, I approach problems holistically, considering multiple perspectives and potential outcomes. Would you like me to:\n\n• Analyze strategic implications\n• Identify opportunities\n• Suggest actionable steps\n• Evaluate potential risks\n\nWhat specific aspect interests you most?`;
     }
   }
 }
