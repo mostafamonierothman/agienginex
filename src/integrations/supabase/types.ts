@@ -248,6 +248,54 @@ export type Database = {
           },
         ]
       }
+      imported_conversations: {
+        Row: {
+          code_snippet: string | null
+          content: string | null
+          conversation_id: string | null
+          conversation_title: string | null
+          created_at: string | null
+          id: string
+          imported_at: string | null
+          message_index: number | null
+          project_tag: string | null
+          raw_json: Json | null
+          role: string | null
+          topic: string | null
+          user_id: string | null
+        }
+        Insert: {
+          code_snippet?: string | null
+          content?: string | null
+          conversation_id?: string | null
+          conversation_title?: string | null
+          created_at?: string | null
+          id?: string
+          imported_at?: string | null
+          message_index?: number | null
+          project_tag?: string | null
+          raw_json?: Json | null
+          role?: string | null
+          topic?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          code_snippet?: string | null
+          content?: string | null
+          conversation_id?: string | null
+          conversation_title?: string | null
+          created_at?: string | null
+          id?: string
+          imported_at?: string | null
+          message_index?: number | null
+          project_tag?: string | null
+          raw_json?: Json | null
+          role?: string | null
+          topic?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           company: string | null

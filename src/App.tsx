@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { navItems } from "./nav-items";
 import Index from "./pages/Index";
 import AGIV5 from "./pages/AGIV5";
+import ChatGPTImportPage from "./pages/ChatGPTImport";
 
 const queryClient = new QueryClient();
 
@@ -18,6 +19,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/agi-v5" element={<AGIV5 />} />
+          <Route path="/chatgpt-import" element={<ChatGPTImportPage />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
