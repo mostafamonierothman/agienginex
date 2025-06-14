@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import type { AgentMemory } from '@/types/DatabaseTypes';
 
 export class PersistentMemory {
   private memoryCache: Map<string, any> = new Map();
@@ -12,8 +13,9 @@ export class PersistentMemory {
           user_id: 'persistent_memory',
           agent_name: 'system_memory',
           memory_key: key,
-          memory_value: typeof value === 'string' ? value : JSON.stringify(value)
-        } as any, {
+          memory_value: typeof value === 'string' ? value : JSON.stringify(value),
+          timestamp: new Date().toISOString()
+        } as Partial<AgentMemory>, {
           onConflict: 'user_id,agent_name,memory_key'
         });
       console.log(`🧠 Persistent memory set: ${key}`);

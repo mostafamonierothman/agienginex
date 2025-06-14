@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import type { AgentMemory } from '@/types/DatabaseTypes';
 
 export class SupabaseMemoryService {
   static async saveMemory(sessionId: string, content: any) {
@@ -11,7 +12,7 @@ export class SupabaseMemoryService {
           memory_key: sessionId, 
           memory_value: JSON.stringify(content), 
           timestamp: new Date().toISOString() 
-        }]);
+        } as Partial<AgentMemory>]);
     } catch (e) {
       console.error('[SupabaseMemoryService] Save error:', e);
     }
@@ -27,7 +28,6 @@ export class SupabaseMemoryService {
         .limit(1);
 
       if (error) throw error;
-      
       const memoryValue = data?.[0]?.memory_value;
       if (memoryValue) {
         try {
@@ -37,7 +37,6 @@ export class SupabaseMemoryService {
           return memoryValue; // Return as string if not valid JSON
         }
       }
-      
       return null;
     } catch (e) {
       console.error('[SupabaseMemoryService] Load error:', e);
@@ -55,7 +54,7 @@ export class SupabaseMemoryService {
           memory_key: `execution_log_${action}`,
           memory_value: JSON.stringify(result),
           timestamp: new Date().toISOString()
-        }]);
+        } as Partial<AgentMemory>]);
     } catch (e) {
       console.error('[SupabaseMemoryService] Execution log error:', e);
     }

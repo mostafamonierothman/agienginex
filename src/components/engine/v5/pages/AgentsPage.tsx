@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { agentRegistry } from '@/config/AgentRegistry';
 import { SupabaseMemoryService } from '@/services/SupabaseMemoryService';

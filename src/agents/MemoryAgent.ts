@@ -1,6 +1,6 @@
-
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { supabase } from '@/integrations/supabase/client';
+import type { AgentMemory } from '@/types/DatabaseTypes';
 
 export class MemoryAgent {
   async runner(context: AgentContext): Promise<AgentResponse> {
@@ -17,7 +17,7 @@ export class MemoryAgent {
           memory_key: memoryKey,
           memory_value: memoryValue,
           timestamp: new Date().toISOString()
-        } as any);
+        } as Partial<AgentMemory>);
 
       return {
         success: true,
@@ -25,10 +25,10 @@ export class MemoryAgent {
         data: { memoryKey, stored: true },
         timestamp: new Date().toISOString()
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
-        message: `❌ MemoryAgent error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `❌ MemoryAgent error: ${error.message || 'Unknown error'}`
       };
     }
   }

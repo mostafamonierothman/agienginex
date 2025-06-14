@@ -15,7 +15,7 @@ export type Database = {
           id: string
           memory_key: string | null
           memory_value: string | null
-          timestamp: string | null
+          timestamp: string
           user_id: string | null
         }
         Insert: {
@@ -23,7 +23,7 @@ export type Database = {
           id?: string
           memory_key?: string | null
           memory_value?: string | null
-          timestamp?: string | null
+          timestamp?: string
           user_id?: string | null
         }
         Update: {
@@ -31,7 +31,7 @@ export type Database = {
           id?: string
           memory_key?: string | null
           memory_value?: string | null
-          timestamp?: string | null
+          timestamp?: string
           user_id?: string | null
         }
         Relationships: []
@@ -42,7 +42,7 @@ export type Database = {
           goal_text: string | null
           priority: number | null
           progress_percentage: number | null
-          status: string | null
+          status: Database["public"]["Enums"]["goal_status"]
           timestamp: string | null
         }
         Insert: {
@@ -50,7 +50,7 @@ export type Database = {
           goal_text?: string | null
           priority?: number | null
           progress_percentage?: number | null
-          status?: string | null
+          status?: Database["public"]["Enums"]["goal_status"]
           timestamp?: string | null
         }
         Update: {
@@ -58,7 +58,7 @@ export type Database = {
           goal_text?: string | null
           priority?: number | null
           progress_percentage?: number | null
-          status?: string | null
+          status?: Database["public"]["Enums"]["goal_status"]
           timestamp?: string | null
         }
         Relationships: []
@@ -119,7 +119,7 @@ export type Database = {
           id: string
           name: string
           replies_received: number | null
-          status: string
+          status: Database["public"]["Enums"]["campaign_status"]
           subject: string
           target_industry: string | null
           template: string
@@ -132,7 +132,7 @@ export type Database = {
           id?: string
           name: string
           replies_received?: number | null
-          status?: string
+          status?: Database["public"]["Enums"]["campaign_status"]
           subject: string
           target_industry?: string | null
           template: string
@@ -145,7 +145,7 @@ export type Database = {
           id?: string
           name?: string
           replies_received?: number | null
-          status?: string
+          status?: Database["public"]["Enums"]["campaign_status"]
           subject?: string
           target_industry?: string | null
           template?: string
@@ -164,7 +164,7 @@ export type Database = {
           replied_at: string | null
           resend_email_id: string | null
           sent_at: string
-          status: string
+          status: Database["public"]["Enums"]["email_status"]
           subject: string
         }
         Insert: {
@@ -177,7 +177,7 @@ export type Database = {
           replied_at?: string | null
           resend_email_id?: string | null
           sent_at?: string
-          status?: string
+          status?: Database["public"]["Enums"]["email_status"]
           subject: string
         }
         Update: {
@@ -190,7 +190,7 @@ export type Database = {
           replied_at?: string | null
           resend_email_id?: string | null
           sent_at?: string
-          status?: string
+          status?: Database["public"]["Enums"]["email_status"]
           subject?: string
         }
         Relationships: [
@@ -218,7 +218,7 @@ export type Database = {
           id: string
           lead_id: string | null
           scheduled_for: string | null
-          type: string
+          type: Database["public"]["Enums"]["follow_up_type"]
         }
         Insert: {
           completed_at?: string | null
@@ -227,7 +227,7 @@ export type Database = {
           id?: string
           lead_id?: string | null
           scheduled_for?: string | null
-          type: string
+          type: Database["public"]["Enums"]["follow_up_type"]
         }
         Update: {
           completed_at?: string | null
@@ -236,7 +236,7 @@ export type Database = {
           id?: string
           lead_id?: string | null
           scheduled_for?: string | null
-          type?: string
+          type?: Database["public"]["Enums"]["follow_up_type"]
         }
         Relationships: [
           {
@@ -262,7 +262,7 @@ export type Database = {
           location: string | null
           phone: string | null
           source: string
-          status: string
+          status: Database["public"]["Enums"]["lead_status"]
           updated_at: string
         }
         Insert: {
@@ -278,7 +278,7 @@ export type Database = {
           location?: string | null
           phone?: string | null
           source: string
-          status?: string
+          status?: Database["public"]["Enums"]["lead_status"]
           updated_at?: string
         }
         Update: {
@@ -294,7 +294,7 @@ export type Database = {
           location?: string | null
           phone?: string | null
           source?: string
-          status?: string
+          status?: Database["public"]["Enums"]["lead_status"]
           updated_at?: string
         }
         Relationships: []
@@ -328,7 +328,7 @@ export type Database = {
           input: string | null
           output: string | null
           status: string | null
-          timestamp: string | null
+          timestamp: string
           user_id: string | null
         }
         Insert: {
@@ -338,7 +338,7 @@ export type Database = {
           input?: string | null
           output?: string | null
           status?: string | null
-          timestamp?: string | null
+          timestamp?: string
           user_id?: string | null
         }
         Update: {
@@ -348,7 +348,7 @@ export type Database = {
           input?: string | null
           output?: string | null
           status?: string | null
-          timestamp?: string | null
+          timestamp?: string
           user_id?: string | null
         }
         Relationships: []
@@ -403,7 +403,23 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      campaign_status: "draft" | "active" | "paused" | "completed"
+      email_status:
+        | "sent"
+        | "delivered"
+        | "opened"
+        | "replied"
+        | "bounced"
+        | "failed"
+      follow_up_type: "email" | "call" | "meeting" | "note"
+      goal_status: "active" | "completed"
+      lead_status:
+        | "new"
+        | "contacted"
+        | "replied"
+        | "qualified"
+        | "converted"
+        | "unsubscribed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -518,6 +534,26 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      campaign_status: ["draft", "active", "paused", "completed"],
+      email_status: [
+        "sent",
+        "delivered",
+        "opened",
+        "replied",
+        "bounced",
+        "failed",
+      ],
+      follow_up_type: ["email", "call", "meeting", "note"],
+      goal_status: ["active", "completed"],
+      lead_status: [
+        "new",
+        "contacted",
+        "replied",
+        "qualified",
+        "converted",
+        "unsubscribed",
+      ],
+    },
   },
 } as const
