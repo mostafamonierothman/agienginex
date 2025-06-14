@@ -56,11 +56,21 @@ export const AGIChatLayout: React.FC = () => {
       const msg = `${AGI_IDENTITY_PROMPT}\n---\n${input}`;
       // Send to backend
       const res = await agiEngineX.chat(msg);
-      setMessages(prev => [...prev, { role: "agi", content: res.response }]);
-      // Optionally parse for performance updates (can invoke hooks with new real metrics)
+      // Robustly update chat: support both real & legacy API response
+      setMessages(prev => [
+        ...prev,
+        { role: "agi", content: res.response ?? res.message ?? "No response" }
+      ]);
+      // Robustly update business metrics only if returned
       if (res?.businessMetrics) {
         setPerformance(res.businessMetrics);
+      } else if (res?.data?.businessMetrics) {
+        setPerformance(res.data.businessMetrics);
+      } else if (res?.data?.performance) {
+        setPerformance(res.data.performance);
       }
+      // Optionally, trigger next milestone if response matches
+      // Example: after closing a deal or a contract e-sign/pmt step
     } catch (e) {
       setMessages(prev => [
         ...prev,
@@ -159,3 +169,4 @@ export const AGIChatLayout: React.FC = () => {
     </div>
   );
 };
+
