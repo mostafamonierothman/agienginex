@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { agentRegistry } from "@/config/AgentRegistry";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -9,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import UniversalAgentBusLog from "../components/UniversalAgentBusLog";
 import MetaFeedbackPanel from "../components/MetaFeedbackPanel";
+import RequestAGIengineX from "../components/RequestAGIengineX";
+import AGIStatusPanel from "../components/AGIStatusPanel";
 
 // Helper fetch for meta-agent recommendations
 const fetchMetaInsights = async () => {
@@ -116,9 +117,14 @@ const MetaAGICommandCenter = () => {
             <Button variant="outline" onClick={reloadDynamicAgentRegistry} className="border-green-400 text-green-300">
               <Upload className="w-4 h-4 mr-1" /> Reload Agent Registry
             </Button>
+            {/* NEW: Request AGIengineX */}
+            <RequestAGIengineX />
           </div>
         </CardContent>
       </Card>
+
+      {/* NEW: AGI Status Panel */}
+      <AGIStatusPanel />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* AGI Agents */}
