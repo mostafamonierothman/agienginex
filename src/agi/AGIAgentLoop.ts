@@ -1,4 +1,3 @@
-
 import { AGIPluginHandler } from "./AGIPluginHandler";
 import { GoalScheduler } from "./GoalScheduler";
 import { AGIAgentCollaborationManager, PeerFeedback } from "./AGIAgentCollaborationManager";
@@ -73,8 +72,36 @@ export class AGIAgentLoop {
       try {
         await this.memoryOps.storeToVectorMemory(state.currentGoal, { goal: state.currentGoal, result }, {});
         log(`💾 Stored completed goal/result in vector memory for "${state.currentGoal}"`);
+        // ---- NEW: Store in episodic memory ----
+        await this.memoryOps.storeEpisodicEvent({
+          type: "completed_goal",
+          goal: state.currentGoal,
+          result,
+          timestamp: new Date().toISOString(),
+        });
+        log(`⏳ Stored completed goal/result in episodic memory.`);
       } catch (e: any) {
-        log(`⚠️ Failed to store to vector memory: ${e?.message || e}`);
+        log(`⚠️ Failed to store to vector/episodic memory: ${e?.message || e}`);
+      }
+    }
+
+    // ---- NEW: Store all new lessons in episodic memory ----
+    if (this.lessonManager && typeof this.lessonManager.getLessons === "function") {
+      const lessonsLearned = this.lessonManager.getLessons() || [];
+      if (lessonsLearned.length) {
+        const alreadyMemorized: Set<string> = new Set(state["_already_memorized_lessons"] || []);
+        for (const lesson of lessonsLearned) {
+          if (!alreadyMemorized.has(lesson)) {
+            await this.memoryOps.storeEpisodicEvent({
+              type: "lesson_learned",
+              lesson,
+              timestamp: new Date().toISOString(),
+            });
+            alreadyMemorized.add(lesson);
+            log(`📚 Stored new lesson in episodic memory: "${lesson}"`);
+          }
+        }
+        state["_already_memorized_lessons"] = Array.from(alreadyMemorized);
       }
     }
 
