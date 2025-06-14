@@ -1,4 +1,3 @@
-
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { supabase } from '@/integrations/supabase/client';
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
@@ -15,28 +14,25 @@ interface GoalMemory {
   adaptations: string[];
 }
 
+import { GoalEvaluator } from './GoalEvaluator';
+import { GoalAdaptationEngine } from './GoalAdaptationEngine';
+
+const VALID_GOAL_STATUSES = ['active', 'completed'] as const;
+type ValidGoalStatus = typeof VALID_GOAL_STATUSES[number];
+
 export class GoalMemoryAgent {
-  private goalMemories: Map<string, GoalMemory> = new Map();
+  private goalMemories: Map<string, any> = new Map();
 
   async runner(context: AgentContext): Promise<AgentResponse> {
     try {
       await sendChatUpdate('🧠 GoalMemoryAgent: Re-evaluating goal progress and adaptation...');
-
-      // Load existing goal memories
       await this.loadGoalMemories();
-      
-      // Evaluate progress on active goals
-      const evaluationResults = await this.evaluateGoalProgress();
-      
-      // Adapt goals based on performance
-      const adaptations = await this.adaptGoalsBasedOnPerformance();
-      
-      // Generate new sub-goals if needed
+      const goalEvaluator = new GoalEvaluator();
+      const evaluationResults = await this.evaluateGoalProgress(goalEvaluator);
+      const adaptationEngine = new GoalAdaptationEngine();
+      const adaptations = await this.adaptGoalsBasedOnPerformance(adaptationEngine);
       const newSubGoals = await this.generateNewSubGoals();
-      
-      // Save updated goal memories
       await this.saveGoalMemories();
-
       return {
         success: true,
         message: `🧠 Goal memory updated: ${evaluationResults.goalsEvaluated} goals processed, ${adaptations.length} adaptations made`,
@@ -61,7 +57,7 @@ export class GoalMemoryAgent {
     const { data: goalData } = await supabase
       .from('agi_goals_enhanced')
       .select('*')
-      .eq('status', 'active');
+      .in('status', VALID_GOAL_STATUSES);
 
     // Load agent memory for detailed goal tracking
     const { data: memoryData } = await supabase
@@ -70,7 +66,9 @@ export class GoalMemoryAgent {
       .eq('agent_name', 'goal_memory_agent');
 
     // Combine and structure goal memories
+    // Only allow valid statuses
     goalData?.forEach(goal => {
+      if (!VALID_GOAL_STATUSES.includes(goal.status)) return;
       const memoryEntry = memoryData?.find(m => m.memory_key === `goal_${goal.goal_id}`);
       let goalMemory: GoalMemory;
 
@@ -141,148 +139,33 @@ export class GoalMemoryAgent {
     }
   }
 
-  private async evaluateGoalProgress() {
+  private async evaluateGoalProgress(goalEvaluator: GoalEvaluator) {
     const evaluations = [];
     let goalsEvaluated = 0;
-
     for (const [goalId, goalMemory] of this.goalMemories) {
       if (goalMemory.status !== 'active') continue;
-
-      const evaluation = await this.evaluateSpecificGoal(goalMemory);
+      const evaluation = await goalEvaluator.evaluate(goalMemory);
       evaluations.push(evaluation);
       goalsEvaluated++;
-
-      // Update goal memory with new evaluation
       goalMemory.progress = evaluation.newProgress;
       goalMemory.lastEvaluated = new Date().toISOString();
       goalMemory.successMetrics = { ...goalMemory.successMetrics, ...evaluation.updatedMetrics };
     }
-
     return { goalsEvaluated, evaluations };
   }
 
-  private async evaluateSpecificGoal(goalMemory: GoalMemory) {
-    const evaluation = {
-      goalId: goalMemory.id,
-      previousProgress: goalMemory.progress,
-      newProgress: goalMemory.progress,
-      updatedMetrics: {},
-      needsAdaptation: false,
-      adaptationReason: ''
-    };
-
-    // Get recent system data for evaluation
-    const { data: recentLeads } = await supabase
-      .from('leads')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(100);
-
-    const { data: recentActivity } = await supabase
-      .from('supervisor_queue')
-      .select('*')
-      .eq('status', 'completed')
-      .order('timestamp', { ascending: false })
-      .limit(50);
-
-    // Evaluate based on goal type
-    if (goalMemory.goal.includes('trillion') || goalMemory.goal.includes('revenue')) {
-      const leadsCount = recentLeads?.length || 0;
-      const estimatedRevenue = leadsCount * 2500; // $2.5K per lead estimate
-      
-      evaluation.updatedMetrics = {
-        leadsGenerated: leadsCount,
-        revenue: estimatedRevenue,
-        conversionRate: leadsCount > 0 ? 0.1 : 0 // Estimated 10% conversion
-      };
-
-      // Calculate progress toward trillion (very rough estimate)
-      const trillionProgress = (estimatedRevenue / 1e12) * 100;
-      evaluation.newProgress = Math.min(trillionProgress, 100);
-
-      if (evaluation.newProgress < evaluation.previousProgress) {
-        evaluation.needsAdaptation = true;
-        evaluation.adaptationReason = 'Revenue generation declining - need strategy adjustment';
-      }
-    } else if (goalMemory.goal.includes('system')) {
-      const totalActivities = recentActivity?.length || 0;
-      const successfulActivities = recentActivity?.filter(a => a.status === 'completed').length || 0;
-      const successRate = totalActivities > 0 ? (successfulActivities / totalActivities) * 100 : 0;
-
-      evaluation.updatedMetrics = {
-        tasksCompleted: totalActivities,
-        successRate: successRate,
-        efficiency: successRate
-      };
-
-      evaluation.newProgress = successRate;
-
-      if (successRate < 80) {
-        evaluation.needsAdaptation = true;
-        evaluation.adaptationReason = 'System performance below target - optimization needed';
-      }
-    }
-
-    return evaluation;
-  }
-
-  private async adaptGoalsBasedOnPerformance() {
+  private async adaptGoalsBasedOnPerformance(adaptationEngine: GoalAdaptationEngine) {
     const adaptations = [];
-
     for (const [goalId, goalMemory] of this.goalMemories) {
       const timeSinceLastEvaluation = Date.now() - new Date(goalMemory.lastEvaluated).getTime();
       const hoursSinceEvaluation = timeSinceLastEvaluation / (1000 * 60 * 60);
-
-      // Adapt if progress is slow or declining
-      if (goalMemory.progress < 50 && hoursSinceEvaluation > 4) {
-        const adaptation = await this.createGoalAdaptation(goalMemory, 'slow_progress');
-        adaptations.push(adaptation);
-        goalMemory.adaptations.push(adaptation.description);
-      }
-
-      // Adapt if goal seems impossible with current approach
-      if (goalMemory.progress < 10 && hoursSinceEvaluation > 24) {
-        const adaptation = await this.createGoalAdaptation(goalMemory, 'strategy_change');
+      const these = await adaptationEngine.adapt(goalMemory, hoursSinceEvaluation);
+      for (const adaptation of these) {
         adaptations.push(adaptation);
         goalMemory.adaptations.push(adaptation.description);
       }
     }
-
     return adaptations;
-  }
-
-  private async createGoalAdaptation(goalMemory: GoalMemory, adaptationType: string) {
-    let adaptation = {
-      goalId: goalMemory.id,
-      type: adaptationType,
-      description: '',
-      actions: [],
-      urgent: false
-    };
-
-    switch (adaptationType) {
-      case 'slow_progress':
-        adaptation.description = `Slow progress on "${goalMemory.goal}" - increasing execution frequency`;
-        adaptation.actions = [
-          'Increase agent execution frequency',
-          'Deploy additional execution agents',
-          'Optimize current strategies'
-        ];
-        adaptation.urgent = goalMemory.priority > 7;
-        break;
-
-      case 'strategy_change':
-        adaptation.description = `Major strategy change needed for "${goalMemory.goal}"`;
-        adaptation.actions = [
-          'Completely revise approach',
-          'Deploy different agent types',
-          'Research alternative strategies'
-        ];
-        adaptation.urgent = true;
-        break;
-    }
-
-    return adaptation;
   }
 
   private async generateNewSubGoals() {
@@ -353,7 +236,7 @@ export class GoalMemoryAgent {
     }
   }
 }
-
+  
 export async function GoalMemoryAgentRunner(context: AgentContext): Promise<AgentResponse> {
   const agent = new GoalMemoryAgent();
   return await agent.runner(context);

@@ -13,7 +13,7 @@ export class GoalAgent {
         .from('agi_goals_enhanced')
         .insert({
           goal_text: goal,
-          status: 'active',
+          status: 'active' as 'active',
           priority: Math.floor(Math.random() * 10) + 1,
           progress_percentage: 0
         } as Partial<AGIGoalEnhanced>);

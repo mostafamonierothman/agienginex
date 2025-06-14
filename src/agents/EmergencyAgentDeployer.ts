@@ -127,7 +127,7 @@ export class EmergencyAgentDeployer {
           source: 'emergency_deployment',
           industry: 'eye surgery',
           location: 'Europe',
-          status: 'new'
+          status: 'new' // enum value for database compliance
         },
         {
           email: `emergency.patient.${Date.now()}@healthtravel.com`,

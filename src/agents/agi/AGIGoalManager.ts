@@ -23,8 +23,8 @@ export class AGIGoalManager {
       try {
         const goalData = {
           goal_text: `🧠 Phase 2 AGI Goal: ${selectedGoal}`,
-          status: 'active',
-          priority: 10, // Highest priority for Phase 2 AGI goals
+          status: 'active' as 'active',
+          priority: 10,
           progress_percentage: 0
         };
 

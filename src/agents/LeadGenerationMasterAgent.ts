@@ -1,7 +1,8 @@
-
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { supabase } from '@/integrations/supabase/client';
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
+import { LeadDataEnricher } from './LeadDataEnricher';
+import { LeadDatabaseService } from './LeadDatabaseService';
 
 interface GoogleSearchResult {
   title: string;
@@ -14,10 +15,7 @@ export class LeadGenerationMasterAgent {
     try {
       const keyword = context.input?.keyword || "LASIK abroad UK";
       const agentId = context.input?.agentId || `lead_agent_${Date.now()}`;
-
       await sendChatUpdate(`🔍 ${agentId}: Starting lead generation for "${keyword}"`);
-
-      // Step 1: Test database connection first
       const connectionTest = await this.testDatabaseConnection();
       if (!connectionTest.success) {
         await sendChatUpdate(`❌ ${agentId}: Database connection failed - ${connectionTest.error}`);
@@ -27,25 +25,15 @@ export class LeadGenerationMasterAgent {
           timestamp: new Date().toISOString()
         };
       }
-
       await sendChatUpdate(`✅ ${agentId}: Database connection verified`);
-
-      // Step 2: Generate realistic medical tourism leads
       const searchResults = await this.generateMedicalTourismLeads(keyword);
-      
-      // Step 3: Enrich the results with realistic data
-      const enrichedLeads = this.enrichSearchResults(searchResults, keyword);
-      
+      const enricher = new LeadDataEnricher();
+      const enrichedLeads = enricher.enrichSearchResults(searchResults, keyword);
       await sendChatUpdate(`📊 ${agentId}: Generated ${enrichedLeads.length} enriched leads`);
-      
-      // Step 4: Save to Supabase database with detailed logging
-      const savedLeads = await this.saveLeadsToDatabase(enrichedLeads, agentId);
-      
-      // Step 5: Log agent completion with detailed metrics
+      const leadDbService = new LeadDatabaseService();
+      const savedLeads = await leadDbService.saveLeadsToDatabase(enrichedLeads, agentId);
       await this.logAgentCompletion(agentId, savedLeads.length, keyword);
-      
       await sendChatUpdate(`✅ ${agentId}: Successfully saved ${savedLeads.length} leads to database`);
-
       return {
         success: true,
         message: `Agent ${agentId} generated ${savedLeads.length} leads for "${keyword}"`,
@@ -58,7 +46,6 @@ export class LeadGenerationMasterAgent {
         },
         timestamp: new Date().toISOString()
       };
-
     } catch (error) {
       console.error('LeadGenerationMasterAgent error:', error);
       await sendChatUpdate(`❌ Lead generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
