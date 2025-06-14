@@ -1,4 +1,6 @@
 
+// This hook manages performance state for the selected business, using only real data updates
+
 import { useState } from "react";
 
 type Performance = {
