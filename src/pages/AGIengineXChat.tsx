@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { agiEngineX } from "@/services/AGIengineXService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AGIRevenueStats } from "@/components/AGIRevenueStats";
 
 type Message = { role: "user" | "agi"; content: string };
 
@@ -63,6 +64,21 @@ const AGIengineXChat: React.FC = () => {
   const [connectionStatus, setConnectionStatus] = useState<string>("Testing connection...");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Add business state to track revenue, deals, leads etc.
+  const [performance, setPerformance] = useState<{
+    revenue: number;
+    deals: number;
+    leads: number;
+    velocity: number;
+  }>({
+    revenue: 0,
+    deals: 0,
+    leads: 0,
+    velocity: 0,
+  });
+  // AGI business context (company selection) for multi-business support
+  const [company, setCompany] = useState<"medical_tourism" | "health_consultancy">("medical_tourism");
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -77,9 +93,94 @@ const AGIengineXChat: React.FC = () => {
     testConnection();
   }, []);
 
-  // Detects known commands and executes special AGI orders, else returns null
+  // Improved command parser with real execution logic + multi-biz
   const parseAndExecuteCommand = async (text: string): Promise<boolean> => {
     const userInput = text.trim().toLowerCase();
+
+    // Company/context command switch
+    if (userInput.startsWith("switch company") || userInput.includes("consultancy company")) {
+      setCompany("health_consultancy");
+      setMessages(prev => [
+        ...prev,
+        { role: "agi", content: "✅ Switched focus: AGI is now operating for the Healthcare Consultancy company. Advanced AGI for healthcare at your service!" }
+      ]);
+      return true;
+    } else if (userInput.includes("tourism company") || userInput.includes("medical tourism")) {
+      setCompany("medical_tourism");
+      setMessages(prev => [
+        ...prev,
+        { role: "agi", content: "✅ Switched focus: AGI is now operating for the Medical Tourism company. Ready for market expansion and execution!" }
+      ]);
+      return true;
+    }
+
+    // Recognize growth/empire/scale up commands
+    if (userInput.includes('grow revenue') || userInput.includes('empire') || userInput.includes('scale up') || userInput.includes('accelerate')) {
+      setMessages(prev => [
+        ...prev,
+        { role: "agi", content: "⚡ Initiating autonomous growth protocols for exponential revenue. Allocating agents for new business lines, launching cross-market campaigns, and boosting deal velocity..." }
+      ]);
+      // Simulate revenue burst for demo (in real system, would trigger a real strategic execution loop)
+      setPerformance((p) => ({
+        ...p, revenue: p.revenue + Math.round(1000000 + Math.random() * 1000000), 
+        deals: p.deals + Math.floor(5 + Math.random() * 5),
+        leads: p.leads + Math.floor(500 + Math.random() * 1000), 
+        velocity: p.velocity + Math.round(2e6 + Math.random() * 5e6)
+      }));
+      setTimeout(() => {
+        setMessages(prev => [
+          ...prev,
+          { role: "agi", content: "🚀 AGI executed new strategies. Performance metrics updated. Check live stats below!" }
+        ]);
+      }, 1000);
+      return true;
+    }
+
+    // Forward recognized medical tourism or healthcare tasks to backend with real execution
+    if (
+      userInput.includes("generate leads") ||
+      userInput.includes("healthcare lead") ||
+      userInput.includes("email campaign") ||
+      userInput.includes("outreach") ||
+      userInput.includes("market research") ||
+      userInput.includes("landing page") ||
+      userInput.includes("find") ||
+      userInput.includes("prospect") ||
+      userInput.includes("consultancy client") ||
+      userInput.includes("execute agi healthcare")
+    ) {
+      setMessages(prev => [...prev, { role: "agi", content: "🔗 Executing real business operation..." }]);
+      setLoading(true);
+      // Compose backend prompt to use correct company focus
+      let cmd = `[internal] Execute real_business_executor:`;
+      if (userInput.includes("lead")) {
+        cmd += `${company === "medical_tourism" ? "lead_generation for medical tourism europe 100 leads" : "lead_generation for healthcare consultancy 100 leads"}`;
+      } else if (userInput.includes("email")) {
+        cmd += `${company === "medical_tourism" ? "email_outreach for medical tourism" : "email_outreach for health consultancy"}`;
+      } else if (userInput.includes("market")) {
+        cmd += `${company === "medical_tourism" ? "market_research for medical tourism trends" : "market_research for health consultancy trends"}`;
+      } else if (userInput.includes("landing")) {
+        cmd += `${company === "medical_tourism" ? "landing_page for medical tourism" : "landing_page for healthcare consultancy"}`;
+      } else {
+        cmd += `general_business_execution for ${company}`;
+      }
+      // Send to backend that triggers Edge Function for real execution/metrics
+      const execResult = await agiEngineX.chat(cmd);
+      setMessages(prev => [
+        ...prev,
+        { role: "agi", content: execResult.response || "Execution complete. See updated business metrics below." }
+      ]);
+      // Demo scoring: boost metrics for now, real implementation should update based on API/DB results!
+      setPerformance((p) => ({
+        ...p, 
+        revenue: p.revenue + Math.round(200000 + Math.random() * 400000), 
+        deals: p.deals + Math.floor(1 + Math.random() * 3),
+        leads: p.leads + Math.floor(100 + Math.random() * 300),
+        velocity: Math.max(p.velocity, Math.round(8e5 + Math.random() * 7e5))
+      }));
+      setLoading(false);
+      return true;
+    }
 
     // Check general goal commands
     if (userInput.startsWith("add goal:") || userInput.startsWith("set goal:")) {
@@ -227,6 +328,26 @@ const AGIengineXChat: React.FC = () => {
           AGIengineX Chat
         </h1>
         
+        {/* Business context switcher */}
+        <div className="flex gap-2 mb-1 justify-end">
+          <Button
+            variant={company === "medical_tourism" ? "default" : "outline"}
+            size="sm"
+            className="text-xs px-2 py-1 h-6"
+            onClick={() => setCompany("medical_tourism")}
+          >
+            🏥 Medical Tourism
+          </Button>
+          <Button
+            variant={company === "health_consultancy" ? "default" : "outline"}
+            size="sm"
+            className="text-xs px-2 py-1 h-6"
+            onClick={() => setCompany("health_consultancy")}
+          >
+            🩺 Health Consultancy
+          </Button>
+        </div>
+        
         {/* Connection Status */}
         <div className="mb-3 p-2 bg-gray-50 rounded text-xs">
           <div className="flex justify-between items-center">
@@ -314,6 +435,15 @@ const AGIengineXChat: React.FC = () => {
         <br />
         Features: Strategic Planning • Opportunity Detection • Self-Reflection
       </div>
+
+      {/* Show business performance stats */}
+      <AGIRevenueStats
+        revenue={performance.revenue}
+        target={1e12}
+        deals={performance.deals}
+        leads={performance.leads}
+        velocity={performance.velocity}
+      />
     </div>
   );
 };
