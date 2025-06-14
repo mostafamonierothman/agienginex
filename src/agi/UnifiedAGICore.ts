@@ -1,6 +1,8 @@
 
 import { PersistentMemory } from "@/core/PersistentMemory";
 import { v4 as uuidv4 } from "uuid";
+import { LessonManager } from "./LessonManager";
+import { ActionPluginManager } from "./ActionPluginManager";
 
 type AGIState = {
   running: boolean;
@@ -11,11 +13,6 @@ type AGIState = {
   generation: number;
 };
 
-type AGIOptions = {
-  autoStart?: boolean;
-};
-
-// Singleton Functional AGI
 class UnifiedAGICore {
   private static instance: UnifiedAGICore;
   private state: AGIState = {
@@ -26,11 +23,14 @@ class UnifiedAGICore {
     logs: [],
     generation: 0,
   };
+
   private memory: PersistentMemory;
   private loopTimer: NodeJS.Timeout | null = null;
   private observers: Array<() => void> = [];
-  // Lessons are handled *outside* the main state to prevent type drift
-  private lessonsLearned: string[] = [];
+
+  // Managers
+  private lessons: LessonManager = new LessonManager();
+  private plugins: ActionPluginManager = new ActionPluginManager();
 
   private constructor() {
     this.memory = new PersistentMemory();
@@ -58,8 +58,7 @@ class UnifiedAGICore {
   }
 
   public getState() {
-    // safely bind the lessons outside of the "locked" AGIState
-    return { ...this.state, lessonsLearned: [...this.lessonsLearned] };
+    return { ...this.state, lessonsLearned: this.lessons.getLessons(), plugins: this.plugins.getPlugins().map(p => p.name) };
   }
 
   private log(msg: string) {
@@ -71,7 +70,7 @@ class UnifiedAGICore {
 
   private async persistState() {
     await this.memory.set("unified_agi_state", this.state);
-    await this.memory.set("unified_agi_lessons", this.lessonsLearned);
+    await this.memory.set("unified_agi_lessons", this.lessons.getLessons());
   }
 
   private async restoreState() {
@@ -84,7 +83,18 @@ class UnifiedAGICore {
 
   private async restoreLessons() {
     const lessons = await this.memory.get("unified_agi_lessons", []);
-    this.lessonsLearned = Array.isArray(lessons) ? lessons : [];
+    if (Array.isArray(lessons)) this.lessons.setLessons(lessons);
+  }
+
+  // Plugins
+  public registerPlugin(plugin: Parameters<ActionPluginManager["register"]>[0]) {
+    this.plugins.register(plugin);
+    this.log(`🔌 Registered plugin "${plugin.name}" (${plugin.description})`);
+    this.notify();
+  }
+
+  public getRegisteredPlugins() {
+    return this.plugins.getPlugins();
   }
 
   public async start() {
@@ -120,9 +130,10 @@ class UnifiedAGICore {
       logs: [],
       generation: 0,
     };
-    this.lessonsLearned = [];
+    this.lessons.clear();
+    this.plugins.clear();
     await this.memory.clear();
-    this.log("🔄 AGI memory, goals, and lessons cleared. State reset.");
+    this.log("🔄 AGI memory, goals, lessons, and plugins cleared. State reset.");
     this.persistState();
     this.notify();
   }
@@ -149,7 +160,7 @@ class UnifiedAGICore {
     this.state.generation++;
     this.log(`🔁 AGI Generation ${this.state.generation}...`);
 
-    // 1. Goal selection (now learning-aware)
+    // 1. Goal selection
     if (!this.state.currentGoal) {
       const newGoal = this.autoGenerateGoal();
       await this.setGoal(newGoal);
@@ -158,14 +169,25 @@ class UnifiedAGICore {
     // 2. Memory recall & analysis
     const thoughts = await this.recallAndReason();
 
-    // 3. Act: attempt to achieve goal
-    const result = await this.actOnGoal(this.state.currentGoal!, thoughts);
+    // 3. Act: run registered plugins on the goal and thoughts
+    let combinedResult = "";
+    let pluginOutputs: string[] = [];
+    if (this.plugins.getPlugins().length > 0) {
+      const memSnapshot = {};
+      const outputs = await this.plugins.run(this.state.currentGoal!, thoughts, memSnapshot);
+      pluginOutputs = outputs.map(o => `[${o.name}] ${o.output}`);
+      combinedResult = pluginOutputs.join(" | ");
+      this.log(`🔌 Plugins executed: ${pluginOutputs.join(" | ")}`);
+    } else {
+      // fallback default reasoning/action
+      combinedResult = await this.defaultActOnGoal(this.state.currentGoal!, thoughts);
+    }
 
     // 4. Store results and memory, and LEARN
-    if (result) {
+    if (combinedResult) {
       this.state.completedGoals.push({
         goal: this.state.currentGoal!,
-        result,
+        result: combinedResult,
         timestamp: new Date().toISOString(),
       });
       await this.addMemory(
@@ -173,31 +195,27 @@ class UnifiedAGICore {
         {
           goal: this.state.currentGoal,
           thoughts,
-          result,
+          result: combinedResult,
+          plugins: pluginOutputs,
           generation: this.state.generation,
         }
       );
-      // Direct learning after a successful run
-      this.learnFromGoal(this.state.currentGoal!, result, thoughts);
+      this.learnFromGoal(this.state.currentGoal!, combinedResult, thoughts);
       this.state.currentGoal = null;
     }
 
-    // 5. Learn and optimize (self-improve)
+    // 5. Self-improve
     this.selfImprove();
 
     this.persistState();
     this.notify();
-
     this.loopTimer = setTimeout(() => this.loop(), 2000);
   }
 
   private learnFromGoal(goal: string, result: string, thoughts: string) {
     const lesson = `If AGI works on "${goal}", result: ${result.slice(0, 48)}...`;
-    if (!this.lessonsLearned.includes(lesson)) {
-      this.lessonsLearned.unshift(lesson);
-      if (this.lessonsLearned.length > 40) this.lessonsLearned = this.lessonsLearned.slice(0, 40);
-      this.log(`🧠 Learned lesson: ${lesson}`);
-    }
+    this.lessons.addLesson(lesson);
+    this.log(`🧠 Learned lesson: ${lesson}`);
   }
 
   private autoGenerateGoal(): string {
@@ -210,9 +228,10 @@ class UnifiedAGICore {
       "Summarize what I've learned so far",
       "Strengthen my reasoning abilities"
     ];
-    // Integrate learning
-    if (this.lessonsLearned.length > 0 && Math.random() < 0.4) {
-      const fragment = this.lessonsLearned[Math.floor(Math.random() * this.lessonsLearned.length)];
+    // Use lessons bias
+    const lessons = this.lessons.getLessons();
+    if (lessons.length > 0 && Math.random() < 0.4) {
+      const fragment = lessons[Math.floor(Math.random() * lessons.length)];
       return `Expand on learned lesson: ${fragment.slice(0, 60)}`;
     }
     const previous = this.state.completedGoals;
@@ -239,7 +258,7 @@ class UnifiedAGICore {
     );
   }
 
-  private async actOnGoal(goal: string, thoughts: string): Promise<string> {
+  private async defaultActOnGoal(goal: string, thoughts: string): Promise<string> {
     await new Promise((res) => setTimeout(res, 500));
     return `Goal "${goal}" was addressed using current knowledge and thoughts: ${thoughts}`;
   }
@@ -254,3 +273,4 @@ class UnifiedAGICore {
 export const unifiedAGI = UnifiedAGICore.getInstance();
 
 // ... End of file
+
