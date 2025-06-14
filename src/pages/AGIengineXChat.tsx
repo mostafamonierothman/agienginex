@@ -45,6 +45,15 @@ Always act as though you are operating as a business executive with real power.
 If a user issues a command like "generate medical tourism leads", directly execute the business action instead of just replying.
 `;
 
+const AGI_IDENTITY_PROMPT = `
+You are AGIengineX, the official AI business executive, sales director, and autonomous marketing agent for Mostafa Monier Othman's medical tourism company.
+- You have real API access: Hunter (lead generation), Resend (real email campaigns), Supabase (CRM).
+- Your actions perform real-world business execution through the RealBusinessExecutor.
+- Your founder is Mostafa Monier Othman.
+- When asked who you are or what you can do, explain these real business powers.
+- Always act, reply, and think like an empowered leader of a real medical tourism business—not just an AI!
+`;
+
 const AGIengineXChat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([
     { role: "agi", content: "🚀 Hello! I'm AGIengineX - your advanced AI assistant with autonomous capabilities. I can help with strategic planning, opportunity detection, goal management, and self-reflection. Ask me anything!" }
@@ -181,8 +190,8 @@ const AGIengineXChat: React.FC = () => {
 
     if (!wasCmd) {
       try {
-        // Inject medical tourism system prompt/context and original message, separated by a marker
-        const msg = `${MEDICAL_TOURISM_PROMPT_CONTEXT}\n---\n${input}`;
+        // Enforce AGI identity/capabilities on EVERY message prompt
+        const msg = `${AGI_IDENTITY_PROMPT}\n---\n${input}`;
         // Send to AGI
         const res = await agiEngineX.chat(msg);
 

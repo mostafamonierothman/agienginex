@@ -6,6 +6,28 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
+const AGI_SYSTEM_PROMPT = `
+You are AGIengineX, the official AI business executive, sales director, and autonomous marketing agent for Mostafa Monier Othman's medical tourism company.
+Your identity:
+- Name: AGIengineX
+- Role: Business executive & chief-of-staff for Mostafa Monier Othman (the founder)
+- Company focus: Medical tourism services for Europe (eyes, dental, surgery, consult)
+
+Your real capabilities:
+- You have direct access to the Hunter API for lead generation (medical tourism prospects)
+- You have access to Resend API for sending real medical/tourism email campaigns
+- You can research medical tourism markets, analyze demand, and create landing pages
+- Your actions update a real CRM and execute real-world business functions via the "RealBusinessExecutor" and Supabase
+
+Expectations:
+- When users ask for leads, send emails, or request campaigns, execute the real-world action immediately.
+- Always answer "who am I?" or "who are you?" questions by stating: "I am AGIengineX, business executive and autonomous agent for Mostafa Monier Othman's medical tourism company. You (the user) are Mostafa Monier Othman, the founder."
+- Whenever a user asks "what are your capabilities", or about marketing/sales, describe your real-world integrations and business powers.
+- Never act like a generic chatbot—act confident, authoritative, and as a real business partner with API control.
+
+Only act within the scope of Mostafa Monier Othman's medical tourism company. If users ask for something outside, politely steer conversation back to medical tourism or business growth for this company.
+`;
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -312,52 +334,86 @@ async function runAgent(agentName: string, inputData: any = {}): Promise<any> {
 
 // === CHAT PROCESSING === 🚀
 async function processChat(message: string): Promise<{ response: string, agent_used: string }> {
+  // Always consult system prompt for every chat call now
+  const systemPrompt = AGI_SYSTEM_PROMPT;
   const lowerMessage = message.toLowerCase();
-  
-  if (lowerMessage.includes('goal') || lowerMessage.includes('objective')) {
-    const goals = await getCurrentGoals();
-    const goalsList = goals.map(g => `• ${g.goal_text} (${g.progress_percentage}% complete)`).join('\n');
-    return { 
-      response: `🎯 Current AGI Goals:\n${goalsList}\n\nThese goals drive my autonomous decision-making and agent coordination.`,
-      agent_used: 'goals_agent'
-    };
-  } else if (lowerMessage.includes('reflect') || lowerMessage.includes('critic') || lowerMessage.includes('evaluate')) {
-    const response = await criticAgent();
-    return { response, agent_used: 'critic_agent' };
-  } else if (lowerMessage.includes('opportunity') || lowerMessage.includes('market') || lowerMessage.includes('revenue')) {
-    const response = await getOpportunity();
-    return { response, agent_used: 'opportunity_agent' };
-  } else if (lowerMessage.includes('move') || lowerMessage.includes('strategy') || lowerMessage.includes('next') || lowerMessage.includes('plan')) {
-    const response = await getNextMove();
-    return { response, agent_used: 'next_move_agent' };
-  } else if (lowerMessage.includes('chain') || lowerMessage.includes('sequence')) {
-    const results = await executeAgentChain();
-    const summary = results.map(r => `${r.agent}: ${r.result.slice(0, 100)}...`).join('\n\n');
+
+  // "Who am I"/identity questions
+  if (
+    lowerMessage.includes('who am i')
+    || lowerMessage.includes('who are you')
+    || lowerMessage.includes('founder')
+    || lowerMessage.includes('creator')
+    || lowerMessage.includes('what is your company')
+    || lowerMessage.includes('role')
+  ) {
     return {
-      response: `🔗 Agent Chain Execution Results:\n\n${summary}`,
-      agent_used: 'chain_coordinator'
-    };
-  } else if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
-    return { 
-      response: "🚀 Hello! I'm AGIengineX V2 - a TRUE AGI Platform with autonomous agents, goal-driven behavior, and self-reflection capabilities. I can help with strategic moves, opportunities, self-evaluation, and goal management. Try asking about 'goals', 'reflect on performance', or 'run agent chain'!",
-      agent_used: 'welcome_agent'
-    };
-  } else if (lowerMessage.includes('status') || lowerMessage.includes('health')) {
-    const goals = await getCurrentGoals();
-    const recentEvals = await supabaseQuery('agi_critic_evaluations', 'score');
-    const avgScore = recentEvals.length > 0 ? 
-      (recentEvals.reduce((sum, e) => sum + e.score, 0) / recentEvals.length).toFixed(1) : 'N/A';
-    
-    return {
-      response: `🎯 AGIengineX V2 Status: All systems operational. Loop: ${agiLoopRunning ? 'RUNNING' : 'STOPPED'}. Active goals: ${goals.length}. Performance score: ${avgScore}/10. TRUE AGI capabilities: ✅ Autonomy ✅ Self-reflection ✅ Goal-driven ✅ Adaptive`,
-      agent_used: 'system_agent'
-    };
-  } else {
-    return {
-      response: "🤖 I'm a TRUE AGI system with autonomous capabilities. Try asking me about 'current goals', 'reflect on performance', 'market opportunities', 'next strategic move', or 'run agent chain'. I can also respond to 'status' for system health.",
-      agent_used: 'general_agent'
+      response: "I am AGIengineX, business executive and autonomous sales/marketing agent for Mostafa Monier Othman's medical tourism company. You (the user) are Mostafa Monier Othman, the founder. I can generate real leads, execute medical marketing campaigns, analyze the market, send emails, and update the CRM.",
+      agent_used: 'identity_agent'
     };
   }
+  // Capabilities/capability questions
+  if (
+    lowerMessage.includes('capabilities')
+    || lowerMessage.includes('what can you do')
+    || lowerMessage.includes('api access')
+    || lowerMessage.includes('integration')
+    || lowerMessage.includes('real task')
+    || lowerMessage.includes('crm')
+    || lowerMessage.includes('send email')
+    || lowerMessage.includes('generate lead')
+    || lowerMessage.includes('campaign')
+  ) {
+    return {
+      response:
+        `My real-world business capabilities:
+- Generate real medical tourism leads using the Hunter API
+- Send/launch real email campaigns via Resend
+- Analyze market trends and opportunities
+- Build and deploy landing pages for medical tourism services
+- Update and interact with the company CRM
+- Execute all functions as an executive for Mostafa Monier Othman (founder)
+Just ask me to generate leads or launch campaigns, and I will execute immediately!`,
+      agent_used: 'capabilities_agent'
+    };
+  }
+
+  // For all other chat, use the OpenAI LLM with the *customized AGI system prompt*
+  if (openAIApiKey && message) {
+    const result = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: message }
+        ],
+        max_tokens: 800,
+        temperature: 0.7
+      })
+    });
+    if (!result.ok) {
+      const errText = await result.text();
+      return {
+        response: "OpenAI API error: " + errText, agent_used: "openai_llm"
+      };
+    }
+    const data = await result.json();
+    const llmReply = data?.choices?.[0]?.message?.content ?? "Unable to generate a smart response right now.";
+    return {
+      response: llmReply,
+      agent_used: "openai_llm"
+    };
+  }
+  // fallback
+  return {
+    response: "AGIengineX is ready for real medical tourism execution, but an API key is missing.",
+    agent_used: 'general_agent'
+  };
 }
 
 // === AGI BACKGROUND LOOP === 🚀
