@@ -4,13 +4,14 @@ import { agentRegistry } from "@/config/AgentRegistry";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Brain, Zap, Bot, BarChart, RefreshCw, Info, ArrowUpRightFromCircle } from "lucide-react";
+import { Brain, Zap, Bot, BarChart, RefreshCw, Info, ArrowUpRightFromCircle, Upload, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import UniversalAgentBusLog from "../components/UniversalAgentBusLog";
+import MetaFeedbackPanel from "../components/MetaFeedbackPanel";
 
 // Helper fetch for meta-agent recommendations
 const fetchMetaInsights = async () => {
-  // In a real world app: Query meta-agent or supervisor_queue for latest analysis
   let metaText = "Thinking...";
   try {
     const { data, error } = await supabase
@@ -20,7 +21,6 @@ const fetchMetaInsights = async () => {
       .limit(10);
     if (error) throw error;
     if (data && data.length > 0) {
-      // Show newest meta/supervisor output
       metaText = data
         .filter((d) => d.agent_name && d.output && (d.agent_name.includes("meta_agent") || d.agent_name.includes("nexus_ai") || d.agent_name.includes("supervisor")))
         .map((d) => `[${d.agent_name}] ${d.output}`)
@@ -37,6 +37,9 @@ const MetaAGICommandCenter = () => {
   const [metaInsights, setMetaInsights] = useState("Thinking...");
   const [loading, setLoading] = useState(false);
 
+  // NEW: Track registry update state for reloads
+  const [registryUpdated, setRegistryUpdated] = useState(Date.now());
+
   const refreshAgents = () => {
     setAgents(agentRegistry.getAllAgents());
   };
@@ -45,6 +48,18 @@ const MetaAGICommandCenter = () => {
     setLoading(true);
     setMetaInsights(await fetchMetaInsights());
     setLoading(false);
+  };
+
+  // Dynamic AgentRegistry Reload (simulate hot-reload)
+  const reloadDynamicAgentRegistry = () => {
+    // In future, could scan and re-import new agents; here just trigger update & toast
+    agentRegistry.updateSystemStatus();
+    setRegistryUpdated(Date.now());
+    setAgents(agentRegistry.getAllAgents());
+    toast({
+      title: "Agent Registry Reloaded",
+      description: "All registered agents have been refreshed for new capabilities.",
+    });
   };
 
   // Refresh agents and meta-insights periodically
@@ -84,7 +99,7 @@ const MetaAGICommandCenter = () => {
             Meta AGI Command Center
           </CardTitle>
           <CardDescription className="text-gray-300">
-            View live status of all agents, surface meta-AGI recommendations, and steer the next evolution of AGIengineX. Each click here can ripple across all autonomous systems.
+            View integrated AGI system live status, meta-recommendations, universal agent bus, and participate in evolution: registry reload, feedback loop, workflows—all in one console.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -97,6 +112,9 @@ const MetaAGICommandCenter = () => {
             </Button>
             <Button variant="secondary" disabled={loading} onClick={handleRunRandomAgent} className="ml-auto">
               <Brain className="w-4 h-4 mr-1" /> Trigger Next Agent
+            </Button>
+            <Button variant="outline" onClick={reloadDynamicAgentRegistry} className="border-green-400 text-green-300">
+              <Upload className="w-4 h-4 mr-1" /> Reload Agent Registry
             </Button>
           </div>
         </CardContent>
@@ -146,6 +164,12 @@ const MetaAGICommandCenter = () => {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Universal Agent Bus Viewer + Feedback */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <UniversalAgentBusLog key={registryUpdated} />
+        <MetaFeedbackPanel />
       </div>
 
       {/* Future: AGI Feedback/Experiments area */}
