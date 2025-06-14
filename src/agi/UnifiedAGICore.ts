@@ -7,7 +7,7 @@ import { AGIState } from "./AGIState";
 import { AGINotificationManager } from "./AGINotification";
 import { AGIPluginHandler } from "./AGIPluginHandler";
 import { GoalScheduler } from "./GoalScheduler";
-import { AGIAgentCollaborationManager } from "./AGIAgentCollaborationManager";
+import { AGIAgentCollaborationManager, PeerFeedback } from "./AGIAgentCollaborationManager";
 
 class UnifiedAGICore {
   private static instance: UnifiedAGICore;

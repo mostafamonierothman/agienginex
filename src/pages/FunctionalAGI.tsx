@@ -171,6 +171,27 @@ const FunctionalAGIPage: React.FC = () => {
             </div>
           </div>
 
+          {/* === Collaborative Peer Feedback === */}
+          <div className="mb-4">
+            <span className="text-blue-300 font-bold">Recent Peer Feedback:</span>
+            {state.recentCollaborationFeedback && state.recentCollaborationFeedback.length > 0 ? (
+              <ul className="ml-5 mt-2 text-xs">
+                {state.recentCollaborationFeedback
+                  .slice(-5)
+                  .reverse()
+                  .map((fb: any, idx: number) => (
+                    <li key={idx} className="mb-1">
+                      <span className="font-semibold text-cyan-300">{fb.agent}: </span>
+                      <span className="text-white">{fb.feedback}</span>
+                      <span className="ml-2 text-gray-500">{new Date(fb.timestamp).toLocaleTimeString()}</span>
+                    </li>
+                  ))}
+              </ul>
+            ) : (
+              <span className="ml-2 text-gray-400">No peer feedback yet.</span>
+            )}
+          </div>
+
           {/* === AGI Status === */}
           <div className="mb-4">
             <span className="text-green-400 font-semibold">Status:</span>{" "}
