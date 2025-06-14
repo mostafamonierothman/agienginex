@@ -1,6 +1,6 @@
-
 import { PersistentMemory } from "@/core/PersistentMemory";
 import { AGIState } from "./AGIState";
+import { SupabaseAGIStateService } from "@/services/SupabaseAGIStateService";
 
 export class AGIStateManagement {
   private memory: PersistentMemory;
@@ -27,13 +27,25 @@ export class AGIStateManagement {
   }
 
   async persistState(extra: Record<string, any> = {}) {
+    // Persist state to Supabase as primary source
+    try {
+      await SupabaseAGIStateService.saveState({ ...this.state, ...extra });
+    } catch (e) {
+      console.error("[AGIStateManagement] Supabase persistState error:", e);
+    }
+    // Also persist locally for resilience
     await this.memory.set("unified_agi_state", { ...this.state, ...extra });
   }
 
   async restoreState() {
-    const prev = await this.memory.get("unified_agi_state", null);
-    if (prev) {
-      this.state = { ...prev, logs: [], running: false };
+    // Try to load from Supabase first
+    const remote = await SupabaseAGIStateService.loadState();
+    if (remote) {
+      this.state = { ...remote };
+    } else {
+      // fallback local
+      const prev = await this.memory.get("unified_agi_state", null);
+      if (prev) this.state = { ...prev, logs: [], running: false };
     }
   }
 
@@ -47,5 +59,7 @@ export class AGIStateManagement {
       logs: [],
       generation: 0,
     };
+    // Erase from Supabase as well (optional; here we just reset)
+    await SupabaseAGIStateService.saveState(this.state);
   }
 }

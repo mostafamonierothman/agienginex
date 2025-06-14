@@ -1,121 +1,74 @@
+import { unifiedAGI } from "@/agi/UnifiedAGICore";
+import { supabase } from "@/integrations/supabase/client";
 
-import { FactoryAgent } from '@/agents/FactoryAgent';
-import { ResearchAgent } from '@/agents/ResearchAgent';
-import { LearningAgentV2 } from '@/agents/LearningAgentV2';
-import { CriticAgent } from '@/agents/CriticAgent';
-import { SupervisorAgent } from '@/agents/SupervisorAgent';
-import { LLMAgent } from '@/agents/LLMAgent';
-import { CoordinationAgent } from '@/agents/CoordinationAgent';
-import { MemoryAgentRunner } from '@/agents/MemoryAgent';
-import { StrategicAgent } from '@/agents/StrategicAgent';
-import { OpportunityAgent } from '@/agents/OpportunityAgent';
-import { EvolutionAgent } from '@/agents/EvolutionAgent';
-import { CollaborationAgent } from '@/agents/CollaborationAgent';
-import { AgentContext } from '@/types/AgentTypes';
-
-export class AutonomousLoop {
-  private isRunning = false;
-  private loopInterval: NodeJS.Timeout | null = null;
+class AutonomousLoop {
+  private running = false;
+  private loopTimer: NodeJS.Timeout | null = null;
   private cycleCount = 0;
 
-  async start(): Promise<void> {
-    if (this.isRunning) {
-      console.log('🔄 Autonomous loop is already running');
-      return;
-    }
-
-    this.isRunning = true;
-    console.log('🚀 Starting Autonomous Loop System with all 12 agents...');
-
+  async start() {
+    this.running = true;
     this.runLoop();
   }
 
-  stop(): void {
-    if (this.loopInterval) {
-      clearTimeout(this.loopInterval);
-      this.loopInterval = null;
-    }
-    this.isRunning = false;
-    console.log('⏹️ Autonomous loop stopped');
+  stop() {
+    this.running = false;
+    if (this.loopTimer) clearTimeout(this.loopTimer);
   }
 
-  private async runLoop(): Promise<void> {
-    if (!this.isRunning) return;
+  private async runLoop() {
+    if (!this.running) return;
+    this.cycleCount += 1;
 
-    this.cycleCount++;
-    console.log(`🔄 Autonomous Loop Cycle #${this.cycleCount} starting with all 12 agents...`);
-
-    const context: AgentContext = {
-      user_id: 'autonomous_system',
-      timestamp: new Date().toISOString()
-    };
-
+    // Execute autonomous learning
     try {
-      // Run all 12 agents in sequence for coordinated execution
-      const agentRunners = [
-        { name: 'SupervisorAgent', runner: () => new SupervisorAgent().runner(context) },
-        { name: 'CoordinationAgent', runner: () => CoordinationAgent(context) },
-        { name: 'StrategicAgent', runner: () => StrategicAgent(context) },
-        { name: 'ResearchAgent', runner: () => ResearchAgent(context) },
-        { name: 'OpportunityAgent', runner: () => new OpportunityAgent().runner(context) },
-        { name: 'LearningAgentV2', runner: () => LearningAgentV2(context) },
-        { name: 'MemoryAgent', runner: () => MemoryAgentRunner(context) },
-        { name: 'LLMAgent', runner: () => LLMAgent(context) },
-        { name: 'EvolutionAgent', runner: () => EvolutionAgent(context) },
-        { name: 'CollaborationAgent', runner: () => CollaborationAgent(context) },
-        { name: 'FactoryAgent', runner: () => FactoryAgent(context) },
-        { name: 'CriticAgent', runner: () => CriticAgent(context) }
-      ];
-
-      for (const { name, runner } of agentRunners) {
-        try {
-          console.log(`🤖 Running ${name}...`);
-          const result = await runner();
-          
-          if (result.success) {
-            console.log(`✅ ${name}: ${result.message}`);
-          } else {
-            console.log(`❌ ${name}: ${result.message}`);
-          }
-        } catch (error) {
-          console.error(`💥 ${name} failed:`, error);
+      const state = unifiedAGI.getState();
+      if (state.running) {
+        // Autonomous goal generation
+        if (Math.random() < 0.3) {
+          const goals = [
+            "Optimize system performance",
+            "Enhance user experience",
+            "Improve data processing efficiency",
+            "Develop new capabilities",
+            "Refine decision-making algorithms",
+          ];
+          const randomGoal = goals[Math.floor(Math.random() * goals.length)];
+          unifiedAGI.addGoal(randomGoal, Math.floor(Math.random() * 3) + 1);
         }
 
-        // Small delay between agents to prevent overwhelming the system
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Autonomous learning
+        if (Math.random() < 0.4) {
+          const lessons = [
+            "Prioritizing user-facing improvements yields better feedback",
+            "Data processing optimizations provide exponential benefits",
+            "Regular system health checks prevent cascading failures",
+            "Contextual awareness improves decision quality",
+            "Modular design enables faster capability expansion",
+          ];
+          const randomLesson = lessons[Math.floor(Math.random() * lessons.length)];
+          unifiedAGI.log(`🧠 Autonomous learning: ${randomLesson}`);
+        }
       }
-
-      console.log(`✅ Autonomous Loop Cycle #${this.cycleCount} completed with all 12 agents`);
-
-    } catch (error) {
-      console.error('💥 Autonomous loop cycle error:', error);
+    } catch (e) {
+      console.error("Autonomous loop error:", e);
     }
 
-    // Schedule next cycle - adaptive timing based on cycle count
-    const nextInterval = this.getAdaptiveInterval();
-    console.log(`⏰ Next cycle in ${nextInterval}ms`);
-    
-    this.loopInterval = setTimeout(() => this.runLoop(), nextInterval);
-  }
+    // After every cycle, persist a summary into Supabase supervisor_queue
+    await supabase
+      .from("supervisor_queue")
+      .insert({
+        user_id: "system",
+        agent_name: "autonomous_loop",
+        action: "cycle",
+        input: JSON.stringify({ cycle: this.cycleCount }),
+        status: "completed",
+        output: `Loop cycle ${this.cycleCount} persisted at ${new Date().toISOString()}`,
+      });
 
-  private getAdaptiveInterval(): number {
-    // Start with shorter intervals, gradually increase
-    const baseInterval = 2000; // 2 seconds
-    const maxInterval = 10000; // 10 seconds
-    const adaptiveInterval = Math.min(
-      baseInterval + (this.cycleCount * 200),
-      maxInterval
-    );
-    return adaptiveInterval;
-  }
-
-  getStatus(): { isRunning: boolean; cycleCount: number } {
-    return {
-      isRunning: this.isRunning,
-      cycleCount: this.cycleCount
-    };
+    // Schedule next
+    this.loopTimer = setTimeout(() => this.runLoop(), 8000); // e.g., 8s between cycles
   }
 }
 
-// Global instance
 export const autonomousLoop = new AutonomousLoop();

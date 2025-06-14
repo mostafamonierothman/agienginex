@@ -73,6 +73,8 @@ class UnifiedAGICore {
   }
 
   async start() {
+    // On start, restore persisted state (uses Supabase, see AGIStateManagement)
+    await this.stateManager.restoreState();
     if (this.stateManager.getState().running) {
       this.log("AGI already running.");
       return;
