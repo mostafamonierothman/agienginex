@@ -2,6 +2,7 @@ import { PersistentMemory } from "@/core/PersistentMemory";
 import { v4 as uuidv4 } from "uuid";
 import { LessonManager } from "./LessonManager";
 import { ActionPluginManager } from "./ActionPluginManager";
+import { vectorMemoryService } from "@/services/VectorMemoryService";
 
 type AGIState = {
   running: boolean;
@@ -30,6 +31,8 @@ class UnifiedAGICore {
   // Managers
   private lessons: LessonManager = new LessonManager();
   private plugins: ActionPluginManager = new ActionPluginManager();
+
+  private vectorMemoryId = "core-agi-agent"; // static agentId for AGI's vector memory
 
   private constructor() {
     this.memory = new PersistentMemory();
@@ -154,6 +157,21 @@ class UnifiedAGICore {
     await this.memory.set(key, value);
     this.state.memoryKeys = await this.memory.keys();
     this.log(`🧠 Memory stored under key "${key}"`);
+    // --- VECTOR MEMORY STORE ---
+    try {
+      // Store a text summary and the important goal in vector memory
+      const summary = (typeof value === "string") ? value : (value?.goal || "") + " | " + (value?.result || "");
+      await vectorMemoryService.storeMemory(
+        this.vectorMemoryId,
+        summary,
+        "core-agi-loop",
+        0.7 // moderately important
+      );
+      this.log(`🧬 Vector memory: stored "${(summary ?? "").slice(0, 48)}..."`);
+    } catch (e) {
+      this.log("Vector memory error: " + (e?.message || e));
+    }
+
     this.persistState();
     this.notify();
   }
@@ -248,19 +266,42 @@ class UnifiedAGICore {
   }
 
   private async recallAndReason(): Promise<string> {
+    // First, grab symbolic memory as before:
     const keys = await this.memory.keys();
-    if (!keys || keys.length === 0) return "No significant memories. Acting from scratch.";
-    const memories = [];
-    for (let i = 0; i < Math.min(5, keys.length); i++) {
-      const mem = await this.memory.get(keys[keys.length - 1 - i]);
-      memories.push(mem);
+    let regularMem = "";
+    if (!keys || keys.length === 0)
+      regularMem = "No significant memories. Acting from scratch.";
+    else {
+      const memories = [];
+      for (let i = 0; i < Math.min(5, keys.length); i++) {
+        const mem = await this.memory.get(keys[keys.length - 1 - i]);
+        memories.push(mem);
+      }
+      regularMem =
+        "Synthesized thoughts: " +
+        memories
+          .map((mem, idx) => `[${idx + 1}] ${JSON.stringify(mem).slice(0, 40)}...`)
+          .join(" ");
     }
-    return (
-      "Synthesized thoughts: " +
-      memories
-        .map((mem, idx) => `[${idx + 1}] ${JSON.stringify(mem).slice(0, 40)}...`)
-        .join(" ")
-    );
+
+    // Now, NEW: Grab similar vector memories from VectorMemoryService!
+    try {
+      const vectorMems = await vectorMemoryService.retrieveMemories(
+        this.vectorMemoryId,
+        this.state.currentGoal || "", // query by current goal
+        3
+      );
+      if (vectorMems && vectorMems.length > 0) {
+        regularMem +=
+          " || Vector Memory Hints: " +
+          vectorMems
+            .map((vm, i) => `[${i + 1}] ${vm.content.slice(0, 50)}...`)
+            .join(" ");
+      }
+    } catch (e) {
+      this.log("VectorMemoryService recall error: " + (e?.message || e));
+    }
+    return regularMem;
   }
 
   private async defaultActOnGoal(goal: string, thoughts: string): Promise<string> {

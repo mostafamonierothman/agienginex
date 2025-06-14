@@ -1,10 +1,10 @@
-
 import React, { useEffect, useState } from "react";
 import { unifiedAGI } from "@/agi/UnifiedAGICore";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { vectorMemoryService } from "@/services/VectorMemoryService";
 
 const FunctionalAGIPage: React.FC = () => {
   const [state, setState] = useState(unifiedAGI.getState());
@@ -13,9 +13,22 @@ const FunctionalAGIPage: React.FC = () => {
   const [pluginDesc, setPluginDesc] = useState("");
   const [pluginCode, setPluginCode] = useState("");
   const [pluginError, setPluginError] = useState<string | null>(null);
+  const [vectorStats, setVectorStats] = useState<{ shortTerm: number; longTerm: number; episodic: number }>({
+    shortTerm: 0,
+    longTerm: 0,
+    episodic: 0,
+  });
 
   useEffect(() => {
-    const update = () => setState(unifiedAGI.getState());
+    const fetchVectorStats = async () => {
+      const stats = await vectorMemoryService.getMemoryStats("core-agi-agent");
+      setVectorStats(stats);
+    };
+    fetchVectorStats();
+    const update = () => {
+      setState(unifiedAGI.getState());
+      fetchVectorStats();
+    };
     unifiedAGI.subscribe(update);
     return () => unifiedAGI.unsubscribe(update);
   }, []);
@@ -65,7 +78,7 @@ const FunctionalAGIPage: React.FC = () => {
   };
 
   // AGI Completion estimate after this step
-  const AGI_COMPLETION_PERCENT = 65;
+  const AGI_COMPLETION_PERCENT = 72;
 
   return (
     <div className="max-w-2xl mx-auto mt-10 space-y-6">
@@ -145,6 +158,16 @@ const FunctionalAGIPage: React.FC = () => {
               ) : (
                 <span className="ml-2 text-gray-400">No plugins registered.</span>
               )}
+            </div>
+          </div>
+
+          {/* VECTOR MEMORY STATS DISPLAY */}
+          <div className="mb-4">
+            <span className="text-blue-400 font-semibold">Vector Memory ("Brain"):</span>
+            <div className="ml-4 mt-1 flex flex-col gap-1 text-xs text-blue-200">
+              <div>Short-Term: <span className="font-mono">{vectorStats.shortTerm}</span></div>
+              <div>Episodic: <span className="font-mono">{vectorStats.episodic}</span></div>
+              <div>Long-Term: <span className="font-mono">{vectorStats.longTerm}</span></div>
             </div>
           </div>
 
