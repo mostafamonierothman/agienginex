@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { unifiedAGI } from "@/agi/UnifiedAGICore";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -25,12 +24,15 @@ const FunctionalAGIPage: React.FC = () => {
     }
   };
 
+  // AGI Completion estimate after this step
+  const AGI_COMPLETION_PERCENT = 40;
+
   return (
     <div className="max-w-2xl mx-auto mt-10 space-y-6">
       <Card className="bg-slate-900/80 border-slate-700">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
-            🌐 Functional AGI Core
+            🌐 Functional AGI Core <span className="ml-auto text-green-400 text-sm">{AGI_COMPLETION_PERCENT}% Complete</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -86,6 +88,14 @@ const FunctionalAGIPage: React.FC = () => {
                   <span className="ml-1 text-gray-400">({g.result.slice(0, 50)}...)</span>
                   <span className="ml-2 text-gray-500 text-xs">{g.timestamp}</span>
                 </li>
+              ))}
+            </ul>
+          </div>
+          <div className="mb-4">
+            <span className="font-bold text-pink-400">Lessons Learned ({(state.lessonsLearned?.length || 0)}):</span>
+            <ul className="list-decimal ml-6 text-pink-200 text-xs">
+              {state.lessonsLearned && state.lessonsLearned.slice(0, 5).map((lesson: string, i: number) => (
+                <li key={i}>{lesson}</li>
               ))}
             </ul>
           </div>

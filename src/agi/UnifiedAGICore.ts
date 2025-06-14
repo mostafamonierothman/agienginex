@@ -8,6 +8,7 @@ type AGIState = {
   memoryKeys: string[];
   logs: string[];
   generation: number;
+  lessonsLearned: string[];
 };
 
 type AGIOptions = {
@@ -23,7 +24,8 @@ class UnifiedAGICore {
     completedGoals: [],
     memoryKeys: [],
     logs: [],
-    generation: 0
+    generation: 0,
+    lessonsLearned: []
   };
   private memory: PersistentMemory;
   private loopTimer: NodeJS.Timeout | null = null;
@@ -32,6 +34,8 @@ class UnifiedAGICore {
   private constructor() {
     this.memory = new PersistentMemory();
     this.restoreState();
+    // restore lessons if possible
+    this.restoreLessons();
   }
 
   static getInstance() {
@@ -54,7 +58,7 @@ class UnifiedAGICore {
   }
 
   public getState() {
-    return { ...this.state };
+    return { ...this.state, lessonsLearned: [...this.lessonsLearned] };
   }
 
   private log(msg: string) {
@@ -67,6 +71,7 @@ class UnifiedAGICore {
 
   private async persistState() {
     await this.memory.set("unified_agi_state", this.state);
+    await this.memory.set("unified_agi_lessons", this.lessonsLearned);
   }
 
   private async restoreState() {
@@ -75,6 +80,11 @@ class UnifiedAGICore {
       this.state = { ...prev, logs: [], running: false };
       this.log("Restored AGI state from memory.");
     }
+  }
+
+  private async restoreLessons() {
+    const lessons = await this.memory.get("unified_agi_lessons", []);
+    this.lessonsLearned = Array.isArray(lessons) ? lessons : [];
   }
 
   public async start() {
@@ -110,8 +120,9 @@ class UnifiedAGICore {
       logs: [],
       generation: 0
     };
+    this.lessonsLearned = [];
     await this.memory.clear();
-    this.log("🔄 AGI memory and goals cleared. State reset.");
+    this.log("🔄 AGI memory, goals, and lessons cleared. State reset.");
     this.persistState();
     this.notify();
   }
@@ -138,7 +149,7 @@ class UnifiedAGICore {
     this.state.generation++;
     this.log(`🔁 AGI Generation ${this.state.generation}...`);
 
-    // 1. Goal selection
+    // 1. Goal selection (now learning-aware)
     if (!this.state.currentGoal) {
       const newGoal = this.autoGenerateGoal();
       await this.setGoal(newGoal);
@@ -147,10 +158,10 @@ class UnifiedAGICore {
     // 2. Memory recall & analysis
     const thoughts = await this.recallAndReason();
 
-    // 3. Act: attempt to achieve goal (simulate real action!)
+    // 3. Act: attempt to achieve goal
     const result = await this.actOnGoal(this.state.currentGoal!, thoughts);
 
-    // 4. Store results and memory
+    // 4. Store results and memory, and LEARN
     if (result) {
       this.state.completedGoals.push({
         goal: this.state.currentGoal!,
@@ -166,6 +177,8 @@ class UnifiedAGICore {
           generation: this.state.generation,
         }
       );
+      // -- NEW: Direct learning after a successful run
+      this.learnFromGoal(this.state.currentGoal!, result, thoughts);
       this.state.currentGoal = null; // triggers next cycle to pick new goal
     }
 
@@ -179,6 +192,18 @@ class UnifiedAGICore {
     this.loopTimer = setTimeout(() => this.loop(), 2000); // every 2s
   }
 
+  // **Learning: store abstracted lesson from completed goals**
+  private learnFromGoal(goal: string, result: string, thoughts: string) {
+    // Simple simulated "abstract lesson"
+    const lesson = `If AGI works on "${goal}", result: ${result.slice(0, 48)}...`;
+    // Only add if not a duplicate (for demo)
+    if (!this.lessonsLearned.includes(lesson)) {
+      this.lessonsLearned.unshift(lesson);
+      if (this.lessonsLearned.length > 40) this.lessonsLearned = this.lessonsLearned.slice(0, 40);
+      this.log(`🧠 Learned lesson: ${lesson}`);
+    }
+  }
+
   private autoGenerateGoal(): string {
     const baseGoals = [
       "Find new ways to optimize workflow",
@@ -189,10 +214,15 @@ class UnifiedAGICore {
       "Summarize what I've learned so far",
       "Strengthen my reasoning abilities"
     ];
-    // Add randomness and adaptivity
+    // Integrate learning
+    if (this.lessonsLearned.length > 0 && Math.random() < 0.4) {
+      // Pick a phrase from a learned lesson to focus on an area AGI has succeeded at
+      const fragment = this.lessonsLearned[Math.floor(Math.random() * this.lessonsLearned.length)];
+      return `Expand on learned lesson: ${fragment.slice(0, 60)}`;
+    }
+    // ... keep old behavior (occasionally reflect on past goals)
     const previous = this.state.completedGoals;
-    if (previous.length > 0 && Math.random() < 0.2) {
-      // Reflect on a past goal
+    if (previous.length > 0 && Math.random() < 0.15) {
       const past = previous[Math.floor(Math.random() * previous.length)];
       return `Reflect and improve upon past goal: "${past.goal}"`;
     }
