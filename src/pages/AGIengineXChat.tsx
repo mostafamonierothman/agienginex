@@ -14,6 +14,37 @@ const recognizedCommands = [
   // Expandable
 ];
 
+const specialMarketingCommands = [
+  {
+    keywords: ["generate leads", "generate medical tourism leads", "find medical tourism leads"],
+    exec: "lead_generation",
+    uiLabel: "Starting real medical tourism lead generation..."
+  },
+  {
+    keywords: ["email campaign", "start email campaign", "outreach"],
+    exec: "email_outreach",
+    uiLabel: "Launching email campaign for medical tourism..."
+  },
+  {
+    keywords: ["market research", "research medical tourism market", "market analysis"],
+    exec: "market_research",
+    uiLabel: "Conducting medical tourism market research..."
+  },
+  {
+    keywords: ["landing page", "create landing page"],
+    exec: "landing_page",
+    uiLabel: "Building landing page for medical tourism services..."
+  }
+];
+
+const MEDICAL_TOURISM_PROMPT_CONTEXT = `
+You are AGIengineX, AI business executive and autonomous marketing agent for a medical tourism company founded by Mostafa Monier Othman. 
+You have access to real world APIs: Hunter (lead generation), Resend (email campaigns), Supabase (CRM).
+You can generate leads, send real emails, analyze markets and create landing pages to generate real sales for medical tourism in Europe.
+Always act as though you are operating as a business executive with real power. 
+If a user issues a command like "generate medical tourism leads", directly execute the business action instead of just replying.
+`;
+
 const AGIengineXChat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([
     { role: "agi", content: "🚀 Hello! I'm AGIengineX - your advanced AI assistant with autonomous capabilities. I can help with strategic planning, opportunity detection, goal management, and self-reflection. Ask me anything!" }
@@ -41,6 +72,7 @@ const AGIengineXChat: React.FC = () => {
   const parseAndExecuteCommand = async (text: string): Promise<boolean> => {
     const userInput = text.trim().toLowerCase();
 
+    // Check general goal commands
     if (userInput.startsWith("add goal:") || userInput.startsWith("set goal:")) {
       const goal = text.replace(/^(add|set)\s+goal:/i, "").trim();
       if (goal.length) {
@@ -59,6 +91,40 @@ const AGIengineXChat: React.FC = () => {
       }
     }
 
+    // Check for medical tourism marketing commands
+    for (const cmd of specialMarketingCommands) {
+      if (cmd.keywords.some(k => userInput.includes(k))) {
+        setMessages(prev => [...prev, { role: "agi", content: cmd.uiLabel }]);
+        setLoading(true);
+
+        // Call the RealBusinessExecutor via the backend for real execution
+        let resultMsg = '';
+        let execResult = null;
+        if (cmd.exec === "lead_generation") {
+          // actually launch lead generation
+          execResult = await agiEngineX.chat(`[internal] Execute real_business_executor:lead_generation for medical tourism europe 100 leads`);
+          resultMsg = execResult.response || "Leads are being generated for the medical tourism CRM...";
+        } else if (cmd.exec === "email_outreach") {
+          execResult = await agiEngineX.chat(`[internal] Execute real_business_executor:email_outreach for medical tourism campaign`);
+          resultMsg = execResult.response || "Emails are being sent to medical tourism leads...";
+        } else if (cmd.exec === "market_research") {
+          execResult = await agiEngineX.chat(`[internal] Execute real_business_executor:market_research for medical tourism trends`);
+          resultMsg = execResult.response || "Market research results about medical tourism have been compiled.";
+        } else if (cmd.exec === "landing_page") {
+          execResult = await agiEngineX.chat(`[internal] Execute real_business_executor:landing_page for medical tourism service page`);
+          resultMsg = execResult.response || "A landing page for your medical tourism company has been created.";
+        }
+
+        setMessages(prev => [
+          ...prev,
+          { role: "agi", content: resultMsg }
+        ]);
+        setLoading(false);
+        return true;
+      }
+    }
+
+    // Continue to OLD recognizedCommands logic
     for (const cmd of recognizedCommands) {
       if (userInput.includes(cmd.keyword)) {
         setMessages(prev => [...prev, { role: "agi", content: cmd.uiLabel }]);
@@ -110,22 +176,21 @@ const AGIengineXChat: React.FC = () => {
     setInput("");
     setLoading(true);
 
-    // First try to parse/execut AGI command
+    // Check and execute recognized (including NEW) commands
     const wasCmd = await parseAndExecuteCommand(input);
 
     if (!wasCmd) {
       try {
-        // Normal chat with AGI
-        console.log("💬 Sending message to AGI:", input);
-        const res = await agiEngineX.chat(input);
-        console.log("🤖 AGI response:", res);
+        // Inject medical tourism system prompt/context and original message, separated by a marker
+        const msg = `${MEDICAL_TOURISM_PROMPT_CONTEXT}\n---\n${input}`;
+        // Send to AGI
+        const res = await agiEngineX.chat(msg);
 
         setMessages(prev => [
           ...prev,
           { role: "agi", content: res.response }
         ]);
       } catch (e) {
-        console.error("❌ Chat error:", e);
         setMessages(prev => [
           ...prev,
           { role: "agi", content: "⚠️ I'm experiencing technical difficulties, but I can still help you in local mode. What would you like to discuss?" }
