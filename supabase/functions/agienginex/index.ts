@@ -9,6 +9,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Improved logger for every request
+function logRequest(req: Request, extra?: any) {
+  try {
+    const url = new URL(req.url);
+    console.log(`[${new Date().toISOString()}] ${req.method} ${url.pathname}`, extra ? extra : '');
+  } catch {
+    // Fallback if URL construction fails
+    console.log(`[${new Date().toISOString()}] ${req.method} request`, extra ? extra : '');
+  }
+}
+
 // Initialize Supabase client
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -402,6 +413,8 @@ function stopAGILoop() {
 
 // === API ENDPOINTS === 🚀
 serve(async (req) => {
+  logRequest(req);
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
