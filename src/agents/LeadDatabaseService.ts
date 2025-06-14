@@ -11,7 +11,13 @@ export class LeadDatabaseService {
       // Ensure status is restricted to allowed enum
       const patchLeads = leads.map(lead => ({
         ...lead,
-        status: 'new',
+        status: "new" as
+          | "new"
+          | "contacted"
+          | "replied"
+          | "qualified"
+          | "converted"
+          | "unsubscribed",
         updated_at: new Date().toISOString(),
       }));
       for (let i = 0; i < patchLeads.length; i += batchSize) {

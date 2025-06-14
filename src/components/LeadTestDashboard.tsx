@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { Database, Users, Activity, Zap } from 'lucide-react';
+import LeadCard from "./lead-dashboard/LeadCard";
 
 interface Lead {
   id: string;
@@ -187,43 +188,7 @@ export default function LeadTestDashboard() {
           ) : (
             <div className="space-y-4">
               {leads.map((lead) => (
-                <div key={lead.id} className="bg-slate-700/30 p-4 rounded-lg">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="text-lg font-semibold text-white">
-                        {lead.first_name} {lead.last_name}
-                      </h3>
-                      <p className="text-gray-300">{lead.email}</p>
-                    </div>
-                    <Badge className={`${
-                      lead.status === 'new' ? 'bg-green-500' : 
-                      lead.status === 'contacted' ? 'bg-blue-500' : 'bg-gray-500'
-                    } text-white`}>
-                      {lead.status}
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                    <div>
-                      <span className="text-gray-400">Company: </span>
-                      <span className="text-white">{lead.company || 'N/A'}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-400">Industry: </span>
-                      <span className="text-blue-400">{lead.industry || 'N/A'}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-400">Location: </span>
-                      <span className="text-green-400">{lead.location || 'N/A'}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-400">Source: </span>
-                      <span className="text-purple-400">{lead.source}</span>
-                    </div>
-                  </div>
-                  <div className="mt-2 text-xs text-gray-400">
-                    Created: {new Date(lead.created_at).toLocaleString()}
-                  </div>
-                </div>
+                <LeadCard key={lead.id} lead={lead} />
               ))}
             </div>
           )}
