@@ -3,15 +3,10 @@ import { v4 as uuidv4 } from "uuid";
 import { LessonManager } from "./LessonManager";
 import { ActionPluginManager } from "./ActionPluginManager";
 import { vectorMemoryService } from "@/services/VectorMemoryService";
-
-type AGIState = {
-  running: boolean;
-  currentGoal: string | null;
-  completedGoals: { goal: string; result: string; timestamp: string }[];
-  memoryKeys: string[];
-  logs: string[];
-  generation: number;
-};
+import { AGIState } from "./AGIState";
+import { AGINotificationManager } from "./AGINotification";
+import { AGIPluginHandler } from "./AGIPluginHandler";
+import { GoalScheduler } from "./GoalScheduler";
 
 class UnifiedAGICore {
   private static instance: UnifiedAGICore;
@@ -23,16 +18,21 @@ class UnifiedAGICore {
     logs: [],
     generation: 0,
   };
-
   private memory: PersistentMemory;
   private loopTimer: NodeJS.Timeout | null = null;
-  private observers: Array<() => void> = [];
+
+  // Move subscribers to notification manager
+  private notifications = new AGINotificationManager();
+  subscribe = this.notifications.subscribe.bind(this.notifications);
+  unsubscribe = this.notifications.unsubscribe.bind(this.notifications);
+  private notify = this.notifications.notify.bind(this.notifications);
 
   // Managers
   private lessons: LessonManager = new LessonManager();
-  private plugins: ActionPluginManager = new ActionPluginManager();
+  private pluginHandler: AGIPluginHandler = new AGIPluginHandler();
+  private goalScheduler: GoalScheduler = new GoalScheduler();
 
-  private vectorMemoryId = "core-agi-agent"; // static agentId for AGI's vector memory
+  private vectorMemoryId = "core-agi-agent";
 
   private constructor() {
     this.memory = new PersistentMemory();
@@ -47,20 +47,13 @@ class UnifiedAGICore {
     return UnifiedAGICore.instance;
   }
 
-  public subscribe(observer: () => void) {
-    this.observers.push(observer);
-  }
-
-  public unsubscribe(observer: () => void) {
-    this.observers = this.observers.filter((o) => o !== observer);
-  }
-
-  private notify() {
-    this.observers.forEach((cb) => cb());
-  }
-
   public getState() {
-    return { ...this.state, lessonsLearned: this.lessons.getLessons(), plugins: this.plugins.getPlugins().map(p => p.name) };
+    return {
+      ...this.state,
+      lessonsLearned: this.lessons.getLessons(),
+      plugins: this.pluginHandler.getPlugins().map(p => p.name),
+      goalQueue: this.goalScheduler.getQueue(),
+    };
   }
 
   private log(msg: string) {
@@ -87,22 +80,35 @@ class UnifiedAGICore {
     const lessons = await this.memory.get("unified_agi_lessons", []);
     if (Array.isArray(lessons)) this.lessons.setLessons(lessons);
   }
-
-  // Plugins
-  public registerPlugin(plugin: Parameters<ActionPluginManager["register"]>[0]) {
-    this.plugins.register(plugin);
+  
+  // Plugins via pluginHandler
+  public registerPlugin(plugin: Parameters<AGIPluginHandler["register"]>[0]) {
+    this.pluginHandler.register(plugin);
     this.log(`🔌 Registered plugin "${plugin.name}" (${plugin.description})`);
     this.notify();
   }
 
   public unregisterPlugin(name: string) {
-    this.plugins.unregister(name);
+    this.pluginHandler.unregister(name);
     this.log(`❌ Unregistered plugin "${name}"`);
     this.notify();
   }
 
   public getRegisteredPlugins() {
-    return this.plugins.getPlugins();
+    return this.pluginHandler.getPlugins();
+  }
+
+  // Goal scheduler API
+  public addGoal(goal: string, priority: number = 1) {
+    this.goalScheduler.addGoal(goal, priority);
+    this.log(`🗂️ Queued goal "${goal}" with priority ${priority}`);
+    this.notify();
+  }
+
+  public reprioritizeGoal(goal: string, priority: number) {
+    this.goalScheduler.reprioritize(goal, priority);
+    this.log(`🎚️ Reprioritized goal "${goal}" to priority ${priority}`);
+    this.notify();
   }
 
   public async start() {
@@ -139,17 +145,16 @@ class UnifiedAGICore {
       generation: 0,
     };
     this.lessons.clear();
-    this.plugins.clear();
+    this.pluginHandler.clear();
+    this.goalScheduler.clear();
     await this.memory.clear();
-    this.log("🔄 AGI memory, goals, lessons, and plugins cleared. State reset.");
+    this.log("🔄 AGI memory, goals, lessons, plugins, and queue cleared. State reset.");
     this.persistState();
     this.notify();
   }
 
-  public async setGoal(goal: string) {
-    this.state.currentGoal = goal;
-    this.log(`🎯 New goal set: "${goal}"`);
-    this.persistState();
+  public async setGoal(goal: string, priority: number = 1) {
+    this.addGoal(goal, priority);
     this.notify();
   }
 
@@ -176,17 +181,18 @@ class UnifiedAGICore {
     this.notify();
   }
 
-  // Main AGI loop
+  // Main AGI loop (refactored for prioritized goals)
   private async loop() {
     if (!this.state.running) return;
-
     this.state.generation++;
     this.log(`🔁 AGI Generation ${this.state.generation}...`);
 
-    // 1. Goal selection
+    // 1. Goal selection uses scheduler/queue first, then fallback
     if (!this.state.currentGoal) {
-      const newGoal = this.autoGenerateGoal();
-      await this.setGoal(newGoal);
+      const newGoal =
+        this.goalScheduler.popNextGoal() || this.autoGenerateGoal();
+      this.state.currentGoal = newGoal;
+      this.log(`🎯 Fetched next goal: "${newGoal}"`);
     }
 
     // 2. Memory recall & analysis
@@ -195,18 +201,21 @@ class UnifiedAGICore {
     // 3. Act: run registered plugins on the goal and thoughts
     let combinedResult = "";
     let pluginOutputs: string[] = [];
-    if (this.plugins.getPlugins().length > 0) {
+    if (this.pluginHandler.getPlugins().length > 0) {
       const memSnapshot = {};
-      const outputs = await this.plugins.run(this.state.currentGoal!, thoughts, memSnapshot);
+      const outputs = await this.pluginHandler.run(
+        this.state.currentGoal!,
+        thoughts,
+        memSnapshot
+      );
       pluginOutputs = outputs.map(o => `[${o.name}] ${o.output}`);
       combinedResult = pluginOutputs.join(" | ");
       this.log(`🔌 Plugins executed: ${pluginOutputs.join(" | ")}`);
     } else {
-      // fallback default reasoning/action
       combinedResult = await this.defaultActOnGoal(this.state.currentGoal!, thoughts);
     }
 
-    // 4. Store results and memory, and LEARN
+    // 4. Store results, memory, learn, and self-improve
     if (combinedResult) {
       this.state.completedGoals.push({
         goal: this.state.currentGoal!,
@@ -225,8 +234,7 @@ class UnifiedAGICore {
       );
       this.learnFromGoal(this.state.currentGoal!, combinedResult, thoughts);
       this.state.currentGoal = null;
-
-      // Self-improvement (NEW)
+      // Self-improvement (as before)
       await this.selfImprove();
     }
 
