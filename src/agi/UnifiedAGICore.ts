@@ -1,3 +1,4 @@
+
 import { AGIState } from "./AGIState";
 import { AGIStateManagement } from "./AGIStateManagement";
 import { LessonManager } from "./LessonManager";
@@ -19,13 +20,16 @@ class UnifiedAGICore {
   private agentCollaboration = new AGIAgentCollaborationManager();
   private teamManager = new AgentTeamManager();
   private memoryOps = new AGIMemoryOps(this.lessons, "core-agi-agent");
+
+  // Mention callback used for adaptive prioritization
   private agentLoop = new AGIAgentLoop(
     this.pluginHandler,
     this.goalScheduler,
     this.memoryOps,
     this.agentCollaboration,
     this.lessons,
-    this.teamManager
+    this.teamManager,
+    (goal: string, priority: number) => this.reprioritizeGoal(goal, priority)
   );
   private loopTimer: NodeJS.Timeout | null = null;
 
@@ -156,3 +160,4 @@ class UnifiedAGICore {
 }
 
 export const unifiedAGI = UnifiedAGICore.getInstance();
+

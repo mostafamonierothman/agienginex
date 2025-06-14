@@ -1,3 +1,4 @@
+
 import { AGIPluginHandler } from "./AGIPluginHandler";
 import { GoalScheduler } from "./GoalScheduler";
 import { AGIAgentCollaborationManager, PeerFeedback } from "./AGIAgentCollaborationManager";
@@ -12,6 +13,7 @@ export class AGIAgentLoop {
   private agentCollaboration: AGIAgentCollaborationManager;
   private lessonManager: LessonManager;
   private teamManager: AgentTeamManager;
+  private reprioritizeGoalCallback?: (goal: string, priority: number) => void;
 
   constructor(
     pluginHandler: AGIPluginHandler,
@@ -19,7 +21,8 @@ export class AGIAgentLoop {
     memoryOps: AGIMemoryOps,
     agentCollaboration: AGIAgentCollaborationManager,
     lessonManager: LessonManager,
-    teamManager: AgentTeamManager
+    teamManager: AgentTeamManager,
+    reprioritizeGoalCallback?: (goal: string, priority: number) => void
   ) {
     this.pluginHandler = pluginHandler;
     this.goalScheduler = goalScheduler;
@@ -27,6 +30,7 @@ export class AGIAgentLoop {
     this.agentCollaboration = agentCollaboration;
     this.lessonManager = lessonManager;
     this.teamManager = teamManager;
+    this.reprioritizeGoalCallback = reprioritizeGoalCallback;
   }
 
   async runLoop(state: any, log: (msg: string) => void, persist: () => Promise<void>) {
@@ -48,7 +52,7 @@ export class AGIAgentLoop {
         if (recalledVectorMemories.length) {
           log(
             `🧠 Recalled ${recalledVectorMemories.length} vector memories for "${state.currentGoal}":\n` +
-            recalledVectorMemories.map((m: any) => `- "${m.memory_value || m}"`).join("\n")
+              recalledVectorMemories.map((m: any) => `- "${m.memory_value || m}"`).join("\n")
           );
         } else {
           log(`🧠 No relevant vector memories found for "${state.currentGoal}".`);
@@ -60,7 +64,6 @@ export class AGIAgentLoop {
     }
 
     // 3. Plugin and default action
-    // Simulated result logic here:
     let result = "[mocked result]";
     // The below can later be replaced with actual plugin/action output.
     // e.g. result = await this.pluginHandler.run(...);
@@ -77,18 +80,25 @@ export class AGIAgentLoop {
 
     // 4. Peer feedback and teamwork
     let peerFeedback: PeerFeedback[] = [];
+    let negativeFeedbackFound = false;
     try {
-      peerFeedback = await this.agentCollaboration.requestPeerFeedback(
-        state.currentGoal!,
-        result
-      );
+      peerFeedback = await this.agentCollaboration.requestPeerFeedback(state.currentGoal!, result);
       state["recentCollaborationFeedback"] = [
         ...(state["recentCollaborationFeedback"] || []),
         ...peerFeedback,
       ].slice(-10);
-      peerFeedback.forEach(fb =>
-        log(`🤝 Peer ${fb.agent}: ${fb.feedback}`)
-      );
+      peerFeedback.forEach(fb => {
+        log(`🤝 Peer ${fb.agent}: ${fb.feedback}`);
+        // Check for feedback suggesting deeper thought or negative
+        if (
+          fb.feedback.toLowerCase().includes("deeper thought") ||
+          fb.feedback.toLowerCase().includes("question your assumptions") ||
+          fb.feedback.toLowerCase().includes("could be generalized") ||
+          fb.feedback.toLowerCase().includes("rushed")
+        ) {
+          negativeFeedbackFound = true;
+        }
+      });
       // Team collaboration step!
       if (Math.random() < 0.3) {
         const team = this.teamManager.getOrFormTeam("core-agi-agent", state.currentGoal!);
@@ -97,6 +107,14 @@ export class AGIAgentLoop {
     } catch (e: any) {
       log(`Team/Peer Feedback error: ${e.message || e}`);
     }
+
+    // ---- NEW: Adaptive goal reprioritization ----
+    if (negativeFeedbackFound && !!this.reprioritizeGoalCallback) {
+      log(`🔄 Meta-cognition: Peer feedback indicates further attention needed for "${state.currentGoal}". Reprioritizing ...`);
+      // Boost this goal's priority for another attempt
+      this.reprioritizeGoalCallback(state.currentGoal, 5);
+    }
+
     // ... continue loop logic, update, persist
     await persist();
   }
