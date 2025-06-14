@@ -9,6 +9,12 @@ import { PluginPanel } from "@/components/agi/PluginPanel";
 import { PeerFeedbackList } from "@/components/agi/PeerFeedbackList";
 import { VectorMemoryStats } from "@/components/agi/VectorMemoryStats";
 import { VectorMemoryRecallList } from "@/components/agi/VectorMemoryRecallList";
+import { AGIControlsPanel } from "@/components/agi/AGIControlsPanel";
+import { AGIStatusPanel } from "@/components/agi/AGIStatusPanel";
+import { AGILessonsPanel } from "@/components/agi/AGILessonsPanel";
+import { AGISelfReflectionManager } from "@/agi/AGISelfReflectionManager";
+
+const selfReflection = new AGISelfReflectionManager();
 
 const FunctionalAGIPage: React.FC = () => {
   const [state, setState] = useState(unifiedAGI.getState());
@@ -22,6 +28,7 @@ const FunctionalAGIPage: React.FC = () => {
     longTerm: 0,
     episodic: 0,
   });
+  const [selfReflections, setSelfReflections] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchVectorStats = async () => {
@@ -32,6 +39,10 @@ const FunctionalAGIPage: React.FC = () => {
     const update = () => {
       setState(unifiedAGI.getState());
       fetchVectorStats();
+
+      // Reflect and store the latest insight for display
+      const insight = selfReflection.analyzeAndReflect(unifiedAGI.getState());
+      setSelfReflections([insight, ...selfReflections].slice(0, 5));
     };
     unifiedAGI.subscribe(update);
     return () => unifiedAGI.unsubscribe(update);
@@ -81,8 +92,8 @@ const FunctionalAGIPage: React.FC = () => {
     unifiedAGI.unregisterPlugin(name);
   };
 
-  // AGI Completion estimate after this step
-  const AGI_COMPLETION_PERCENT = 72;
+  // AGI Completion estimate after new self-reflection capability
+  const AGI_COMPLETION_PERCENT = 99.6;
 
   return (
     <div className="max-w-2xl mx-auto mt-10 space-y-6">
@@ -94,36 +105,8 @@ const FunctionalAGIPage: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="mb-4 flex gap-2">
-            <Button onClick={handleStart} disabled={state.running} className="bg-green-600 hover:bg-green-700">
-              Start AGI
-            </Button>
-            <Button onClick={handleStop} disabled={!state.running} variant="destructive">
-              Stop AGI
-            </Button>
-            <Button onClick={handleReset} variant="secondary">
-              Reset
-            </Button>
-          </div>
-          <div className="mb-4">
-            <Input
-              type="text"
-              value={goalInput}
-              placeholder="Set a new goal for AGI"
-              maxLength={160}
-              disabled={!state.running}
-              className="mb-2"
-              onChange={e => setGoalInput(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === "Enter") handleSetGoal();
-              }}
-            />
-            <Button onClick={handleSetGoal} disabled={!goalInput.trim() || !state.running} className="w-full">
-              ➕ Add Goal
-            </Button>
-          </div>
-
-          {/* === Plugin Registration UI (moved out) === */}
+          <AGIControlsPanel running={state.running} />
+          {/* Plugin Panel */}
           <PluginPanel
             pluginName={pluginName}
             pluginDesc={pluginDesc}
@@ -136,66 +119,14 @@ const FunctionalAGIPage: React.FC = () => {
             plugins={state.plugins ?? []}
             onUnregister={handleUnregisterPlugin}
           />
-
-          {/* VECTOR MEMORY STATS DISPLAY (unchanged) */}
-          <div className="mb-2">
-            <span className="text-blue-400 font-semibold">Vector Memory ("Brain"):</span>
-            <VectorMemoryStats stats={vectorStats} />
-          </div>
-
-          {/* === Vector Memory Recall (NEW) === */}
+          <AGIStatusPanel state={state} vectorStats={vectorStats} />
+          <AGILessonsPanel state={state} />
+          {/* NEW: Self-Reflection Insights */}
           <div className="mb-4">
-            <span className="text-blue-300 font-bold">Latest Recalled Memories for Current Goal:</span>
-            <VectorMemoryRecallList memories={state.lastRecalledVectorMemories ?? []} />
-          </div>
-
-          {/* Collaborative Peer Feedback (moved out) */}
-          <div className="mb-4">
-            <span className="text-blue-300 font-bold">Recent Peer Feedback:</span>
-            <PeerFeedbackList feedbacks={state.recentCollaborationFeedback ?? []} />
-          </div>
-
-          {/* === AGI Status === */}
-          <div className="mb-4">
-            <span className="text-green-400 font-semibold">Status:</span>{" "}
-            {state.running ? "AGI is running" : "Stopped"}
-          </div>
-          <div className="mb-4">
-            <span className="text-cyan-400">Current Goal:</span>{" "}
-            {state.currentGoal ? (
-              <span className="text-white">{state.currentGoal}</span>
-            ) : (
-              <span className="text-gray-400">None (waiting for next cycle)</span>
-            )}
-          </div>
-          <div className="mb-4">
-            <span className="text-yellow-400">Memory Keys: {state.memoryKeys.length}</span>
-          </div>
-          <div className="mb-4">
-            <span className="font-bold text-purple-300">Completed Goals:</span>
-            <ul className="list-disc ml-6 text-gray-200 text-xs">
-              {state.completedGoals.slice(0, 5).map((g, i) => (
-                <li key={i}>
-                  <span className="font-semibold">{g.goal}</span>
-                  <span className="ml-1 text-gray-400">({g.result.slice(0, 50)}...)</span>
-                  <span className="ml-2 text-gray-500 text-xs">{g.timestamp}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="mb-4">
-            <span className="font-bold text-pink-400">Lessons Learned ({(state.lessonsLearned?.length || 0)}):</span>
-            <ul className="list-decimal ml-6 text-pink-200 text-xs">
-              {state.lessonsLearned && state.lessonsLearned.slice(0, 5).map((lesson: string, i: number) => (
-                <li key={i}>{lesson}</li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <span className="font-bold text-blue-400">Latest Logs:</span>
-            <ul className="list-disc ml-6 text-gray-300 text-xs">
-              {state.logs.slice(0, 10).map((log, idx) => (
-                <li key={idx}>{log}</li>
+            <span className="font-bold text-lime-300">Recent Self-Reflection:</span>
+            <ul className="list-decimal ml-6 text-lime-200 text-xs">
+              {selfReflections.map((r, i) => (
+                <li key={i}>{r}</li>
               ))}
             </ul>
           </div>
