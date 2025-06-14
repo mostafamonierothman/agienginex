@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { vectorMemoryService } from "@/services/VectorMemoryService";
+import { PluginPanel } from "@/components/agi/PluginPanel";
+import { PeerFeedbackList } from "@/components/agi/PeerFeedbackList";
+import { VectorMemoryStats } from "@/components/agi/VectorMemoryStats";
 
 const FunctionalAGIPage: React.FC = () => {
   const [state, setState] = useState(unifiedAGI.getState());
@@ -119,77 +122,30 @@ const FunctionalAGIPage: React.FC = () => {
             </Button>
           </div>
 
-          {/* === Plugin Registration UI === */}
-          <div className="mb-6 bg-slate-800 p-4 rounded">
-            <div className="font-bold text-blue-300 mb-2">Register Action Plugin</div>
-            <div className="mb-2 flex flex-col gap-2">
-              <Input placeholder="Plugin Name" value={pluginName} onChange={e => setPluginName(e.target.value)} />
-              <Input placeholder="Short Description" value={pluginDesc} onChange={e => setPluginDesc(e.target.value)} />
-              <Textarea
-                placeholder={`Async plugin code. Example:\nreturn \`Echo: \${ctx.goal} -- \${ctx.thoughts}\`;`}
-                value={pluginCode}
-                onChange={e => setPluginCode(e.target.value)}
-                className="font-mono"
-                rows={4}
-              />
-              <Button onClick={handleRegisterPlugin} className="bg-blue-600 hover:bg-blue-700">
-                ➕ Register Plugin
-              </Button>
-              {pluginError && <div className="text-red-400 text-xs">{pluginError}</div>}
-            </div>
-            <div className="mt-3">
-              <span className="text-cyan-400 font-semibold">Active Plugins:</span>
-              {state.plugins && state.plugins.length > 0 ? (
-                <ul className="ml-5 mt-2 text-xs">
-                  {state.plugins.map((p: string) => (
-                    <li key={p} className="flex items-center gap-2 mb-1">
-                      <span className="text-white">{p}</span>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        className="py-0.5 px-2 text-xs"
-                        onClick={() => handleUnregisterPlugin(p)}
-                      >
-                        Unregister
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <span className="ml-2 text-gray-400">No plugins registered.</span>
-              )}
-            </div>
-          </div>
+          {/* === Plugin Registration UI (moved out) === */}
+          <PluginPanel
+            pluginName={pluginName}
+            pluginDesc={pluginDesc}
+            pluginCode={pluginCode}
+            pluginError={pluginError}
+            onNameChange={setPluginName}
+            onDescChange={setPluginDesc}
+            onCodeChange={setPluginCode}
+            onRegister={handleRegisterPlugin}
+            plugins={state.plugins ?? []}
+            onUnregister={handleUnregisterPlugin}
+          />
 
-          {/* VECTOR MEMORY STATS DISPLAY */}
+          {/* VECTOR MEMORY STATS DISPLAY (moved out) */}
           <div className="mb-4">
             <span className="text-blue-400 font-semibold">Vector Memory ("Brain"):</span>
-            <div className="ml-4 mt-1 flex flex-col gap-1 text-xs text-blue-200">
-              <div>Short-Term: <span className="font-mono">{vectorStats.shortTerm}</span></div>
-              <div>Episodic: <span className="font-mono">{vectorStats.episodic}</span></div>
-              <div>Long-Term: <span className="font-mono">{vectorStats.longTerm}</span></div>
-            </div>
+            <VectorMemoryStats stats={vectorStats} />
           </div>
 
-          {/* === Collaborative Peer Feedback === */}
+          {/* Collaborative Peer Feedback (moved out) */}
           <div className="mb-4">
             <span className="text-blue-300 font-bold">Recent Peer Feedback:</span>
-            {state.recentCollaborationFeedback && state.recentCollaborationFeedback.length > 0 ? (
-              <ul className="ml-5 mt-2 text-xs">
-                {state.recentCollaborationFeedback
-                  .slice(-5)
-                  .reverse()
-                  .map((fb: any, idx: number) => (
-                    <li key={idx} className="mb-1">
-                      <span className="font-semibold text-cyan-300">{fb.agent}: </span>
-                      <span className="text-white">{fb.feedback}</span>
-                      <span className="ml-2 text-gray-500">{new Date(fb.timestamp).toLocaleTimeString()}</span>
-                    </li>
-                  ))}
-              </ul>
-            ) : (
-              <span className="ml-2 text-gray-400">No peer feedback yet.</span>
-            )}
+            <PeerFeedbackList feedbacks={state.recentCollaborationFeedback ?? []} />
           </div>
 
           {/* === AGI Status === */}
