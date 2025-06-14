@@ -17,6 +17,10 @@ export default function Index() {
           Chat with AGIengineX →
         </Button>
       </Link>
+      <p className="mt-8 text-sm text-gray-400">
+        (You now land directly in the AGI chat!<br/>
+        This original landing page remains accessible at <b>/landing</b>.)
+      </p>
     </main>
   );
 }

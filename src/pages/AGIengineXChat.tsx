@@ -1,10 +1,18 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { agiEngineX } from "@/services/AGIengineXService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 type Message = { role: "user" | "agi"; content: string };
+
+const recognizedCommands = [
+  { keyword: "start loop", exec: "loop_start", uiLabel: "AGI Loop Started!" },
+  { keyword: "stop loop", exec: "loop_stop", uiLabel: "AGI Loop Stopped." },
+  { keyword: "show status", exec: "status", uiLabel: "Fetching AGI Status..." },
+  { keyword: "run agents", exec: "chain", uiLabel: "Running agent chain..." },
+  { keyword: "who am i", exec: "whoami", uiLabel: "You are Mostafa Monier Othman." },
+  // Expandable
+];
 
 const AGIengineXChat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([
@@ -29,32 +37,103 @@ const AGIengineXChat: React.FC = () => {
     testConnection();
   }, []);
 
+  // Detects known commands and executes special AGI orders, else returns null
+  const parseAndExecuteCommand = async (text: string): Promise<boolean> => {
+    const userInput = text.trim().toLowerCase();
+
+    if (userInput.startsWith("add goal:") || userInput.startsWith("set goal:")) {
+      const goal = text.replace(/^(add|set)\s+goal:/i, "").trim();
+      if (goal.length) {
+        setMessages(prev => [
+          ...prev,
+          { role: "agi", content: `🎯 Creating new goal: "${goal}"...` }
+        ]);
+        setLoading(true);
+        const ok = await agiEngineX.createGoal(goal, 5);
+        setMessages(prev => [
+          ...prev,
+          { role: "agi", content: ok ? `✅ Goal created: "${goal}"` : `❌ Failed to create goal: "${goal}"` }
+        ]);
+        setLoading(false);
+        return true;
+      }
+    }
+
+    for (const cmd of recognizedCommands) {
+      if (userInput.includes(cmd.keyword)) {
+        setMessages(prev => [...prev, { role: "agi", content: cmd.uiLabel }]);
+        setLoading(true);
+
+        // Map execution to AGI backend method
+        if (cmd.exec === "loop_start") {
+          await agiEngineX.startLoop();
+          setMessages(prev => [
+            ...prev,
+            { role: "agi", content: "✅ AGI Loop started (autonomous mode)." }
+          ]);
+        } else if (cmd.exec === "loop_stop") {
+          await agiEngineX.stopLoop();
+          setMessages(prev => [
+            ...prev,
+            { role: "agi", content: "🛑 AGI Loop stopped." }
+          ]);
+        } else if (cmd.exec === "status") {
+          const status = await agiEngineX.getSystemStatus();
+          setMessages(prev => [
+            ...prev,
+            { role: "agi", content: "📊 AGI Status:\n" + JSON.stringify(status, null, 2) }
+          ]);
+        } else if (cmd.exec === "chain") {
+          const res = await agiEngineX.runAgentChain();
+          setMessages(prev => [
+            ...prev,
+            { role: "agi", content: `🔗 Agent chain results: ${JSON.stringify(res, null, 2)}` }
+          ]);
+        } else if (cmd.exec === "whoami") {
+          setMessages(prev => [
+            ...prev,
+            { role: "agi", content: "You are Mostafa Monier Othman, founder of AGIengineX." }
+          ]);
+        }
+        setLoading(false);
+        return true;
+      }
+    }
+    return false;
+  };
+
   const handleSend = async () => {
     if (!input.trim() || loading) return;
-    
+
     const userMsg = { role: "user" as const, content: input };
     setMessages(prev => [...prev, userMsg]);
     setInput("");
     setLoading(true);
-    
-    try {
-      console.log("💬 Sending message to AGI:", input);
-      const res = await agiEngineX.chat(input);
-      console.log("🤖 AGI response:", res);
-      
-      setMessages(prev => [
-        ...prev,
-        { role: "agi", content: res.response }
-      ]);
-    } catch (e) {
-      console.error("❌ Chat error:", e);
-      setMessages(prev => [
-        ...prev,
-        { role: "agi", content: "⚠️ I'm experiencing technical difficulties, but I can still help you in local mode. What would you like to discuss?" }
-      ]);
-    } finally {
-      setLoading(false);
+
+    // First try to parse/execut AGI command
+    const wasCmd = await parseAndExecuteCommand(input);
+
+    if (!wasCmd) {
+      try {
+        // Normal chat with AGI
+        console.log("💬 Sending message to AGI:", input);
+        const res = await agiEngineX.chat(input);
+        console.log("🤖 AGI response:", res);
+
+        setMessages(prev => [
+          ...prev,
+          { role: "agi", content: res.response }
+        ]);
+      } catch (e) {
+        console.error("❌ Chat error:", e);
+        setMessages(prev => [
+          ...prev,
+          { role: "agi", content: "⚠️ I'm experiencing technical difficulties, but I can still help you in local mode. What would you like to discuss?" }
+        ]);
+      }
     }
+
+    setLoading(false);
   };
 
   const handleTestConnection = async () => {
@@ -142,7 +221,7 @@ const AGIengineXChat: React.FC = () => {
             className="flex-1"
             value={input}
             disabled={loading}
-            placeholder="Ask about goals, opportunities, strategy..."
+            placeholder='Ask about goals, opportunities, strategy or try: "start loop", "stop loop", "add goal: X", "show status"...'
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === "Enter" && handleSend()}
           />
