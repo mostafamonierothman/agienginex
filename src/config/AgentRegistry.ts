@@ -1,3 +1,4 @@
+
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { ChatProcessorAgentRunner } from '@/agents/ChatProcessorAgent';
 import { SystemContextAgentRunner } from '@/agents/SystemContextAgent';
@@ -134,6 +135,23 @@ export class AgentRegistry {
 
   getAgent(agentName: string): (context: AgentContext) => Promise<AgentResponse> | undefined {
     return this.agents.get(agentName);
+  }
+
+  async runRandomAgent(context: AgentContext): Promise<AgentResponse> {
+    const agentNames = Array.from(this.agents.keys());
+    if (agentNames.length === 0) {
+      return {
+        success: false,
+        message: 'No agents available to run',
+        timestamp: new Date().toISOString()
+      };
+    }
+
+    const randomIndex = Math.floor(Math.random() * agentNames.length);
+    const randomAgentName = agentNames[randomIndex];
+    
+    console.log(`🎲 Running random agent: ${randomAgentName}`);
+    return await this.runAgent(randomAgentName, context);
   }
 
   getRandomAgent(): RegisteredAgent | null {
