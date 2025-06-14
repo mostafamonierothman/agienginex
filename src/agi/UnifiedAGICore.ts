@@ -7,6 +7,7 @@ import { AGIState } from "./AGIState";
 import { AGINotificationManager } from "./AGINotification";
 import { AGIPluginHandler } from "./AGIPluginHandler";
 import { GoalScheduler } from "./GoalScheduler";
+import { AGIAgentCollaborationManager } from "./AGIAgentCollaborationManager";
 
 class UnifiedAGICore {
   private static instance: UnifiedAGICore;
@@ -31,6 +32,7 @@ class UnifiedAGICore {
   private lessons: LessonManager = new LessonManager();
   private pluginHandler: AGIPluginHandler = new AGIPluginHandler();
   private goalScheduler: GoalScheduler = new GoalScheduler();
+  private collaboration = new AGIAgentCollaborationManager();
 
   private vectorMemoryId = "core-agi-agent";
 
@@ -53,6 +55,8 @@ class UnifiedAGICore {
       lessonsLearned: this.lessons.getLessons(),
       plugins: this.pluginHandler.getPlugins().map(p => p.name),
       goalQueue: this.goalScheduler.getQueue(),
+      // New: expose recent collaboration feedback
+      recentCollaborationFeedback: this.state["recentCollaborationFeedback"] || [],
     };
   }
 
@@ -181,16 +185,15 @@ class UnifiedAGICore {
     this.notify();
   }
 
-  // Main AGI loop (refactored for prioritized goals)
+  // Main AGI loop (refactored for prioritized goals and collaboration)
   private async loop() {
     if (!this.state.running) return;
     this.state.generation++;
     this.log(`🔁 AGI Generation ${this.state.generation}...`);
 
-    // 1. Goal selection uses scheduler/queue first, then fallback
+    // 1. Goal selection
     if (!this.state.currentGoal) {
-      const newGoal =
-        this.goalScheduler.popNextGoal() || this.autoGenerateGoal();
+      const newGoal = this.goalScheduler.popNextGoal() || this.autoGenerateGoal();
       this.state.currentGoal = newGoal;
       this.log(`🎯 Fetched next goal: "${newGoal}"`);
     }
@@ -198,7 +201,7 @@ class UnifiedAGICore {
     // 2. Memory recall & analysis
     const thoughts = await this.recallAndReason();
 
-    // 3. Act: run registered plugins on the goal and thoughts
+    // 3. Act
     let combinedResult = "";
     let pluginOutputs: string[] = [];
     if (this.pluginHandler.getPlugins().length > 0) {
@@ -215,13 +218,15 @@ class UnifiedAGICore {
       combinedResult = await this.defaultActOnGoal(this.state.currentGoal!, thoughts);
     }
 
-    // 4. Store results, memory, learn, and self-improve
+    // 4. Store results, memory, learn, self-improve, and collaborative feedback
+    let peerFeedback: PeerFeedback[] = [];
     if (combinedResult) {
       this.state.completedGoals.push({
         goal: this.state.currentGoal!,
         result: combinedResult,
         timestamp: new Date().toISOString(),
       });
+
       await this.addMemory(
         `goal_${this.state.generation}_${uuidv4().slice(0, 8)}`,
         {
@@ -232,9 +237,28 @@ class UnifiedAGICore {
           generation: this.state.generation,
         }
       );
+
       this.learnFromGoal(this.state.currentGoal!, combinedResult, thoughts);
+
+      // === AGI Peer Collaboration: Get feedback from agents
+      try {
+        peerFeedback = await this.collaboration.requestPeerFeedback(
+          this.state.currentGoal!,
+          combinedResult
+        );
+        // Save to state (most recent N)
+        this.state["recentCollaborationFeedback"] = [
+          ...(this.state["recentCollaborationFeedback"] || []),
+          ...peerFeedback,
+        ].slice(-10);
+        peerFeedback.forEach(fb =>
+          this.log(`🤝 Peer ${fb.agent}: ${fb.feedback}`)
+        );
+      } catch (e) {
+        this.log("PeerCollaboration error: " + (e?.message || e));
+      }
+
       this.state.currentGoal = null;
-      // Self-improvement (as before)
       await this.selfImprove();
     }
 
