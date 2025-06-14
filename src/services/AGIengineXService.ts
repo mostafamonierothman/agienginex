@@ -36,6 +36,38 @@ class AGIengineXService {
     };
   }
 
+  async testConnection(): Promise<{ connected: boolean; message: string }> {
+    try {
+      console.log('🔍 Testing AGI connection...');
+      const response = await fetch(this.baseUrl, {
+        headers: this.getHeaders()
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          connected: true,
+          message: `✅ AGI Connected: ${data.message || 'AGIengineX operational'}`
+        };
+      } else if (response.status === 404) {
+        return {
+          connected: false,
+          message: `❌ 404: Supabase Edge Function Not Found at ${this.baseUrl}. Please check your deployment or URL!`
+        };
+      } else {
+        return {
+          connected: false,
+          message: `❌ Connection failed (${response.status}): Running in enhanced local mode`
+        };
+      }
+    } catch (error) {
+      return {
+        connected: false,
+        message: `❌ Connection error: Enhanced local AGI mode active`
+      };
+    }
+  }
+
   async chat(message: string): Promise<AGIResponse> {
     try {
       console.log('🚀 AGIengineX: Sending chat message:', message);
@@ -47,6 +79,15 @@ class AGIengineXService {
       });
       
       console.log('📡 AGIengineX: Response status:', response.status);
+
+      if (response.status === 404) {
+        // Surface a specific message
+        return {
+          response: "❌ 404: Supabase Edge Function for AGIengineX not found. Please check your deployment or function settings.",
+          agent_used: "system_error",
+          timestamp: new Date().toISOString()
+        };
+      }
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -256,33 +297,6 @@ class AGIengineXService {
     } catch (error) {
       console.error('Stop loop error:', error);
       return false;
-    }
-  }
-
-  async testConnection(): Promise<{ connected: boolean; message: string }> {
-    try {
-      console.log('🔍 Testing AGI connection...');
-      const response = await fetch(this.baseUrl, {
-        headers: this.getHeaders()
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        return {
-          connected: true,
-          message: `✅ AGI Connected: ${data.message || 'AGIengineX operational'}`
-        };
-      } else {
-        return {
-          connected: false,
-          message: `❌ Connection failed (${response.status}): Running in enhanced local mode`
-        };
-      }
-    } catch (error) {
-      return {
-        connected: false,
-        message: `❌ Connection error: Enhanced local AGI mode active`
-      };
     }
   }
 }
