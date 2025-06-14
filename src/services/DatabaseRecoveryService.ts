@@ -24,7 +24,7 @@ export class DatabaseRecoveryService {
         return false;
       }
 
-      const healthData = healthCheck as DatabaseHealthResponse;
+      const healthData = healthCheck as unknown as DatabaseHealthResponse;
       if (healthData?.database_health === 'optimal') {
         await sendChatUpdate('✅ Database schema optimal - Phase 2 AGI fully operational without fallbacks');
         await this.verifyPhase2AGIState();
@@ -244,7 +244,7 @@ export class DatabaseRecoveryService {
     try {
       const { data, error } = await supabase.rpc('check_phase2_agi_health');
       if (error) throw error;
-      return data as DatabaseHealthResponse;
+      return data as unknown as DatabaseHealthResponse;
     } catch (error) {
       return {
         database_health: 'operational',
