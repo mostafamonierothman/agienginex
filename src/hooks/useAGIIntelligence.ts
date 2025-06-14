@@ -122,7 +122,7 @@ export const useAGIIntelligence = () => {
     }));
   }, []);
 
-  // Persist AGI state to database with proper JSON serialization
+  // Persist AGI state to database with proper type safety
   useEffect(() => {
     const saveAGIState = async () => {
       try {
@@ -130,7 +130,7 @@ export const useAGIIntelligence = () => {
           .from('agi_state')
           .upsert({
             key: 'agi_intelligence',
-            state: agiState as any // Cast to any to match Json type
+            state: agiState
           });
       } catch (error) {
         console.error('Failed to save AGI state:', error);
@@ -140,7 +140,7 @@ export const useAGIIntelligence = () => {
     saveAGIState();
   }, [agiState]);
 
-  // Load AGI state on initialization with proper type handling
+  // Load AGI state on initialization with proper type validation
   useEffect(() => {
     const loadAGIState = async () => {
       try {
@@ -150,8 +150,20 @@ export const useAGIIntelligence = () => {
           .eq('key', 'agi_intelligence')
           .single();
 
-        if (data?.state && typeof data.state === 'object') {
-          setAgiState(data.state as AGIState);
+        if (data?.state && typeof data.state === 'object' && !Array.isArray(data.state)) {
+          // Validate that the loaded state has all required AGI properties
+          const loadedState = data.state as Record<string, any>;
+          if (
+            typeof loadedState.intelligenceLevel === 'number' &&
+            typeof loadedState.isLearning === 'boolean' &&
+            typeof loadedState.autonomousMode === 'boolean' &&
+            Array.isArray(loadedState.goals) &&
+            Array.isArray(loadedState.achievements) &&
+            typeof loadedState.errorCount === 'number' &&
+            typeof loadedState.learningRate === 'number'
+          ) {
+            setAgiState(loadedState as AGIState);
+          }
         }
       } catch (error) {
         console.log('No previous AGI state found, starting fresh');
