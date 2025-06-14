@@ -1,4 +1,3 @@
-
 export type AGISystemAssessmentResult = {
   scores: {
     memory: number;
@@ -30,8 +29,9 @@ export type AGISystemAssessmentResult = {
 export class AGISystemAssessment {
   static assess(state: any): AGISystemAssessmentResult {
     // Original capability scoring
+    let autonomy = (typeof state.autonomy_percent === "number") ? state.autonomy_percent
+      : (state.running && !!state.currentGoal ? 92 : 75);
     const memory = (state.memoryKeys?.length ?? 0) > 10 && (state.vectorStats?.longTerm ?? 0) > 5 ? 95 : 70;
-    const autonomy = state.running && !!state.currentGoal ? 92 : 75;
     const learning = (state.lessonsLearned?.length ?? 0) > 3 ? 90 : 60;
     const collaboration = (state.recentCollaborationFeedback?.length ?? 0) > 2 ? 87 : 55;
     const selfReflection = (state.selfReflectionHistory?.length ?? 0) > 2 ? 92 : 65;

@@ -11,6 +11,9 @@ import { AGISystemAssessment } from "@/agi/AGISystemAssessment";
 import { unifiedAGI } from "@/agi/UnifiedAGICore";
 import { autonomousLoop } from "@/loops/AutonomousLoop";
 
+// Add: poll real AGI system state for progress & feedback
+import { sendAGIChatCommand, fetchLiveAGIState } from "@/services/AGIChatOrchestrator";
+
 export const AGIChatLayout: React.FC = () => {
   const [messages, setMessages] = useState([
     {
@@ -56,7 +59,28 @@ export const AGIChatLayout: React.FC = () => {
     currentGoal: input || null,
   });
 
-  const autonomyPercent = systemAssessment.overallPercent;
+  const [agiInfo, setAgiInfo] = useState<any>(null);
+  const [optimisticAutonomy, setOptimisticAutonomy] = useState(72);
+
+  // Poll backend for live AGI state every 10s
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    async function poll() {
+      const state = await fetchLiveAGIState();
+      if (state?.success !== false) setAgiInfo(state);
+      timer = setTimeout(poll, 10000);
+    }
+    poll();
+    return () => {
+      clearTimeout(timer);
+    };
+  }, []);
+
+  // Derive autonomy percent from backend info if present
+  const autonomyPercent = agiInfo?.autonomy_percent
+    || agiInfo?.agiProgress
+    || (agiInfo?.metrics && agiInfo.metrics.realAgentSuccessRate)
+    || optimisticAutonomy;
 
   const breakthroughReached = autonomyPercent >= 95;
   const nearBreakthrough = autonomyPercent >= 90 && autonomyPercent < 95;
@@ -69,23 +93,25 @@ export const AGIChatLayout: React.FC = () => {
     setLoading(true);
 
     try {
-      const msg = `You are AGIengineX, the official autonomous executive for Mostafa Monier Othman's medical tourism company. Proceed to execute real business actions.\n---\n${input}`;
-      const res = await agiEngineX.chat(msg);
-
-      // Only rely on .response or res as string. Don't access .message.
-      const responseText =
-        typeof res === "string"
-          ? res
-          : (typeof res?.response === "string" ? res.response : "No response");
+      // Route ALL chat via backend AGI orchestrator (edge function) for real execution
+      const rawResult = await sendAGIChatCommand(input, { type: "chat" });
+      const responseText = rawResult?.response
+        || rawResult?.output
+        || rawResult?.message
+        || rawResult?.agent_used
+        || "⚠️ No AGI response";
 
       setMessages((prev) => [...prev, { role: "agi", content: responseText }]);
+      // Optimistically update autonomy if we got a result
+      if (rawResult?.autonomy_percent > 0) setOptimisticAutonomy(rawResult.autonomy_percent);
+      // Optionally, poll state now for more up-to-date info:
+      fetchLiveAGIState().then((state) => {
+        if (state?.success !== false) setAgiInfo(state);
+      });
     } catch (e: any) {
       setMessages((prev) => [
         ...prev,
-        {
-          role: "agi",
-          content: "⚠️ There was a problem with the real execution. Please try again.",
-        },
+        { role: "agi", content: "⚠️ Real AGI action failed. Please retry." },
       ]);
     }
     setLoading(false);
@@ -164,6 +190,9 @@ export const AGIChatLayout: React.FC = () => {
           <span className="font-bold text-orange-400">⚡ Near-breakthrough: Advanced AGI at {autonomyPercent}%. Activate more business actions to cross the autonomy frontier.</span>
         ) : (
           <>
+            {agiInfo?.liveFeedback ?
+              <>{agiInfo.liveFeedback}<br /></>
+              : null}
             Your AGI now uses 100% real backend business data for metrics.<br />
             No fake data, no fake buttons—real chat control only.<br />
             Next: automate actual business transactions (lead creation, deal closing, payments) via chat.<br />

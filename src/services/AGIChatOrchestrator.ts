@@ -1,0 +1,42 @@
+
+import { createClient } from '@supabase/supabase-js';
+
+// Use Supabase Edge Function to orchestrate AGIengineX
+const SUPABASE_URL = "https://hnudinfejowoxlybifqq.supabase.co";
+
+const EDGE_URL = `${SUPABASE_URL}/functions/v1/agienginex`;
+
+export async function sendAGIChatCommand(command: string, options: any = {}) {
+  // Command object is flexible: {cmd, type, ...fields}
+  try {
+    const resp = await fetch(EDGE_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+        // If needed, add supabase auth (currently public)
+      },
+      body: JSON.stringify({
+        message: command,
+        type: options.type || 'chat',
+        ...options
+      }),
+    });
+    const data = await resp.json();
+    return data;
+  } catch (e: any) {
+    return { success: false, error: e?.message || "Network error" };
+  }
+}
+
+/**
+ * Polls live AGIengineX state from backend to reflect real agent performance
+ */
+export async function fetchLiveAGIState() {
+  try {
+    const resp = await fetch(`${EDGE_URL}?status=1`);
+    const data = await resp.json();
+    return data;
+  } catch (e: any) {
+    return { success: false, error: e?.message || "Network error" };
+  }
+}
