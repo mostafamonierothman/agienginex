@@ -17,6 +17,7 @@ import { CustomerAcquisitionAgentRunner } from '@/agents/CustomerAcquisitionAgen
 import { EnhancedExecutiveAgentRunner } from '@/agents/EnhancedExecutiveAgent';
 import { AGOCoreLoopAgentRunner } from '@/agents/AGOCoreLoopAgent';
 import { NexusAIAgentRunner } from '@/agents/NexusAIAgent';
+import { OpenAISupervisorAgentRunner } from '@/agents/OpenAISupervisorAgent';
 
 export interface RegisteredAgent {
   name: string;
@@ -78,6 +79,9 @@ export class AgentRegistry {
 
     // Meta & Advanced Reasoning Agents
     this.registerAgent('nexus_ai_agent', NexusAIAgentRunner, 'Meta');
+
+    // ---- NEW: Always-on OpenAI Supervisor Agent ----
+    this.registerAgent('openai_supervisor_agent', OpenAISupervisorAgentRunner, 'Supervisor');
 
     this.updateSystemStatus();
   }
