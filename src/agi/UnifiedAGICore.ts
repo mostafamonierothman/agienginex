@@ -49,6 +49,8 @@ class UnifiedAGICore {
       plugins: this.pluginHandler.getPlugins().map((p) => p.name),
       goalQueue: this.goalScheduler.getQueue(),
       recentCollaborationFeedback: this.stateManager.getState()["recentCollaborationFeedback"] || [],
+      // Add last recalled vector memories to state for UI
+      lastRecalledVectorMemories: this.stateManager.getState()["lastRecalledVectorMemories"] || [],
     };
   }
 

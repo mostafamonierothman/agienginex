@@ -1,4 +1,3 @@
-
 import { AGIPluginHandler } from "./AGIPluginHandler";
 import { GoalScheduler } from "./GoalScheduler";
 import { AGIAgentCollaborationManager, PeerFeedback } from "./AGIAgentCollaborationManager";
@@ -39,8 +38,27 @@ export class AGIAgentLoop {
       state.currentGoal = newGoal;
       log(`🎯 Fetched goal: "${newGoal}"`);
     }
-    // 2. Memory recall (symbolic and vector)
-    // ... Place memory recall logic here ...
+
+    // === 2. Memory recall (symbolic and vector) ===
+    let recalledVectorMemories = [];
+    try {
+      if (state.currentGoal) {
+        recalledVectorMemories = await this.memoryOps.recallFromVectorMemory(state.currentGoal);
+        state["lastRecalledVectorMemories"] = recalledVectorMemories;
+        if (recalledVectorMemories.length) {
+          log(
+            `🧠 Recalled ${recalledVectorMemories.length} vector memories for "${state.currentGoal}":\n` +
+            recalledVectorMemories.map((m: any) => `- "${m.memory_value || m}"`).join("\n")
+          );
+        } else {
+          log(`🧠 No relevant vector memories found for "${state.currentGoal}".`);
+        }
+      }
+    } catch (err) {
+      log(`🧠 Vector memory recall failed: ${err instanceof Error ? err.message : "Unknown error"}`);
+      state["lastRecalledVectorMemories"] = [];
+    }
+
     // 3. Plugin and default action
     // ... Plugin and defaultActOnGoal logic ...
     // 4. Peer feedback and teamwork

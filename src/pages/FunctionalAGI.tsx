@@ -8,6 +8,7 @@ import { vectorMemoryService } from "@/services/VectorMemoryService";
 import { PluginPanel } from "@/components/agi/PluginPanel";
 import { PeerFeedbackList } from "@/components/agi/PeerFeedbackList";
 import { VectorMemoryStats } from "@/components/agi/VectorMemoryStats";
+import { VectorMemoryRecallList } from "@/components/agi/VectorMemoryRecallList";
 
 const FunctionalAGIPage: React.FC = () => {
   const [state, setState] = useState(unifiedAGI.getState());
@@ -136,10 +137,16 @@ const FunctionalAGIPage: React.FC = () => {
             onUnregister={handleUnregisterPlugin}
           />
 
-          {/* VECTOR MEMORY STATS DISPLAY (moved out) */}
-          <div className="mb-4">
+          {/* VECTOR MEMORY STATS DISPLAY (unchanged) */}
+          <div className="mb-2">
             <span className="text-blue-400 font-semibold">Vector Memory ("Brain"):</span>
             <VectorMemoryStats stats={vectorStats} />
+          </div>
+
+          {/* === Vector Memory Recall (NEW) === */}
+          <div className="mb-4">
+            <span className="text-blue-300 font-bold">Latest Recalled Memories for Current Goal:</span>
+            <VectorMemoryRecallList memories={state.lastRecalledVectorMemories ?? []} />
           </div>
 
           {/* Collaborative Peer Feedback (moved out) */}
