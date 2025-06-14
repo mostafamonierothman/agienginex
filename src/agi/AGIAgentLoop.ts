@@ -60,13 +60,27 @@ export class AGIAgentLoop {
     }
 
     // 3. Plugin and default action
-    // ... Plugin and defaultActOnGoal logic ...
+    // Simulated result logic here:
+    let result = "[mocked result]";
+    // The below can later be replaced with actual plugin/action output.
+    // e.g. result = await this.pluginHandler.run(...);
+
+    // === Automatically store the completed goal/result in vector memory ===
+    if (state.currentGoal && result) {
+      try {
+        await this.memoryOps.storeToVectorMemory(state.currentGoal, { goal: state.currentGoal, result }, {});
+        log(`💾 Stored completed goal/result in vector memory for "${state.currentGoal}"`);
+      } catch (e: any) {
+        log(`⚠️ Failed to store to vector memory: ${e?.message || e}`);
+      }
+    }
+
     // 4. Peer feedback and teamwork
     let peerFeedback: PeerFeedback[] = [];
     try {
       peerFeedback = await this.agentCollaboration.requestPeerFeedback(
         state.currentGoal!,
-        "[mocked result]"
+        result
       );
       state["recentCollaborationFeedback"] = [
         ...(state["recentCollaborationFeedback"] || []),
