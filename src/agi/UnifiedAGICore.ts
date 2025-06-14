@@ -1,3 +1,4 @@
+
 import { PersistentMemory } from "@/core/PersistentMemory";
 import { v4 as uuidv4 } from "uuid";
 
@@ -8,7 +9,6 @@ type AGIState = {
   memoryKeys: string[];
   logs: string[];
   generation: number;
-  lessonsLearned: string[];
 };
 
 type AGIOptions = {
@@ -25,16 +25,16 @@ class UnifiedAGICore {
     memoryKeys: [],
     logs: [],
     generation: 0,
-    lessonsLearned: []
   };
   private memory: PersistentMemory;
   private loopTimer: NodeJS.Timeout | null = null;
   private observers: Array<() => void> = [];
+  // Lessons are handled *outside* the main state to prevent type drift
+  private lessonsLearned: string[] = [];
 
   private constructor() {
     this.memory = new PersistentMemory();
     this.restoreState();
-    // restore lessons if possible
     this.restoreLessons();
   }
 
@@ -58,13 +58,13 @@ class UnifiedAGICore {
   }
 
   public getState() {
+    // safely bind the lessons outside of the "locked" AGIState
     return { ...this.state, lessonsLearned: [...this.lessonsLearned] };
   }
 
   private log(msg: string) {
     const timestamp = new Date().toISOString();
     this.state.logs.unshift(`[${timestamp}] ${msg}`);
-    // Only keep the latest 60 logs
     if (this.state.logs.length > 60) this.state.logs = this.state.logs.slice(0, 60);
     this.notify();
   }
@@ -118,7 +118,7 @@ class UnifiedAGICore {
       completedGoals: [],
       memoryKeys: [],
       logs: [],
-      generation: 0
+      generation: 0,
     };
     this.lessonsLearned = [];
     await this.memory.clear();
@@ -177,9 +177,9 @@ class UnifiedAGICore {
           generation: this.state.generation,
         }
       );
-      // -- NEW: Direct learning after a successful run
+      // Direct learning after a successful run
       this.learnFromGoal(this.state.currentGoal!, result, thoughts);
-      this.state.currentGoal = null; // triggers next cycle to pick new goal
+      this.state.currentGoal = null;
     }
 
     // 5. Learn and optimize (self-improve)
@@ -188,15 +188,11 @@ class UnifiedAGICore {
     this.persistState();
     this.notify();
 
-    // Autonomously schedule next cycle
-    this.loopTimer = setTimeout(() => this.loop(), 2000); // every 2s
+    this.loopTimer = setTimeout(() => this.loop(), 2000);
   }
 
-  // **Learning: store abstracted lesson from completed goals**
   private learnFromGoal(goal: string, result: string, thoughts: string) {
-    // Simple simulated "abstract lesson"
     const lesson = `If AGI works on "${goal}", result: ${result.slice(0, 48)}...`;
-    // Only add if not a duplicate (for demo)
     if (!this.lessonsLearned.includes(lesson)) {
       this.lessonsLearned.unshift(lesson);
       if (this.lessonsLearned.length > 40) this.lessonsLearned = this.lessonsLearned.slice(0, 40);
@@ -216,11 +212,9 @@ class UnifiedAGICore {
     ];
     // Integrate learning
     if (this.lessonsLearned.length > 0 && Math.random() < 0.4) {
-      // Pick a phrase from a learned lesson to focus on an area AGI has succeeded at
       const fragment = this.lessonsLearned[Math.floor(Math.random() * this.lessonsLearned.length)];
       return `Expand on learned lesson: ${fragment.slice(0, 60)}`;
     }
-    // ... keep old behavior (occasionally reflect on past goals)
     const previous = this.state.completedGoals;
     if (previous.length > 0 && Math.random() < 0.15) {
       const past = previous[Math.floor(Math.random() * previous.length)];
@@ -230,10 +224,8 @@ class UnifiedAGICore {
   }
 
   private async recallAndReason(): Promise<string> {
-    // Synthesize recent memory into a "thought"
     const keys = await this.memory.keys();
     if (!keys || keys.length === 0) return "No significant memories. Acting from scratch.";
-    // Fetch last 5 memories
     const memories = [];
     for (let i = 0; i < Math.min(5, keys.length); i++) {
       const mem = await this.memory.get(keys[keys.length - 1 - i]);
@@ -248,14 +240,11 @@ class UnifiedAGICore {
   }
 
   private async actOnGoal(goal: string, thoughts: string): Promise<string> {
-    // In a true AGI this is where agent reasoning and action would occur!
-    // For now: simulate actual deliberation and action
     await new Promise((res) => setTimeout(res, 500));
     return `Goal "${goal}" was addressed using current knowledge and thoughts: ${thoughts}`;
   }
 
   private selfImprove() {
-    // Simulated self-improvement 
     if (Math.random() < 0.1) {
       this.log("🦾 AGI performed an internal optimization!");
     }
@@ -263,3 +252,5 @@ class UnifiedAGICore {
 }
 
 export const unifiedAGI = UnifiedAGICore.getInstance();
+
+// ... End of file
