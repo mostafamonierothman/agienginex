@@ -1,1 +1,14 @@
-project_id = "hnudinfejowoxlybifqq"
+
+name = "agienginex-production"
+type = "javascript"
+account_id = "2baa26ea950e3c3f7b1a814cdd6e8c71"
+workers_dev = true
+main = "server/index.ts"
+compatibility_date = "2024-06-01"
+
+[vars]
+SUPABASE_URL = "https://xyzcompany.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+[functions.agienginex]
+verify_jwt = false
