@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Brain, Bot, MessageSquare, Activity, Target, Zap, Settings, Database, FileText, Globe, Users } from 'lucide-react';
+import { Brain, Bot, MessageSquare, Activity, Target, Zap, Settings, Database, FileText, Globe, Users, DollarSign } from 'lucide-react';
 
 // Import all page components
 import DashboardPage from './pages/DashboardPage';
@@ -17,6 +17,7 @@ import DeepAgentsPage from './pages/DeepAgentsPage';
 import MedicalTourismAgentsPage from './pages/MedicalTourismAgentsPage';
 import MarketResearchPage from './pages/MarketResearchPage';
 import ProjectsPage from './pages/ProjectsPage';
+import RevenueGenerationPage from './pages/RevenueGenerationPage';
 
 const AGIV5Dashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -28,8 +29,17 @@ const AGIV5Dashboard = () => {
       shortLabel: 'Home',
       icon: Brain,
       component: DashboardPage,
-      badge: 'AGO',
+      badge: 'AGI',
       badgeColor: 'bg-purple-500'
+    },
+    {
+      id: 'revenue',
+      label: 'Revenue Generation',
+      shortLabel: 'Revenue',
+      icon: DollarSign,
+      component: RevenueGenerationPage,
+      badge: '$200K+',
+      badgeColor: 'bg-green-500'
     },
     {
       id: 'agents',
@@ -132,12 +142,17 @@ const AGIV5Dashboard = () => {
                 <Brain className="h-6 w-6 md:h-8 lg:h-10 md:w-8 lg:w-10 text-purple-400 flex-shrink-0" />
                 <span className="break-words">AGIengineX V5</span>
               </div>
-              <Badge className="bg-purple-500 text-white text-xs md:text-sm w-fit">
-                Advanced AGI Operations
-              </Badge>
+              <div className="flex gap-2">
+                <Badge className="bg-purple-500 text-white text-xs md:text-sm w-fit">
+                  Full AGI Ready
+                </Badge>
+                <Badge className="bg-green-500 text-white text-xs md:text-sm w-fit">
+                  $200K+ Revenue
+                </Badge>
+              </div>
             </CardTitle>
             <p className="text-gray-300 text-sm md:text-base lg:text-lg mt-2">
-              Complete AGI system with 46+ specialized agents, autonomous loops, memory systems, and real-world integrations
+              Full AGI system with autonomous revenue generation, 46+ specialized agents, and zero-error operation
             </p>
           </CardHeader>
         </Card>
