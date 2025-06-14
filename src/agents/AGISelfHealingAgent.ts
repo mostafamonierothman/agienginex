@@ -104,7 +104,7 @@ export class AGISelfHealingAgent {
         });
       }
       
-      const failedAgents = recentAgentsData?.filter(a => a && a.status === 'failed') || [];
+      const failedAgents = recentAgentsData?.filter(a => a && typeof a === 'object' && 'status' in a && a.status === 'failed') || [];
       if (failedAgents.length > 3) {
         issues.push({
           type: 'agent_failure',
@@ -199,14 +199,14 @@ export class AGISelfHealingAgent {
     // Log successful agent restart to supervisor queue
     await supabase
       .from('supervisor_queue')
-      .insert([{ // Wrapped in array
+      .insert({
         user_id: 'agi_healing_system',
         agent_name: 'agi_self_healing_agent',
         action: 'agent_system_repair',
         input: JSON.stringify(issue.details),
         status: 'completed',
         output: 'Agent execution system repaired and optimized'
-      }]);
+      } as any);
 
     return {
       success: true,
@@ -281,7 +281,6 @@ export class AGISelfHealingAgent {
   }
 
   private async improveHealingCapabilities(healingResults: any[]) {
-    // Analyze healing patterns and improve future performance
     const successRate = healingResults.filter(r => r.healingResult.success).length / healingResults.length;
     
     if (successRate > 0.8) {
@@ -293,8 +292,8 @@ export class AGISelfHealingAgent {
     // Store learning data for future improvements
     await supabase
       .from('agi_state')
-      .upsert([{ // Wrapped in array
-        key: 'healing_performance', // This field name is correct as per types.ts for agi_state
+      .upsert({
+        key: 'healing_performance',
         state: {
           lastHealingSession: new Date().toISOString(),
           successRate,
@@ -305,7 +304,7 @@ export class AGISelfHealingAgent {
             'Optimized recovery protocols'
           ]
         }
-      }], { onConflict: 'key' }); // Assuming 'key' is the column for conflict resolution
+      } as any, { onConflict: 'key' });
   }
 
   private async emergencyRecovery() {

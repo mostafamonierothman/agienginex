@@ -138,7 +138,6 @@ export class AGOCoreLoopAgent {
   private async updateSystemMemory(goal: string, result: any, evaluation: any) {
     const timestamp = new Date().toISOString();
     
-    // Update system context
     const currentContext = await this.memory.get('system_context', {});
     currentContext.lastGoalExecution = {
       goal,
@@ -152,14 +151,14 @@ export class AGOCoreLoopAgent {
     // Log to supervisor queue for tracking
     await supabase
       .from('supervisor_queue')
-      .insert([{ // Wrapped in array
+      .insert({
         user_id: 'ago_core_loop',
         agent_name: 'ago_core_loop_agent',
         action: 'goal_execution',
         input: JSON.stringify({ goal }),
         status: result.success ? 'completed' : 'failed',
         output: JSON.stringify({ evaluation, result: result.message })
-      }]);
+      } as any);
   }
 
   private async performSystemReflection(results: any[]) {

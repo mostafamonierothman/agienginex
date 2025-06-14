@@ -8,13 +8,13 @@ export class PersistentMemory {
       this.memoryCache.set(key, value);
       await supabase
         .from('agent_memory')
-        .upsert([{ // Wrapped in array
+        .upsert({
           user_id: 'persistent_memory',
           agent_name: 'system_memory',
           memory_key: key,
           memory_value: typeof value === 'string' ? value : JSON.stringify(value)
-        }], {
-          onConflict: 'user_id,agent_name,memory_key' // This assumes a unique constraint exists on these columns
+        } as any, {
+          onConflict: 'user_id,agent_name,memory_key'
         });
       console.log(`🧠 Persistent memory set: ${key}`);
     } catch (error) {

@@ -53,14 +53,14 @@ export async function APIConnectorAgentRunner(context: AgentContext): Promise<Ag
     // Log to supervisor queue
     await supabase
       .from('supervisor_queue')
-      .insert([{ // Wrapped in array
+      .insert({
         user_id: context.user_id || 'api_connector_agent',
         agent_name: 'api_connector_agent',
         action: 'test_public_api',
         input: JSON.stringify({ action: 'test_random_api' }),
         status: 'completed',
         output: JSON.stringify(result).substring(0, 500)
-      }]);
+      } as any);
 
     return {
       success: true,

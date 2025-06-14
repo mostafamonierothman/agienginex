@@ -206,13 +206,13 @@ export class AGIConsultancyAgent {
     try {
       await supabase
         .from('agent_memory')
-        .insert([{ // Wrapped in array
+        .insert({
           user_id: 'agi_consultancy_research',
           agent_name: 'AGIConsultancyAgent',
           memory_key: 'consultancy_analysis',
           memory_value: JSON.stringify(data),
           timestamp: new Date().toISOString()
-        }]);
+        } as any);
     } catch (error) {
       console.error('Failed to store consultancy data:', error);
     }
