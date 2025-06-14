@@ -1,3 +1,4 @@
+
 import { unifiedAGI } from "@/agi/UnifiedAGICore";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -14,6 +15,13 @@ class AutonomousLoop {
   stop() {
     this.running = false;
     if (this.loopTimer) clearTimeout(this.loopTimer);
+  }
+
+  getStatus() {
+    return {
+      isRunning: this.running,
+      cycleCount: this.cycleCount,
+    };
   }
 
   private async runLoop() {
@@ -72,3 +80,4 @@ class AutonomousLoop {
 }
 
 export const autonomousLoop = new AutonomousLoop();
+
