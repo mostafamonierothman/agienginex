@@ -5,9 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { Database, Users, Activity, Zap } from 'lucide-react';
+import { Database, Users, Activity, Zap, AlertTriangle } from 'lucide-react';
 import LeadCard from "./lead-dashboard/LeadCard";
 import type { LeadStatus } from '@/types/DatabaseTypes';
+
+// Emergency deployer agent
+import { EmergencyAgentDeployerRunner } from '@/agents/EmergencyAgentDeployer';
 
 interface Lead {
   id: string;
@@ -21,7 +24,7 @@ interface Lead {
   source: string;
   industry?: string | null;
   location?: string | null;
-  status: 
+  status:
     | 'new'
     | 'contacted'
     | 'replied'
@@ -36,6 +39,7 @@ export default function LeadTestDashboard() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [totalLeads, setTotalLeads] = useState(0);
+  const [deploying, setDeploying] = useState(false);
 
   const fetchLeads = async () => {
     setIsLoading(true);
@@ -85,7 +89,7 @@ export default function LeadTestDashboard() {
         updated_at: new Date().toISOString(),
       };
 
-      // Fixed: Must insert as array, and match supabase "status" type
+      // Must insert as array, and match supabase "status" type
       const { data, error } = await supabase
         .from('leads')
         .insert([testLead])
@@ -107,6 +111,46 @@ export default function LeadTestDashboard() {
     } catch (error) {
       console.error('Error creating test lead:', error);
     }
+  };
+
+  // MAIN: Billion Dollar Decision - Deploy 100 AGI Agents
+  const deployMassiveAGISquad = async () => {
+    setDeploying(true);
+    try {
+      const result = await EmergencyAgentDeployerRunner({
+        input: {
+          emergencyMode: true,
+          targetLeads: 100000,
+          agentCount: 100,
+          specialties: ['global_medical_tourism', 'ai_sales', 'email_automation', 'dental', 'cosmetic_surgery', 'orthopedics', 'fertility'],
+          targetRegion: 'Global'
+        },
+        user_id: 'billion_dollar_op',
+        timestamp: new Date().toISOString()
+      });
+
+      if (result.success) {
+        toast({
+          title: "🚀 100 AGI Lead Agents Deployed",
+          description: "The agent swarm was launched. Expect rapid exponential lead growth.",
+        });
+        fetchLeads(); // force update
+      } else {
+        toast({
+          title: "⚠️ Deployment Error",
+          description: result.message || "An error occurred.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "⚠️ Deployment Error",
+        description: "Unexpected error deploying agent swarm.",
+        variant: "destructive",
+      });
+      console.error('Error deploying AGI squad:', error);
+    }
+    setDeploying(false);
   };
 
   useEffect(() => {
@@ -178,9 +222,20 @@ export default function LeadTestDashboard() {
         </Button>
       </div>
 
-      {/* Billion-Dollar A.I. Decision notice */}
-      <div className="bg-black/60 text-white text-center rounded-lg p-3 font-bold shadow-md">
-        🚀 Your AGI lead pipeline is on the bleeding edge. Push production, focus acquisition and scale—no one globally is executing this vertical and scale like you (unless OpenAI or Google launches a direct copy tomorrow)! <span className="text-green-400">Make the next billion dollar decision in your dashboard.</span>
+      {/* Decision Section */}
+      <div className="flex flex-col md:flex-row items-center justify-center gap-6 bg-gradient-to-r from-yellow-900/70 to-black/80 p-6 rounded-lg shadow-xl my-4 border border-yellow-500/30">
+        <div className="flex items-center mb-2 md:mb-0 gap-3">
+          <AlertTriangle className="h-8 w-8 text-yellow-300 animate-pulse" />
+          <span className="text-xl md:text-2xl font-extrabold text-yellow-100">BILLION DOLLAR DECISION</span>
+        </div>
+        <Button
+          onClick={deployMassiveAGISquad}
+          disabled={deploying}
+          className="bg-gradient-to-r from-yellow-400 to-green-500 shadow-lg text-black text-lg font-bold px-8 py-4 hover:scale-105 transition"
+          size="lg"
+        >
+          {deploying ? "Deploying..." : "🚀 Deploy 100 AGI Lead Agents Now"}
+        </Button>
       </div>
 
       {/* Leads List */}
