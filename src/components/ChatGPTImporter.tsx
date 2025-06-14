@@ -67,22 +67,28 @@ function extractMessagesFromExport(json: ChatGPTExport): {
 const ChatGPTImporter: React.FC = () => {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setSelectedFile(file);
+    setImportResult(null);
+  };
+
+  const handleImport = async () => {
+    if (!selectedFile) return;
+
     setImporting(true);
     setImportResult(null);
-
     try {
-      const text = await file.text();
+      const text = await selectedFile.text();
       const json: ChatGPTExport = JSON.parse(text);
       const messages = extractMessagesFromExport(json);
 
       let success = 0;
       let errorCount = 0;
       for (const message of messages) {
-        const { data, error } = await supabase.from("imported_conversations").insert([
+        const { error } = await supabase.from("imported_conversations").insert([
           {
             conversation_id: message.conversation_id,
             conversation_title: message.conversation_title,
@@ -131,6 +137,7 @@ const ChatGPTImporter: React.FC = () => {
       });
     }
     setImporting(false);
+    setSelectedFile(null);
   };
 
   return (
@@ -146,11 +153,17 @@ const ChatGPTImporter: React.FC = () => {
           <Input
             type="file"
             accept=".json"
-            onChange={handleFileUpload}
+            onChange={handleFileChange}
             disabled={importing}
             className="mb-4"
           />
-          <Button disabled>{importing ? "Importing..." : "Upload & Import"}</Button>
+          <Button
+            onClick={handleImport}
+            disabled={!selectedFile || importing}
+            className="w-full"
+          >
+            {importing ? "Importing..." : "Upload & Import"}
+          </Button>
           {importResult && (
             <div className="mt-4 text-sm text-white">
               Imported: <span className="font-semibold">{importResult.success}</span> / {importResult.total}
@@ -166,3 +179,4 @@ const ChatGPTImporter: React.FC = () => {
 };
 
 export default ChatGPTImporter;
+
