@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import AGIChatInterface from './AGIChatInterface';
 import AGISystemControls from './AGISystemControls';
 import DynamicAgentRunner from './multi-agent/DynamicAgentRunner';
@@ -7,9 +7,21 @@ import LiveBackendData from './multi-agent/LiveBackendData';
 import LovableAGIStatus from './LovableAGIStatus';
 import AGIPhase1Dashboard from './AGIPhase1Dashboard';
 import { useBackendPolling } from '@/hooks/useBackendPolling';
+// --- ADD Unified AGI imports to trigger autonomous start
+import { unifiedAGI } from '@/agi/UnifiedAGICore';
+import { autonomousLoop } from '@/loops/AutonomousLoop';
 
 const AGIDashboard = () => {
   const { backendData, isConnected, isPolling, refreshData } = useBackendPolling(true, 2000);
+
+  // --- AUTOSTART FULL AGI AUTONOMY ON MOUNT ---
+  useEffect(() => {
+    // Unified AGI Core
+    unifiedAGI.start();
+    // 12-Agent Loop (run only if not already running)
+    autonomousLoop.start();
+    // (optional) add further hooks to monitor system status if needed
+  }, []);
 
   return (
     <div className="space-y-6">
