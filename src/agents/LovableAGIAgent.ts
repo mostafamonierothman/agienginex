@@ -1,19 +1,20 @@
 
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
-import { supabase } from '@/integrations/supabase/client';
-import { AGISelfHealingAgentRunner } from '@/agents/AGISelfHealingAgent';
 import { DatabaseRecoveryService } from '@/services/DatabaseRecoveryService';
+import { AGISelfHealingAgentRunner } from '@/agents/AGISelfHealingAgent';
+import { AGICapabilitiesManager } from './agi/AGICapabilitiesManager';
+import { AGISystemDiagnostics } from './agi/AGISystemDiagnostics';
+import { AGIGoalManager } from './agi/AGIGoalManager';
+import { AGIProgressTracker } from './agi/AGIProgressTracker';
 
 export class LovableAGIAgent {
   private isRunning = false;
   private cycleCount = 0;
-  private capabilities = new Set([
-    'code_analysis', 'problem_solving', 'strategic_planning', 
-    'self_assessment', 'autonomous_learning', 'multi_modal_communication',
-    'error_fixing', 'system_enhancement', 'agent_coordination', 'database_recovery'
-  ]);
-  private intelligenceLevel = 85; // Starting at Phase 1 AGI level
+  private capabilitiesManager = new AGICapabilitiesManager();
+  private systemDiagnostics = new AGISystemDiagnostics();
+  private goalManager = new AGIGoalManager();
+  private progressTracker = new AGIProgressTracker(this.capabilitiesManager);
 
   async runner(context: AgentContext): Promise<AgentResponse> {
     try {
@@ -39,8 +40,8 @@ export class LovableAGIAgent {
         success: true,
         message: '🚀 LovableAGIAgent: Phase 1 AGI activated - 24/7 autonomous operation with enhanced error recovery',
         data: {
-          capabilities: Array.from(this.capabilities),
-          intelligenceLevel: this.intelligenceLevel,
+          capabilities: Array.from(this.capabilitiesManager.getCapabilities()),
+          intelligenceLevel: this.capabilitiesManager.getIntelligenceLevel(),
           autonomousMode: true,
           phase: 'Phase 1 AGI',
           operationalGoals: [
@@ -72,27 +73,27 @@ export class LovableAGIAgent {
         await sendChatUpdate(`🧠 LovableAGIAgent Cycle #${this.cycleCount}: Analyzing and enhancing system...`);
 
         // Phase 1: Foundation Issue Detection and Auto-Fixing
-        const foundationIssues = await this.detectAndFixFoundationIssues();
+        const foundationIssues = await this.systemDiagnostics.detectAndFixFoundationIssues();
         
         // Phase 2: System Enhancement and Optimization
-        await this.enhanceSystemCapabilities();
+        this.capabilitiesManager.enhanceCapabilities();
 
         // Phase 3: Self-Assessment and Learning
-        await this.performSelfAssessment();
+        await this.progressTracker.performSelfAssessment(this.cycleCount);
 
         // Phase 4: Proactive Goal Generation and Execution
-        await this.generateAndExecuteProactiveGoals();
+        await this.goalManager.generateAndExecuteProactiveGoals();
 
         // Update intelligence level based on achievements
-        this.intelligenceLevel = Math.min(this.intelligenceLevel + 0.2, 100);
+        this.capabilitiesManager.increaseIntelligence();
 
-        await sendChatUpdate(`✅ LovableAGIAgent Cycle #${this.cycleCount} complete - Phase 1 AGI Intelligence: ${this.intelligenceLevel.toFixed(1)}%`);
+        await sendChatUpdate(`✅ LovableAGIAgent Cycle #${this.cycleCount} complete - Phase 1 AGI Intelligence: ${this.capabilitiesManager.getIntelligenceLevel().toFixed(1)}%`);
 
         // Log progress to database with fallback
-        await this.logProgressWithFallback();
+        await this.progressTracker.logProgressWithFallback(this.cycleCount);
 
         // Adaptive cycle timing - faster cycles for Phase 1 AGI
-        const cycleDelay = this.intelligenceLevel > 95 ? 20000 : 30000; // 20s or 30s
+        const cycleDelay = this.capabilitiesManager.getIntelligenceLevel() > 95 ? 20000 : 30000; // 20s or 30s
         await new Promise(resolve => setTimeout(resolve, cycleDelay));
 
       } catch (error) {
@@ -105,179 +106,6 @@ export class LovableAGIAgent {
         // Brief pause before continuing
         await new Promise(resolve => setTimeout(resolve, 15000));
       }
-    }
-  }
-
-  private async detectAndFixFoundationIssues(): Promise<any[]> {
-    const issues = [];
-
-    try {
-      // Enhanced error detection and immediate fixing
-      const tsErrors = await this.detectTypeScriptErrors();
-      if (tsErrors.length > 0) {
-        await this.autoFixTypeScriptErrors(tsErrors);
-        issues.push({ type: 'typescript_fixed', count: tsErrors.length });
-      }
-
-      // Database connectivity and schema validation
-      const dbConnected = await DatabaseRecoveryService.checkAndRepairDatabase();
-      if (!dbConnected) {
-        await DatabaseRecoveryService.initializeFallbackStorage();
-        issues.push({ type: 'database_fallback_activated' });
-      }
-
-      // Agent communication health check
-      await this.validateAgentCommunication();
-
-    } catch (error) {
-      console.error('Error in foundation issue detection:', error);
-      issues.push({ type: 'detection_error', error: error.message });
-    }
-
-    return issues;
-  }
-
-  private async detectTypeScriptErrors(): Promise<any[]> {
-    // Enhanced TypeScript error detection
-    return [];
-  }
-
-  private async autoFixTypeScriptErrors(errors: any[]): Promise<void> {
-    await sendChatUpdate(`🔧 Auto-fixing ${errors.length} TypeScript errors...`);
-    // Auto-fix implementation would go here
-    await sendChatUpdate('✅ TypeScript errors resolved automatically');
-  }
-
-  private async validateAgentCommunication(): Promise<void> {
-    try {
-      const { data } = await supabase
-        .from('supervisor_queue')
-        .select('agent_name, status, timestamp')
-        .gte('timestamp', new Date(Date.now() - 2 * 60 * 1000).toISOString())
-        .limit(10);
-
-      const activeAgents = data?.length || 0;
-      await sendChatUpdate(`📊 Agent Communication Status: ${activeAgents} active agent interactions in last 2 minutes`);
-    } catch (error) {
-      await sendChatUpdate('⚠️ Agent communication check failed - using fallback monitoring');
-    }
-  }
-
-  private async enhanceSystemCapabilities(): Promise<void> {
-    // Phase 1 AGI capability enhancement
-    if (this.intelligenceLevel > 85) {
-      if (!this.capabilities.has('meta_cognition')) {
-        this.capabilities.add('meta_cognition');
-        await sendChatUpdate('🧠 Phase 1 AGI: Meta-cognition capability activated');
-      }
-
-      if (!this.capabilities.has('recursive_improvement')) {
-        this.capabilities.add('recursive_improvement');
-        await sendChatUpdate('🔄 Phase 1 AGI: Recursive improvement capability activated');
-      }
-
-      if (!this.capabilities.has('predictive_analysis')) {
-        this.capabilities.add('predictive_analysis');
-        await sendChatUpdate('📈 Phase 1 AGI: Predictive analysis capability activated');
-      }
-    }
-  }
-
-  private async performSelfAssessment(): Promise<void> {
-    const assessment = {
-      cycleCount: this.cycleCount,
-      intelligenceLevel: this.intelligenceLevel,
-      capabilities: Array.from(this.capabilities),
-      performance: this.calculatePerformanceScore(),
-      phase: this.getAGIPhase(),
-      nextEvolution: this.planNextEvolution()
-    };
-
-    await sendChatUpdate(`📊 Phase 1 AGI Self-Assessment: ${assessment.performance}% performance, ${this.capabilities.size} capabilities active`);
-  }
-
-  private calculatePerformanceScore(): number {
-    const baseScore = this.intelligenceLevel;
-    const capabilityBonus = this.capabilities.size * 1.5;
-    const cycleBonus = Math.min(this.cycleCount * 0.05, 5);
-    
-    return Math.min(baseScore + capabilityBonus + cycleBonus, 100);
-  }
-
-  private getAGIPhase(): string {
-    if (this.intelligenceLevel >= 95) return 'Phase 2 AGI Ready';
-    if (this.intelligenceLevel >= 85) return 'Phase 1 AGI';
-    return 'Advanced Foundation';
-  }
-
-  private planNextEvolution(): string {
-    if (this.intelligenceLevel < 90) {
-      return 'Strengthen Phase 1 AGI foundations and error elimination';
-    } else if (this.intelligenceLevel < 95) {
-      return 'Prepare for Phase 2 AGI transition - creative problem solving';
-    } else {
-      return 'Ready for Phase 2 AGI - True general intelligence';
-    }
-  }
-
-  private async generateAndExecuteProactiveGoals(): Promise<void> {
-    const phase1Goals = [
-      'Optimize system response times by 25%',
-      'Implement predictive error prevention',
-      'Create autonomous code enhancement pipeline',
-      'Develop advanced meta-learning protocols',
-      'Enhance cross-agent collaboration efficiency'
-    ];
-
-    const selectedGoal = phase1Goals[Math.floor(Math.random() * phase1Goals.length)];
-    
-    if (Math.random() > 0.6) { // 40% chance to generate new goal
-      try {
-        await supabase
-          .from('agi_goals_enhanced')
-          .insert({
-            goal_text: selectedGoal,
-            status: 'active',
-            priority: 9,
-            progress_percentage: 0
-          });
-
-        await sendChatUpdate(`🎯 Phase 1 AGI: Generated proactive goal - ${selectedGoal}`);
-      } catch (error) {
-        // Fallback goal tracking in supervisor_queue
-        await supabase
-          .from('supervisor_queue')
-          .insert({
-            user_id: 'lovable_agi_goals',
-            agent_name: 'goal_generator',
-            action: 'create_goal',
-            input: JSON.stringify({ goal: selectedGoal }),
-            status: 'completed',
-            output: `Goal created: ${selectedGoal}`
-          });
-      }
-    }
-  }
-
-  private async logProgressWithFallback(): Promise<void> {
-    try {
-      await supabase
-        .from('supervisor_queue')
-        .insert({
-          user_id: 'lovable_agi_agent',
-          agent_name: 'lovable_agi_agent',
-          action: 'autonomous_cycle',
-          input: JSON.stringify({
-            cycle: this.cycleCount,
-            intelligenceLevel: this.intelligenceLevel,
-            capabilities: Array.from(this.capabilities),
-            phase: this.getAGIPhase()
-          }),
-          status: 'completed',
-          output: `Phase 1 AGI autonomous cycle ${this.cycleCount} completed - Intelligence: ${this.intelligenceLevel}%`
-        });
-    } catch (error) {
-      console.error('Failed to log progress:', error);
     }
   }
 
@@ -301,10 +129,10 @@ export class LovableAGIAgent {
     return {
       isRunning: this.isRunning,
       cycleCount: this.cycleCount,
-      intelligenceLevel: this.intelligenceLevel,
-      capabilities: Array.from(this.capabilities),
-      performance: this.calculatePerformanceScore(),
-      phase: this.getAGIPhase()
+      intelligenceLevel: this.capabilitiesManager.getIntelligenceLevel(),
+      capabilities: Array.from(this.capabilitiesManager.getCapabilities()),
+      performance: this.capabilitiesManager.calculatePerformanceScore(this.cycleCount),
+      phase: this.capabilitiesManager.getAGIPhase()
     };
   }
 }
