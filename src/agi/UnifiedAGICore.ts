@@ -17,6 +17,7 @@ import { CrossSystemIntegrationManager } from "./CrossSystemIntegrationManager";
 import { MultiAGIOrchestrator } from "./MultiAGIOrchestrator";
 import { AdvancedMemoryConsolidator } from "./AdvancedMemoryConsolidator";
 import { SelfModificationProtocol } from "./SelfModificationProtocol";
+import { AGIAdvancedCapabilities } from "./AGIAdvancedCapabilities";
 
 class UnifiedAGICore {
   private static instance: UnifiedAGICore;
@@ -35,6 +36,7 @@ class UnifiedAGICore {
   private multiAGIOrchestrator = new MultiAGIOrchestrator();
   private memoryConsolidator = new AdvancedMemoryConsolidator();
   private selfModification = new SelfModificationProtocol();
+  private advancedCapabilities: AGIAdvancedCapabilities;
 
   // Mention callback used for adaptive prioritization
   private agentLoop = new AGIAgentLoop(
@@ -52,7 +54,16 @@ class UnifiedAGICore {
   unsubscribe = this.notification.unsubscribe.bind(this.notification);
   private notify = this.notification.notify.bind(this.notification);
 
-  private constructor() {}
+  private constructor() {
+    this.advancedCapabilities = new AGIAdvancedCapabilities({
+      researchEngine: this.researchEngine,
+      systemIntegration: this.systemIntegration,
+      multiAGIOrchestrator: this.multiAGIOrchestrator,
+      memoryConsolidator: this.memoryConsolidator,
+      selfModification: this.selfModification,
+      log: this.log.bind(this),
+    });
+  }
 
   static getInstance() {
     if (!UnifiedAGICore.instance) {
@@ -71,7 +82,7 @@ class UnifiedAGICore {
     
     // Enhanced startup sequence
     await this.absorbWorldState();
-    await this.initializeAdvancedCapabilities();
+    await this.advancedCapabilities.initialize();
     await this.stateManager.persistState();
     this.loop();
     this.notify();
@@ -190,21 +201,18 @@ class UnifiedAGICore {
     this.notify();
   }
 
-  // ... keep existing code (public methods)
-
-  // NEW: Advanced capability accessors
-  public async executeSystemAction(connector: string, action: string, params: any) {
-    return await this.systemIntegration.executeSystemAction(connector, action, params);
+  public executeSystemAction(connector: string, action: string, params: any) {
+    return this.systemIntegration.executeSystemAction(connector, action, params);
   }
 
-  public async spawnSpecializedAGI(specialization: string) {
-    const instance = await this.multiAGIOrchestrator.spawnAGIInstance(specialization);
+  public spawnSpecializedAGI(specialization: string) {
+    const instance = this.multiAGIOrchestrator.spawnAGIInstance(specialization);
     this.log(`🤖 Spawned specialized AGI: ${instance.name} (${specialization})`);
     return instance;
   }
 
-  public async proposeSystemModification(type: any, description: string, benefit: string) {
-    const proposal = await this.selfModification.proposeModification(type, description, benefit);
+  public proposeSystemModification(type: any, description: string, benefit: string) {
+    const proposal = this.selfModification.proposeModification(type, description, benefit);
     this.log(`🔧 Modification proposed: ${description}`);
     return proposal;
   }
