@@ -4,6 +4,8 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -456,10 +458,50 @@ serve(async (req) => {
 
       const endpoint = (body.endpoint || '').toLowerCase();
 
-      // --- Chat
+      // === 🧠 LLM SMART AI CHAT BRIDGE ===
       if (endpoint === 'chat') {
-        const result = await processChat(body.message || '');
-        return new Response(JSON.stringify(result), { headers: corsHeaders });
+        const userMessage = body.message || '';
+        if (openAIApiKey && userMessage) {
+          // Call OpenAI API and return smart response
+          const result = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${openAIApiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'gpt-4o-mini', // You can choose another available model as desired
+              messages: [
+                { role: 'system', content: "You are AGIengineX: a fully autonomous artificial general intelligence, specialized in strategy, business, adaptation, and critical thinking. Be factual, helpful, and concise." },
+                { role: 'user', content: userMessage }
+              ],
+              max_tokens: 800,
+              temperature: 0.7
+            })
+          });
+          if (!result.ok) {
+            const errText = await result.text();
+            return new Response(JSON.stringify({ response: "OpenAI API error: " + errText, agent_used: "openai_llm", timestamp: new Date().toISOString() }), { headers: corsHeaders });
+          }
+          const data = await result.json();
+          const llmReply = data?.choices?.[0]?.message?.content ?? "Unable to generate a smart response right now.";
+          return new Response(
+            JSON.stringify({
+              response: llmReply,
+              agent_used: "openai_llm",
+              timestamp: new Date().toISOString()
+            }),
+            { headers: corsHeaders }
+          );
+        }
+        // Fallback to old local response if no OpenAI key or message
+        return new Response(
+          JSON.stringify({
+            response: "🤖 I'm a TRUE AGI system with autonomous capabilities. Try asking me about 'current goals', 'reflect on performance', 'market opportunities', 'next strategic move', or 'run agent chain'. I can also respond to 'status' for system health.",
+            agent_used: 'general_agent'
+          }),
+          { headers: corsHeaders }
+        );
       }
       // --- Goals GET
       if (endpoint === 'goals') {
