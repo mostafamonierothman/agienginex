@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { agiEngineX } from "@/services/AGIengineXService";
 import { Button } from "@/components/ui/button";
@@ -35,12 +34,11 @@ export const AGIChatLayout: React.FC = () => {
       const msg = `You are AGIengineX, the official autonomous executive for Mostafa Monier Othman's medical tourism company. Proceed to execute real business actions.\n---\n${input}`;
       const res = await agiEngineX.chat(msg);
 
-      // Fix: .message may not exist. Use safe response detection.
+      // Only rely on .response or res as string. Don't access .message.
       const responseText =
-        res?.response ??
-        (typeof res?.message === "string" ? res.message : undefined) ??
-        (typeof res === "string" ? res : "") ??
-        "No response";
+        typeof res === "string"
+          ? res
+          : (typeof res?.response === "string" ? res.response : "No response");
 
       setMessages((prev) => [...prev, { role: "agi", content: responseText }]);
     } catch (e: any) {
