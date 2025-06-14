@@ -6,4 +6,6 @@ export type AGIState = {
   memoryKeys: string[];
   logs: string[];
   generation: number;
+  // --- NEW for dynamic knowledge/world state
+  lastRecalledWorldState?: any[];
 };
