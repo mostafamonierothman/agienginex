@@ -1,13 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Brain, Zap, Target, Settings, Play, Pause } from 'lucide-react';
 import { agentRegistry } from '@/config/AgentRegistry';
 import { SupabaseMemoryService } from '@/services/SupabaseMemoryService';
 import { toast } from '@/hooks/use-toast';
+import AgentSystemOverview from '../components/AgentSystemOverview';
+import AgentCategorySection from '../components/AgentCategorySection';
 
 interface AgentInfo {
   name: string;
@@ -110,93 +107,22 @@ const AgentsPage = () => {
   return (
     <div className="space-y-6">
       {/* System Overview */}
-      <Card className="bg-gradient-to-r from-blue-900/50 to-purple-900/50 border-blue-500/30">
-        <CardHeader>
-          <CardTitle className="text-2xl text-white flex items-center gap-3">
-            <Brain className="h-8 w-8 text-blue-400" />
-            Agent Registry System
-            <Badge variant="outline" className="ml-auto text-cyan-400 border-cyan-400">
-              {systemStats?.version || 'V9'}
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="space-y-1">
-              <div className="text-2xl font-bold text-white">{systemStats?.totalAgents || agents.length}</div>
-              <div className="text-sm text-gray-300">Total Agents</div>
-            </div>
-            <div className="space-y-1">
-              <div className="text-2xl font-bold text-purple-400">{systemStats?.agoAgents || 0}</div>
-              <div className="text-sm text-gray-300">AGO Agents</div>
-            </div>
-            <div className="space-y-1">
-              <div className="text-2xl font-bold text-blue-400">{systemStats?.coreAgents || 0}</div>
-              <div className="text-sm text-gray-300">Core Agents</div>
-            </div>
-            <div className="space-y-1">
-              <div className="text-2xl font-bold text-green-400">{systemStats?.emergencyAgents || 0}</div>
-              <div className="text-sm text-gray-300">Emergency Agents</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <AgentSystemOverview 
+        systemStats={systemStats}
+        totalAgents={agents.length}
+      />
 
       {/* Agent Categories */}
       <div className="grid gap-6">
         {Object.entries(groupedAgents).map(([category, categoryAgents]) => (
-          <Card key={category} className="bg-slate-800/50 border-slate-600/30">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Target className="h-5 w-5" />
-                {category} Agents
-                <Badge variant="outline" className={getCategoryColor(category)}>
-                  {Array.isArray(categoryAgents) ? categoryAgents.length : 0}
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-64">
-                <div className="grid gap-3">
-                  {Array.isArray(categoryAgents) && categoryAgents.map((agent) => (
-                    <div 
-                      key={agent.name}
-                      className="flex items-center justify-between p-3 bg-slate-700/30 rounded border border-slate-600/20"
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Zap className="h-4 w-4 text-yellow-400" />
-                          <span className="font-medium text-white">{agent.name}</span>
-                          <Badge variant="outline" className="text-xs">
-                            {agent.version}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-gray-300">{agent.description}</p>
-                      </div>
-                      <Button
-                        size="sm"
-                        onClick={() => runAgent(agent.name)}
-                        disabled={runningAgents.has(agent.name)}
-                        className="ml-4"
-                      >
-                        {runningAgents.has(agent.name) ? (
-                          <>
-                            <Pause className="h-4 w-4 mr-1" />
-                            Running...
-                          </>
-                        ) : (
-                          <>
-                            <Play className="h-4 w-4 mr-1" />
-                            Run
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
+          <AgentCategorySection
+            key={category}
+            category={category}
+            agents={categoryAgents}
+            runningAgents={runningAgents}
+            onRunAgent={runAgent}
+            getCategoryColor={getCategoryColor}
+          />
         ))}
       </div>
     </div>
