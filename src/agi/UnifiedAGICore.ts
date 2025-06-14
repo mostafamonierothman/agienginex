@@ -225,10 +225,10 @@ class UnifiedAGICore {
       );
       this.learnFromGoal(this.state.currentGoal!, combinedResult, thoughts);
       this.state.currentGoal = null;
-    }
 
-    // 5. Self-improve
-    this.selfImprove();
+      // Self-improvement (NEW)
+      await this.selfImprove();
+    }
 
     this.persistState();
     this.notify();
@@ -309,9 +309,22 @@ class UnifiedAGICore {
     return `Goal "${goal}" was addressed using current knowledge and thoughts: ${thoughts}`;
   }
 
-  private selfImprove() {
-    if (Math.random() < 0.1) {
-      this.log("🦾 AGI performed an internal optimization!");
+  // Self-improvement mechanism (NEW)
+  private async selfImprove() {
+    // With some probability, generate a meta-lesson based on recent completed goals or lessons
+    if (this.state.completedGoals.length >= 3 && Math.random() < 0.25) {
+      // Look at the last few completed goals
+      const last = this.state.completedGoals.slice(-3);
+      const mainPoint = last.map(g => g.goal).join("; ");
+      const lastLesson = this.lessons.getLessons()[0] || "";
+      const improvement =
+        `Meta-lesson: AGI should adapt strategies based on recent goals: [${mainPoint}] and last lesson: ${lastLesson.slice(0, 64)}`;
+      this.lessons.addLesson(improvement);
+      this.log(`🚀 Self-Improvement: ${improvement}`);
+    }
+    // Otherwise, low-prob "optimization"
+    else if (Math.random() < 0.05) {
+      this.log("🦾 Self-optimization: Routine AGI cognitive maintenance.");
     }
   }
 }
