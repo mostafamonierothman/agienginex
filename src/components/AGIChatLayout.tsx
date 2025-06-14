@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { agiEngineX } from "@/services/AGIengineXService";
 import { Button } from "@/components/ui/button";
@@ -5,18 +6,12 @@ import { Input } from "@/components/ui/input";
 import { useAGIBusinessMetrics } from "@/hooks/useAGIBusinessMetrics";
 import { Bot, User2 } from "lucide-react";
 
-// ✅ Import AGISystemAssessment
-import { AGISystemAssessment } from "@/agi/AGISystemAssessment";
 // --- Import AGI AUTO-START modules ---
 import { unifiedAGI } from "@/agi/UnifiedAGICore";
 import { autonomousLoop } from "@/loops/AutonomousLoop";
 
 // Add: poll real AGI system state for progress & feedback
 import { sendAGIChatCommand, fetchLiveAGIState } from "@/services/AGIChatOrchestrator";
-
-// Enhance assessment calculation and comparison
-import { AGIFeatureAssessment } from "@/agi/AGIFeatureAssessment";
-import { AGIChatAssessmentPanel } from "@/components/agi/AGIChatAssessmentPanel";
 
 export const AGIChatLayout: React.FC = () => {
   const [messages, setMessages] = useState([
@@ -44,25 +39,6 @@ export const AGIChatLayout: React.FC = () => {
 
   const { metrics, loading: metricsLoading } = useAGIBusinessMetrics("agi_metrics");
 
-  // Dynamically assess autonomy score using AGISystemAssessment
-  // Simulate minimal state as AGIengineX doesn't hold AGIState—the real system would provide much richer state!
-  const systemAssessment = AGISystemAssessment.assess({
-    memoryKeys: [],
-    vectorStats: {},
-    lessonsLearned: [],
-    recentCollaborationFeedback: [],
-    selfReflectionHistory: [],
-    advancedCapabilities: {
-      systemConnections: 3, // Assume real business integrations are running
-      agiInstances: 3,
-      memoryConsolidation: 2,
-      modificationProposals: 2,
-      safetyStatus: { locksActive: 3, totalProposals: 2, highRiskProposals: 0 }
-    },
-    running: true,
-    currentGoal: input || null,
-  });
-
   const [agiInfo, setAgiInfo] = useState<any>(null);
   const [optimisticAutonomy, setOptimisticAutonomy] = useState(72);
 
@@ -79,24 +55,6 @@ export const AGIChatLayout: React.FC = () => {
       clearTimeout(timer);
     };
   }, []);
-
-  // Enhance assessment calculation and comparison
-  const featureAssessment = AGIFeatureAssessment.assessWithComparison({
-    memoryKeys: agiInfo?.memoryKeys ?? [],
-    vectorStats: agiInfo?.vectorStats ?? {},
-    lessonsLearned: agiInfo?.lessonsLearned ?? [],
-    recentCollaborationFeedback: agiInfo?.recentCollaborationFeedback ?? [],
-    selfReflectionHistory: agiInfo?.selfReflectionHistory ?? [],
-    advancedCapabilities: agiInfo?.advancedCapabilities ?? {
-      systemConnections: 3,
-      agiInstances: 3,
-      memoryConsolidation: 2,
-      modificationProposals: 2,
-      safetyStatus: { locksActive: 3, totalProposals: 2, highRiskProposals: 0 }
-    },
-    running: !!agiInfo?.running,
-    currentGoal: input || null,
-  }, "EngineX AGI v5");
 
   // Derive autonomy percent from backend info if present
   const autonomyPercent = agiInfo?.autonomy_percent
@@ -143,9 +101,8 @@ export const AGIChatLayout: React.FC = () => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-tr from-slate-100 via-purple-50 to-slate-200 dark:from-slate-900 dark:via-slate-800 p-1">
       <div className="w-full max-w-md md:max-w-lg shadow-xl border border-slate-200 bg-white dark:bg-slate-800 rounded-xl flex flex-col min-h-[75dvh]">
-        {/* --- Insert Assessment Panel at the top, before chat --- */}
-        <div className="px-4 pt-6 pb-1"><AGIChatAssessmentPanel assessment={featureAssessment} /></div>
-        <div className="flex items-center px-4 pt-4 pb-2 sticky top-0 bg-white dark:bg-slate-800 rounded-t-xl z-10">
+        {/* --- ONLY CHAT -- removed assessment panel here --- */}
+        <div className="flex items-center px-4 pt-6 pb-2 sticky top-0 bg-white dark:bg-slate-800 rounded-t-xl z-10">
           <Bot className="mr-2 h-7 w-7 text-purple-600" />
           <h1 className="text-xl md:text-2xl font-bold text-purple-700 dark:text-purple-300">
             AGIengineX Chat
