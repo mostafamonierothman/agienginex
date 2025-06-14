@@ -7,6 +7,7 @@ import { navItems } from "./nav-items";
 import Index from "./pages/Index";
 import AGIV5 from "./pages/AGIV5";
 import ChatGPTImportPage from "./pages/ChatGPTImport";
+import FunctionalAGIPage from "./pages/FunctionalAGI";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +21,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/agi-v5" element={<AGIV5 />} />
           <Route path="/chatgpt-import" element={<ChatGPTImportPage />} />
+          <Route path="/functional-agi" element={<FunctionalAGIPage />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
