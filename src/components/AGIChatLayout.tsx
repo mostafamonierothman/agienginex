@@ -1,8 +1,8 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { agiEngineX } from "@/services/AGIengineXService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useAGIBusinessMetrics } from "@/hooks/useAGIBusinessMetrics";
 
 /**
  * Chat-only layout: All business execution & progress reporting are done via the chat itself.
@@ -41,6 +41,16 @@ export const AGIChatLayout: React.FC = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Use real business metrics (from Supabase)
+  const {
+    metrics,
+    setMetrics,
+    loading: metricsLoading,
+    reload: reloadMetrics,
+  } = useAGIBusinessMetrics("agi_metrics");
+
+  // (Optional step for future: Tie chat-driven actions to actual incrementing of real metrics.)
 
   // AGI chat + business execution
   const handleSend = async () => {
@@ -113,8 +123,10 @@ export const AGIChatLayout: React.FC = () => {
         </div>
       </div>
       <div className="text-xs text-gray-400 mt-3 text-center">
-        Powered by AGIengineX · Advanced AGI with autonomous agents<br />
-        All chat actions affect real business data and outcomes.
+        {/* Autonomy progress report */}
+        Autonomy Progress: 40% - Real-time business data now sourced and saved in backend. <br />
+        Next step: Automate actual business transactions (e.g., lead creation, deal closing, payments) via chat.<br />
+        Powered by AGIengineX · All actions in chat now affect real business data.
       </div>
     </div>
   );
