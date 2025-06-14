@@ -101,7 +101,6 @@ class AGIengineXService {
         timestamp: new Date().toISOString()
       };
     } catch (error: any) {
-      const fallbackResponse = this.generateEnhancedLocalAGIResponse(message);
       return {
         response: `💥 Unable to reach AGIengineX. Details: ${error.message || error}`,
         agent_used: 'local_agi_enhanced',
