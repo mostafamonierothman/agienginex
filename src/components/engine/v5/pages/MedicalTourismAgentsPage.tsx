@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -33,23 +32,21 @@ const MedicalTourismAgentsPage = () => {
 
   const loadAgentStatus = async () => {
     try {
-      // Load agent status from supervisor_queue and agent_memory tables
       const { data: supervisorData } = await supabase
-        .from('supervisor_queue')
+        .from('api.supervisor_queue')
         .select('*')
         .ilike('agent_name', '%Agent%')
         .eq('action', 'emergency_deployment')
         .order('timestamp', { ascending: false });
 
       const { data: memoryData } = await supabase
-        .from('agent_memory')
+        .from('api.agent_memory')
         .select('*')
         .eq('memory_key', 'lead_generation_knowledge')
         .order('timestamp', { ascending: false });
 
-      // Load actual leads count
       const { data: leadsData } = await supabase
-        .from('leads')
+        .from('api.leads')
         .select('id, industry')
         .in('industry', ['eye surgery', 'dental procedures']);
 
@@ -57,10 +54,8 @@ const MedicalTourismAgentsPage = () => {
       const dentalLeads = leadsData?.filter(l => l.industry === 'dental procedures').length || 0;
       setTotalLeads(eyeLeads + dentalLeads);
 
-      // Parse agent data from memory and supervisor logs
       const agentMap = new Map();
       
-      // Process memory data for completed agents
       memoryData?.forEach(memory => {
         try {
           const knowledgeData = JSON.parse(memory.memory_value);
@@ -80,7 +75,6 @@ const MedicalTourismAgentsPage = () => {
         }
       });
 
-      // Process supervisor data for active/deploying agents
       supervisorData?.forEach(log => {
         if (!agentMap.has(log.agent_name)) {
           try {
@@ -104,7 +98,6 @@ const MedicalTourismAgentsPage = () => {
       const agentArray = Array.from(agentMap.values());
       setAgents(agentArray);
 
-      // Determine mission status
       if (agentArray.length === 0) {
         setMissionStatus('not_started');
       } else if (agentArray.some(a => a.status === 'active')) {
@@ -137,7 +130,6 @@ const MedicalTourismAgentsPage = () => {
         description: "50 specialized agents deploying for medical tourism leads...",
       });
 
-      // Execute the MedicalTourismLeadFactory agent
       const result = await agentRegistry.runAgent('medical_tourism_lead_factory', {
         input: { 
           emergencyMode: true,
@@ -149,7 +141,6 @@ const MedicalTourismAgentsPage = () => {
         user_id: 'medical_tourism_page'
       });
 
-      // Log the deployment
       await SupabaseMemoryService.saveExecutionLog('MedicalTourismLeadFactory', 'emergency_deployment', result);
 
       if (result.success) {
@@ -159,7 +150,6 @@ const MedicalTourismAgentsPage = () => {
         });
         setMissionStatus('active');
         
-        // Create some sample agents for demonstration
         const sampleAgents = [];
         for (let i = 1; i <= 50; i++) {
           const specialty = i <= 25 ? 'eye_surgery' : 'dental_procedures';
@@ -178,7 +168,6 @@ const MedicalTourismAgentsPage = () => {
         
         setAgents(sampleAgents);
         
-        // Refresh agent status immediately
         setTimeout(loadAgentStatus, 2000);
       } else {
         toast({

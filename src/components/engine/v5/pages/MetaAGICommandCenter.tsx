@@ -16,7 +16,7 @@ const fetchMetaInsights = async () => {
   let metaText = "Thinking...";
   try {
     const { data, error } = await supabase
-      .from("supervisor_queue")
+      .from("api.supervisor_queue")
       .select("output, agent_name, timestamp")
       .order("timestamp", { ascending: false })
       .limit(10);

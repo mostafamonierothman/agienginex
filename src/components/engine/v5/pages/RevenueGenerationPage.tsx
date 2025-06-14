@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import RevenueActivationPanel from '@/components/RevenueActivationPanel';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,7 +23,7 @@ const RevenueGenerationPage = () => {
     setIsLoading(true);
     try {
       const { data, error, count } = await supabase
-        .from('leads')
+        .from('api.leads')
         .select('industry', { count: 'exact' });
 
       if (error) {

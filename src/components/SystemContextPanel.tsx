@@ -20,7 +20,7 @@ const SystemContextPanel = () => {
   useEffect(() => {
     const loadHistory = async () => {
       const { data, error } = await supabase
-        .from('agent_memory')
+        .from('api.agent_memory')
         .select('agent_name, memory_value, timestamp')
         .eq('memory_key', 'chat_message')
         .order('timestamp', { ascending: false })

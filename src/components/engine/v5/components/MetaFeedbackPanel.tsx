@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,9 +14,8 @@ const MetaFeedbackPanel: React.FC = () => {
     if (!fb.trim()) return;
     setLoading(true);
 
-    // Store suggestion in supervisor_queue for now
     const { error } = await supabase
-      .from("supervisor_queue")
+      .from("api.supervisor_queue")
       .insert({
         agent_name: "user_feedback",
         action: "meta_suggestion",
