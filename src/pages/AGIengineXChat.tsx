@@ -329,10 +329,15 @@ const AGIengineXChat: React.FC = () => {
     setInput(question);
   };
 
-  // AGI autonomy progress (demo: let's say 54% after sales agent!)
-  const agiAutonomyPercent = 54;
+  // AGI autonomy progress (now owned in chat, and updates with automations)
+  const [agiAutonomyPercent, setAgiAutonomyPercent] = useState(54);
 
-  // Optional: callback to boost performance when deal closed
+  // Allow child agents to post directly to chat for transparency
+  const postToChat = (msg: string) => {
+    setMessages(prev => [...prev, { role: "agi", content: msg }]);
+  };
+
+  // Modified handleSalesDealClosed to boost autonomy only once (real agents will get smarter)
   function handleSalesDealClosed(revenue: number) {
     setPerformance({
       revenue: performance.revenue + revenue,
@@ -360,7 +365,12 @@ const AGIengineXChat: React.FC = () => {
           <span className="italic text-purple-400 font-normal">Goal: Trillion-Dollar Empire</span>
         </div>
         {/* --- Add Autonomous Sales Panel --- */}
-        <AutonomousSalesAgentPanel onDealClosed={handleSalesDealClosed} />
+        <AutonomousSalesAgentPanel
+          onDealClosed={handleSalesDealClosed}
+          postToChat={postToChat}
+          autonomyPercent={agiAutonomyPercent}
+          setAutonomyPercent={setAgiAutonomyPercent}
+        />
 
         {/* Business context switcher */}
         <CompanySwitcher
