@@ -13,6 +13,8 @@ import { AGIControlsPanel } from "@/components/agi/AGIControlsPanel";
 import { AGIStatusPanel } from "@/components/agi/AGIStatusPanel";
 import { AGILessonsPanel } from "@/components/agi/AGILessonsPanel";
 import { AGISelfReflectionManager } from "@/agi/AGISelfReflectionManager";
+import { AGISystemAssessment } from "@/agi/AGISystemAssessment";
+import { AGISystemAssessmentPanel } from "@/components/agi/AGISystemAssessmentPanel";
 
 const selfReflection = new AGISelfReflectionManager();
 
@@ -30,6 +32,11 @@ const FunctionalAGIPage: React.FC = () => {
   });
   const [selfReflections, setSelfReflections] = useState<string[]>([]);
 
+  // --- NEW: Assessment State
+  const [systemAssessment, setSystemAssessment] = useState(() =>
+    AGISystemAssessment.assess({ ...unifiedAGI.getState(), vectorStats, selfReflectionHistory: selfReflections })
+  );
+
   useEffect(() => {
     const fetchVectorStats = async () => {
       const stats = await vectorMemoryService.getMemoryStats("core-agi-agent");
@@ -42,11 +49,21 @@ const FunctionalAGIPage: React.FC = () => {
 
       // Reflect and store the latest insight for display
       const insight = selfReflection.analyzeAndReflect(unifiedAGI.getState());
-      setSelfReflections([insight, ...selfReflections].slice(0, 5));
+      const reflections = [insight, ...selfReflections].slice(0, 5);
+      setSelfReflections(reflections);
+
+      // --- Update assessment
+      setSystemAssessment(
+        AGISystemAssessment.assess({
+          ...unifiedAGI.getState(),
+          vectorStats,
+          selfReflectionHistory: reflections,
+        })
+      );
     };
     unifiedAGI.subscribe(update);
     return () => unifiedAGI.unsubscribe(update);
-  }, []);
+  }, [selfReflections, vectorStats]);
 
   const handleStart = () => unifiedAGI.start();
   const handleStop = () => unifiedAGI.stop();
@@ -92,11 +109,13 @@ const FunctionalAGIPage: React.FC = () => {
     unifiedAGI.unregisterPlugin(name);
   };
 
-  // AGI Completion estimate after new self-reflection capability
-  const AGI_COMPLETION_PERCENT = 99.6;
+  // Use new dynamically computed percent:
+  const AGI_COMPLETION_PERCENT = systemAssessment.overallPercent;
 
   return (
     <div className="max-w-2xl mx-auto mt-10 space-y-6">
+      {/* NEW: Assessment Panel */}
+      <AGISystemAssessmentPanel assessment={systemAssessment} />
       <Card className="bg-slate-900/80 border-slate-700">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
@@ -106,7 +125,6 @@ const FunctionalAGIPage: React.FC = () => {
         </CardHeader>
         <CardContent>
           <AGIControlsPanel running={state.running} />
-          {/* Plugin Panel */}
           <PluginPanel
             pluginName={pluginName}
             pluginDesc={pluginDesc}
@@ -121,7 +139,6 @@ const FunctionalAGIPage: React.FC = () => {
           />
           <AGIStatusPanel state={state} vectorStats={vectorStats} />
           <AGILessonsPanel state={state} />
-          {/* NEW: Self-Reflection Insights */}
           <div className="mb-4">
             <span className="font-bold text-lime-300">Recent Self-Reflection:</span>
             <ul className="list-decimal ml-6 text-lime-200 text-xs">
