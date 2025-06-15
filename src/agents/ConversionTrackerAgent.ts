@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export const ConversionTrackerAgent = async (leadEmail: string, conversionAmount: number) => {
@@ -8,8 +7,7 @@ export const ConversionTrackerAgent = async (leadEmail: string, conversionAmount
     .eq('email', leadEmail)
     .maybeSingle();
 
-  if (!!lead && typeof lead === 'object' && 'id' in lead && !error) {
-    // Update only the status field
+  if (lead && typeof lead === 'object' && 'id' in lead && !error) {
     await supabase
       .from('api.leads' as any)
       .update({ status: 'converted' })

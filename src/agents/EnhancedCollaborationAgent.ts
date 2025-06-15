@@ -1,4 +1,3 @@
-
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -63,7 +62,7 @@ export class EnhancedCollaborationAgent {
 
             // Store handoff in memory
             await supabase
-                .from('agent_memory')
+                .from('api.agent_memory' as any)
                 .insert({
                     user_id: 'enhanced_collaboration_agent',
                     agent_name: 'enhanced_collaboration_agent',
@@ -152,7 +151,7 @@ export class EnhancedCollaborationAgent {
                 );
 
                 await supabase
-                    .from('supervisor_queue')
+                    .from('api.supervisor_queue' as any)
                     .insert({
                         user_id: context.user_id || 'enhanced_collaboration_agent',
                         agent_name: 'enhanced_collaboration_agent',
@@ -187,7 +186,7 @@ export class EnhancedCollaborationAgent {
             const metrics = this.getCollaborationMetrics();
 
             await supabase
-                .from('supervisor_queue')
+                .from('api.supervisor_queue' as any)
                 .insert({
                     user_id: context.user_id || 'enhanced_collaboration_agent',
                     agent_name: 'enhanced_collaboration_agent',

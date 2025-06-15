@@ -157,7 +157,7 @@ export class EmergencyAgentDeployer {
       ];
 
       const { data, error } = await supabase
-        .from('leads')
+        .from('api.leads' as any)
         .insert(testLeads)
         .select();
 

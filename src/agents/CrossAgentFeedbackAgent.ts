@@ -75,7 +75,7 @@ export class CrossAgentFeedbackAgent {
 
       agentPerformance[agentName].total++;
       agentPerformance[agentName].recentActions.push(activity);
-      
+
       if ('status' in activity && activity.status === 'completed') {
         agentPerformance[agentName].successful++;
       } else if ('status' in activity && activity.status === 'failed') {
@@ -89,10 +89,10 @@ export class CrossAgentFeedbackAgent {
           previousActivity &&
           typeof previousActivity === 'object' &&
           'agent_name' in previousActivity &&
-          previousActivity.agent_name !== agentName
+          (previousActivity as any).agent_name !== agentName
         ) {
           agentSequences.push({
-            from: previousActivity.agent_name,
+            from: (previousActivity as any).agent_name,
             to: agentName,
             context: activity && 'action' in activity ? activity.action : "",
             success: activity && 'status' in activity && activity.status === 'completed'
