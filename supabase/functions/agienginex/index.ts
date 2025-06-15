@@ -21,6 +21,9 @@ import {
   getGoals 
 } from "./handlers/goalManagement.ts";
 
+// --- ⬇️ ADD: Import SupervisorAgent logic here (define handler inline if not available) ---
+// (For Deno/edge context, re-implement the SupervisorAgent main logic inline or import if available)
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -52,57 +55,45 @@ serve(async (req) => {
       endpoint
     } = request;
 
-    // --- 1. AGI CHAT: Delegate to SupervisorAgent via API ---
+    // --- 1. AGI CHAT/LEAD GENERATION: Route through SupervisorAgent ---
     if (
       path === "agi-chat" ||
       (!path && message)
     ) {
       const prompt = message || "";
 
-      // Instead of local logic, we POST to our own backend SupervisorAgent API
-      const supervisorApiUrl = "https://dab85fe5-494f-4f16-b3d1-6b26f771a943.lovableproject.com/api/supervisor-agent";
-      let supervisorResponse;
+      // REMOVE: This block used to call out to an external /api/supervisor-agent endpoint!
+      // Instead, call native SupervisorAgent logic here.
+      // Example: If your handlers contain SupervisorAgent logic, invoke it here.
       try {
-        const supRes = await fetch(supervisorApiUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
+        // If processAGIChat is your SupervisorAgent logic (native, not fetch!), use it:
+        const supervisorResponse = await processAGIChat({
+          path: "agi-chat",
+          goal: prompt,
+          message: prompt,
+          // Pass relevant data for your agent/context if needed
+        }, supabase, openAIApiKey);
+
+        return new Response(JSON.stringify({
+          success: supervisorResponse.success,
+          supervisor_agent: true,
+          supervisor_message: supervisorResponse.message,
+          supervisor_data: supervisorResponse.data,
+          // ... keep proof_of_execution and timestamp
+          proof_of_execution: {
+            total_leads_in_db: supervisorResponse.data?.total_leads_db,
+            total_supervisor_actions: supervisorResponse.data?.total_supervisor_actions,
+            last_agent_run: supervisorResponse.data?.last_agent_run
           },
-          body: JSON.stringify({
-            user_id: "agi_chat_user",
-            input: { goal: prompt, message: prompt }
-          })
-        });
-
-        if (!supRes.ok) {
-          const errText = await supRes.text();
-          return new Response(JSON.stringify({
-            success: false,
-            response: `SupervisorAgent API Error: ${supRes.status} - ${errText}`
-          }), { status: supRes.status, headers: corsHeaders });
-        }
-
-        supervisorResponse = await supRes.json();
+          timestamp: new Date().toISOString()
+        }), { headers: corsHeaders });
       } catch (e) {
+        // If any error in SupervisorAgent, show what failed
         return new Response(JSON.stringify({
           success: false,
-          response: "Could not reach SupervisorAgent API: " + (e?.message || String(e))
+          response: "SupervisorAgent Internal Error: " + (e?.message || String(e))
         }), { status: 500, headers: corsHeaders });
       }
-
-      // Proof: Echo live SupervisorAgent result for traceability & diagnostics
-      return new Response(JSON.stringify({
-        success: supervisorResponse.success,
-        supervisor_agent: true,
-        supervisor_message: supervisorResponse.message,
-        supervisor_data: supervisorResponse.data,
-        proof_of_execution: {
-          total_leads_in_db: supervisorResponse.data?.total_leads_db,
-          total_supervisor_actions: supervisorResponse.data?.total_supervisor_actions,
-          last_agent_run: supervisorResponse.data?.last_agent_run
-        },
-        timestamp: new Date().toISOString()
-      }), { headers: corsHeaders });
     }
 
     // --- 2. Agent Deployment and Management API (explicit) ---
