@@ -60,14 +60,15 @@ export class GoalMemoryAgent {
 
     // Only keep properly shaped goal rows
     const goalData = (goalDataRaw || []).filter(g =>
-      g &&
+      !!g &&
       typeof g === 'object' &&
       'status' in g &&
       'goal_id' in g &&
       'goal_text' in g &&
       'priority' in g &&
       'progress_percentage' in g &&
-      (g.status === 'active' || g.status === 'completed')
+      (g as any).status &&
+      ((g as any).status === 'active' || (g as any).status === 'completed')
     );
 
     // Load agent memory for detailed goal tracking
@@ -77,7 +78,7 @@ export class GoalMemoryAgent {
       .eq('agent_name', 'goal_memory_agent');
     const memoryData = (memoryDataRaw || []).filter(
       m =>
-        m &&
+        !!m &&
         typeof m === 'object' &&
         'memory_key' in m &&
         'memory_value' in m
@@ -86,24 +87,24 @@ export class GoalMemoryAgent {
     // Combine and structure goal memories
     goalData?.forEach(g => {
       if (!g || typeof g !== 'object' || !('status' in g)) return;
-      const status: any = g.status;
+      const status: any = (g as any).status;
       if (status !== 'active' && status !== 'completed') return;
       const memoryEntry = memoryData?.find(
-        m => m && typeof m === 'object' && m.memory_key === `goal_${g.goal_id}`
+        m => m && typeof m === 'object' && (m as any).memory_key === `goal_${(g as any).goal_id}`
       );
       let goalMemory: GoalMemory;
-      if (memoryEntry && typeof memoryEntry.memory_value === "string") {
-        goalMemory = JSON.parse(memoryEntry.memory_value);
+      if (memoryEntry && typeof (memoryEntry as any).memory_value === "string") {
+        goalMemory = JSON.parse((memoryEntry as any).memory_value);
       } else {
         goalMemory = {
-          id: String(g.goal_id),
-          goal: g.goal_text,
-          subGoals: this.generateInitialSubGoals(g.goal_text),
-          priority: g.priority,
-          status: g.status as 'active' | 'completed',
-          progress: g.progress_percentage,
+          id: String((g as any).goal_id),
+          goal: (g as any).goal_text,
+          subGoals: this.generateInitialSubGoals((g as any).goal_text),
+          priority: (g as any).priority,
+          status: (g as any).status as 'active' | 'completed',
+          progress: (g as any).progress_percentage,
           lastEvaluated: new Date().toISOString(),
-          successMetrics: this.defineSuccessMetrics(g.goal_text),
+          successMetrics: this.defineSuccessMetrics((g as any).goal_text),
           adaptations: []
         };
       }

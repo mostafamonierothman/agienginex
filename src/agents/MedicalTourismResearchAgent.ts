@@ -174,7 +174,7 @@ export class MedicalTourismResearchAgent {
   private async storeResearchData(data: any) {
     try {
       await supabase
-        .from('agent_memory')
+        .from('api.agent_memory' as any)
         .insert({
           user_id: 'medical_tourism_research',
           agent_name: 'MedicalTourismResearchAgent',

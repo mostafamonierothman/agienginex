@@ -15,20 +15,21 @@ export class MetaAgent {
     
     // Get recent activity data
     const { data: recentActivity } = await supabase
-      .from('supervisor_queue')
+      .from('api.supervisor_queue' as any)
       .select('agent_name, status')
       .gte('timestamp', new Date(Date.now() - 3600000).toISOString()) // Last hour
       .order('timestamp', { ascending: false });
 
     // Analyze agent performance
     const agentStats = {};
-    recentActivity?.forEach(activity => {
-      if (!agentStats[activity.agent_name]) {
-        agentStats[activity.agent_name] = { total: 0, successful: 0 };
+    (recentActivity || []).forEach(activity => {
+      if (!activity || typeof activity !== "object" || !('agent_name' in activity)) return;
+      if (!agentStats[(activity as any).agent_name]) {
+        agentStats[(activity as any).agent_name] = { total: 0, successful: 0 };
       }
-      agentStats[activity.agent_name].total++;
-      if (activity.status === 'completed') {
-        agentStats[activity.agent_name].successful++;
+      agentStats[(activity as any).agent_name].total++;
+      if ((activity as any).status === 'completed') {
+        agentStats[(activity as any).agent_name].successful++;
       }
     });
 

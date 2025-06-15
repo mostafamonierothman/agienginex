@@ -63,7 +63,7 @@ export class MedicalTourismLeadFactory {
   private async deployRealAgent(agentId: string, keyword: string, specialty: string, delay: number): Promise<void> {
     await new Promise(r => setTimeout(r, delay));
 
-    await supabase.from('supervisor_queue').insert({
+    await supabase.from('api.supervisor_queue' as any).insert({
       user_id: 'demo_user',
       agent_name: agentId,
       action: 'agent_deployed',
@@ -78,7 +78,7 @@ export class MedicalTourismLeadFactory {
       timestamp: new Date().toISOString()
     });
 
-    await supabase.from('supervisor_queue').insert({
+    await supabase.from('api.supervisor_queue' as any).insert({
       user_id: 'demo_user',
       agent_name: agentId,
       action: 'lead_generation_complete',

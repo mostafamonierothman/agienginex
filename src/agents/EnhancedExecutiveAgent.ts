@@ -221,9 +221,12 @@ Focus on IMMEDIATE actions that can generate leads and revenue TODAY using the a
             typeof (item as any).output === 'string'
           ) {
             try {
-              const output = (item as any).output ? JSON.parse((item as any).output) : {};
-              if (output && typeof output === 'object' && 'actual_revenue' in output) {
-                totalRevenue += output.actual_revenue || 0;
+              const outputStr = (item as any).output ?? '';
+              if (outputStr) {
+                const output = JSON.parse(outputStr);
+                if (output && typeof output === 'object' && 'actual_revenue' in output) {
+                  totalRevenue += output.actual_revenue || 0;
+                }
               }
             } catch {}
           }

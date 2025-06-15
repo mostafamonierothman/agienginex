@@ -10,14 +10,14 @@ export class MemoryAgent {
       const memoryValue = JSON.stringify(context.input || {});
 
       await supabase
-        .from('agent_memory')
+        .from('api.agent_memory' as any)
         .insert({
           user_id: context.user_id || 'memory_agent',
           agent_name: 'memory_agent',
           memory_key: memoryKey,
           memory_value: memoryValue,
           timestamp: new Date().toISOString()
-        } as Partial<AgentMemory>);
+        });
 
       return {
         success: true,
