@@ -211,7 +211,7 @@ Focus on IMMEDIATE actions that can generate leads and revenue TODAY using the a
       let totalRevenue = 0;
       if (Array.isArray(data)) {
         data.forEach((item) => {
-          if (!item) return; // Narrow type immediately
+          if (!item) return; // Ensure item is not null
           if (
             typeof item === 'object' &&
             'output' in item &&
