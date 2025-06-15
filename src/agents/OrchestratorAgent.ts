@@ -1,148 +1,63 @@
 
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
-import { MemoryAgent } from '@/agents/MemoryAgent';
-import { SelfImprovementAgent } from '@/agents/SelfImprovementAgent';
-import { EnhancedGoalAgent } from '@/agents/EnhancedGoalAgent';
-import { EnhancedCollaborationAgent } from '@/agents/EnhancedCollaborationAgent';
-import { FactoryAgent } from '@/agents/FactoryAgent';
-import { ResearchAgent } from '@/agents/ResearchAgent';
+import { SupervisorAgentRunner } from '@/agents/SupervisorAgent';
+import { SystemHealthAgentRunner } from '@/services/SystemHealthAgent';
+import { DatabaseErrorAgentRunner } from '@/services/DatabaseErrorAgent';
+import { DatabaseRecoveryService } from '@/services/DatabaseRecoveryService';
 
 export class OrchestratorAgent {
-  private heartbeatInterval?: NodeJS.Timeout;
-
-  private startHeartbeat() {
-    this.heartbeatInterval = setInterval(async () => {
-      await sendChatUpdate('💓 System active... monitoring progress.');
-    }, 15000); // every 15 seconds
-  }
-
-  private stopHeartbeat() {
-    if (this.heartbeatInterval) {
-      clearInterval(this.heartbeatInterval);
-      this.heartbeatInterval = undefined;
-    }
-  }
-
-  private detectMissingSkills(): string[] {
-    // Placeholder logic - in production this would analyze failed tasks
-    const availableSkills = ['memory', 'research', 'collaboration', 'goal_setting'];
-    const requiredSkills = ['data_analysis', 'optimization', 'monitoring'];
-    
-    return requiredSkills.filter(skill => !availableSkills.includes(skill));
-  }
-
   async runOrchestration(context: AgentContext): Promise<AgentResponse> {
     try {
-      await sendChatUpdate('🛠️ Starting orchestration cycle...');
-      this.startHeartbeat();
+      await sendChatUpdate('🛠️ OrchestratorAgent: Starting full system initialization...');
 
-      // === SEQUENTIAL AGENTS FIRST (State Critical) ===
-      await sendChatUpdate('🔄 Running MemoryAgent...');
-      await new MemoryAgent().runner(context);
-      await sendChatUpdate('✅ MemoryAgent completed.');
-
-      await sendChatUpdate('🔧 Running SelfImprovementAgent...');
-      await new SelfImprovementAgent().runner(context);
-      await sendChatUpdate('✅ SelfImprovementAgent completed.');
-
-      await sendChatUpdate('🎯 Running EnhancedGoalAgent...');
-      const goalResponse = await new EnhancedGoalAgent().runner(context);
-      await sendChatUpdate('✅ EnhancedGoalAgent completed.');
-
-      // === PARALLEL EXECUTION (Safe Agents) ===
-      await sendChatUpdate('🚀 Running parallel agents: ResearchAgent + DataGathering...');
-      
-      const parallelResults = await Promise.all([
-        ResearchAgent(context),
-        // Add more parallel agents here as needed
-        this.runDataGatheringAgent(context),
-        this.runAnalysisAgent(context)
-      ]);
-      
-      await sendChatUpdate('✅ Parallel agents completed.');
-
-      // === SEQUENTIAL AGENTS RESUME ===
-      await sendChatUpdate('🤝 Running EnhancedCollaborationAgent...');
-      await new EnhancedCollaborationAgent().runner(context);
-      await sendChatUpdate('✅ EnhancedCollaborationAgent completed.');
-
-      // === DYNAMIC AGENT CREATION ===
-      const missingSkills = this.detectMissingSkills();
-      
-      if (missingSkills.length > 0 || goalResponse?.data?.newAgentsNeeded) {
-        await sendChatUpdate(`⚠️ Missing skills detected: ${missingSkills.join(', ')}. Triggering FactoryAgent...`);
-        
-        await FactoryAgent({
-          ...context,
-          input: { 
-            ...context.input,
-            missingSkills,
-            goalRequirements: goalResponse?.data
-          }
-        });
-        
-        await sendChatUpdate('✅ FactoryAgent completed.');
+      // Step 1: Database Health Check & Repair
+      await sendChatUpdate('1️⃣ Checking database health...');
+      const dbHealthy = await DatabaseRecoveryService.checkAndRepairDatabase();
+      if (!dbHealthy) {
+        await sendChatUpdate('⚠️ Database issues detected, attempting deeper scan...');
+        await DatabaseErrorAgentRunner(context);
       }
+      await sendChatUpdate('✅ Database health check complete.');
+
+      // Step 2: System Health Check
+      await sendChatUpdate('2️⃣ Running system-wide health assessment...');
+      const healthResponse = await SystemHealthAgentRunner(context);
+      if (!healthResponse.success || healthResponse.data?.criticalIssues > 0) {
+        await sendChatUpdate(`⚠️ System health issues found: ${healthResponse.message}`);
+        // Don't halt, but log. Supervisor will see this.
+      }
+      await sendChatUpdate('✅ System health assessment complete.');
+
+      // Step 3: Activate Supervisor to manage the agent ecosystem
+      await sendChatUpdate('3️⃣ Activating SupervisorAgent to manage ecosystem...');
+      const supervisorResponse = await SupervisorAgentRunner(context);
+      if (!supervisorResponse.success) {
+        throw new Error(`SupervisorAgent failed to start: ${supervisorResponse.message}`);
+      }
+      await sendChatUpdate('✅ SupervisorAgent is active and monitoring.');
 
       // === ORCHESTRATION COMPLETE ===
-      this.stopHeartbeat();
-      await sendChatUpdate('🏁 Orchestration cycle complete.');
+      await sendChatUpdate('🏁 Full system initialization orchestrated successfully.');
 
       return {
         success: true,
-        message: 'Orchestration complete with parallel agent execution.',
+        message: 'System initialization plan executed successfully. Supervisor is now active.',
         data: {
-          parallelResults,
-          missingSkills,
-          goalResponse: goalResponse?.data
+          health: healthResponse.data,
+          supervisor: supervisorResponse.data,
         },
         timestamp: new Date().toISOString()
       };
-
     } catch (error) {
-      this.stopHeartbeat();
-      await sendChatUpdate(`❌ Orchestration error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      
+      await sendChatUpdate(`❌ Orchestrator error during initialization: ${error instanceof Error ? error.message : 'Unknown error'}`);
+
       return {
         success: false,
         message: `❌ Orchestration error: ${error instanceof Error ? error.message : 'Unknown error'}`,
         timestamp: new Date().toISOString()
       };
     }
-  }
-
-  private async runDataGatheringAgent(context: AgentContext): Promise<AgentResponse> {
-    // Simulated data gathering agent
-    await sendChatUpdate('📊 DataGatheringAgent: Collecting system metrics...');
-    
-    return {
-      success: true,
-      message: 'Data gathering completed',
-      data: {
-        systemMetrics: {
-          uptime: Date.now(),
-          performance: Math.random() * 100,
-          efficiency: Math.random() * 100
-        }
-      },
-      timestamp: new Date().toISOString()
-    };
-  }
-
-  private async runAnalysisAgent(context: AgentContext): Promise<AgentResponse> {
-    // Simulated analysis agent
-    await sendChatUpdate('🔍 AnalysisAgent: Processing data patterns...');
-    
-    return {
-      success: true,
-      message: 'Analysis completed',
-      data: {
-        patterns: ['optimization_opportunity', 'efficiency_gain', 'scaling_potential'],
-        recommendations: ['Increase parallel processing', 'Optimize memory usage', 'Enhance error handling']
-      },
-      timestamp: new Date().toISOString()
-    };
   }
 }
 

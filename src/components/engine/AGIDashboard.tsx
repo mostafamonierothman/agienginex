@@ -9,6 +9,7 @@ import AGIPhase1Dashboard from './AGIPhase1Dashboard';
 import OptimizationDashboard from './OptimizationDashboard';
 import { useBackendPolling } from '@/hooks/useBackendPolling';
 import { pollBackendAGIState } from '@/services/AGIengineXService';
+import { SystemExecutionPanel } from './SystemExecutionPanel';
 
 const AGIDashboard = () => {
   const { backendData, isConnected, isPolling, refreshData } = useBackendPolling(true, 2000);
@@ -59,6 +60,9 @@ const AGIDashboard = () => {
 
       {activeTab === 'main' && (
         <>
+          {/* New System Execution Panel */}
+          <SystemExecutionPanel />
+
           {/* Phase 1 AGI Status - Top Priority */}
           <AGIPhase1Dashboard />
 
