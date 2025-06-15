@@ -17,6 +17,7 @@ import { AGISystemAssessment } from "@/agi/AGISystemAssessment";
 import { AGISystemAssessmentPanel } from "@/components/agi/AGISystemAssessmentPanel";
 import { VectorMemoryPanel } from "@/components/agi/VectorMemoryPanel";
 import { AGIAssessmentSummary } from "@/components/agi/AGIAssessmentSummary";
+import { useVectorMemoryStats } from "@/hooks/useVectorMemoryStats";
 
 const selfReflection = new AGISelfReflectionManager();
 
@@ -27,32 +28,26 @@ const FunctionalAGIPage: React.FC = () => {
   const [pluginDesc, setPluginDesc] = useState("");
   const [pluginCode, setPluginCode] = useState("");
   const [pluginError, setPluginError] = useState<string | null>(null);
-  // Only use total now, not complex split, to avoid type error
-  const [vectorStats, setVectorStats] = useState<{ total: number }>({
-    total: 0,
-  });
+
+  // Use the new custom hook for vector stats
+  const vectorStats = useVectorMemoryStats("core-agi-agent");
+
   const [selfReflections, setSelfReflections] = useState<string[]>([]);
   const [worldSyncStatus, setWorldSyncStatus] = useState<"idle" | "syncing" | "done" | "error">("idle");
 
   // --- Enhanced assessment with new capabilities
   const [systemAssessment, setSystemAssessment] = useState(() =>
-    AGISystemAssessment.assess({ 
-      ...unifiedAGI.getState(), 
-      vectorStats, 
+    AGISystemAssessment.assess({
+      ...unifiedAGI.getState(),
+      vectorStats,
       selfReflectionHistory: selfReflections,
       advancedCapabilities: unifiedAGI.getState().advancedCapabilities
     })
   );
 
   useEffect(() => {
-    const fetchVectorStats = async () => {
-      const stats = await vectorMemoryService.getMemoryStats("core-agi-agent");
-      setVectorStats(stats);
-    };
-    fetchVectorStats();
     const update = () => {
       setState(unifiedAGI.getState());
-      fetchVectorStats();
 
       const insight = selfReflection.analyzeAndReflect(unifiedAGI.getState());
       const reflections = [insight, ...selfReflections].slice(0, 5);
@@ -68,14 +63,14 @@ const FunctionalAGIPage: React.FC = () => {
     };
     unifiedAGI.subscribe(update);
     return () => unifiedAGI.unsubscribe(update);
-  }, [selfReflections, vectorStats]);
+    // eslint-disable-next-line
+  }, [selfReflections, vectorStats.longTerm]); // Depend only on data we update here
 
   useEffect(() => {
     if (state.running) {
       setWorldSyncStatus("syncing");
       (async () => {
         try {
-          // This triggers UnifiedAGICore.absorbWorldState automatically; here for user feedback.
           setWorldSyncStatus("done");
         } catch {
           setWorldSyncStatus("error");
@@ -101,12 +96,6 @@ const FunctionalAGIPage: React.FC = () => {
       return;
     }
     try {
-      // The function body should be JS code that returns a string, 
-      // receives ctx: {goal, thoughts, memory}.
-      // We'll use new Function for demo: (ctx) => { ... }
-      // Security note: In real apps, never eval untrusted code!
-      // For demonstration only.
-      // Wrap code with 'async (ctx) => { ... }'
       const asyncBody = `return (async (ctx) => {${pluginCode}\n})`;
       // eslint-disable-next-line no-new-func
       const createFunc = new Function(asyncBody);
@@ -128,7 +117,7 @@ const FunctionalAGIPage: React.FC = () => {
     unifiedAGI.unregisterPlugin(name);
   };
 
-  // Use the new total-only stat
+  // Calculate the AGI completion percentage
   const AGI_COMPLETION_PERCENT =
     Math.min(
       100,
@@ -140,7 +129,7 @@ const FunctionalAGIPage: React.FC = () => {
     <div className="max-w-2xl mx-auto mt-10 space-y-6">
       {/* Enhanced Assessment Panel */}
       <AGISystemAssessmentPanel assessment={systemAssessment} />
-      
+
       {/* Enhanced Main Panel */}
       <Card className="bg-slate-900/80 border-slate-700">
         <CardHeader>
@@ -153,8 +142,7 @@ const FunctionalAGIPage: React.FC = () => {
           {worldSyncStatus === "syncing" && (
             <div className="mb-2 text-blue-200">🌎 Syncing up with the current world state...</div>
           )}
-          
-          {/* World State Display */}
+
           {state.lastRecalledWorldState && state.lastRecalledWorldState.length > 0 && (
             <div className="mb-4">
               <div className="font-bold text-cyan-400 mb-1">🌐 World Awareness:</div>
@@ -171,7 +159,6 @@ const FunctionalAGIPage: React.FC = () => {
             </div>
           )}
 
-          {/* NEW: Advanced Capabilities Display */}
           {state.advancedCapabilities && (
             <div className="mb-4 p-3 bg-purple-900/30 rounded border border-purple-700">
               <div className="font-bold text-purple-300 mb-2">🚀 Advanced AGI Capabilities</div>
@@ -225,8 +212,12 @@ const FunctionalAGIPage: React.FC = () => {
       </Card>
       {/* VECTOR MEMORY PANEL */}
       <VectorMemoryPanel
-        stats={{ shortTerm: 0, episodic: 0, longTerm: vectorStats.total ?? 0 }}
-        total={vectorStats.total ?? 0}
+        stats={{
+          shortTerm: vectorStats.shortTerm,
+          episodic: vectorStats.episodic,
+          longTerm: vectorStats.longTerm
+        }}
+        total={vectorStats.total}
       />
       {/* AGI SYSTEM ASSESSMENT SUMMARY */}
       <AGIAssessmentSummary assessment={systemAssessment} />
