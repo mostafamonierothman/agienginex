@@ -36,6 +36,36 @@ export type Database = {
         }
         Relationships: []
       }
+      agi_goals: {
+        Row: {
+          created_at: string | null
+          goal_text: string | null
+          id: number
+          priority: number | null
+          progress_percentage: number | null
+          status: Database["public"]["Enums"]["goal_status"]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          goal_text?: string | null
+          id?: number
+          priority?: number | null
+          progress_percentage?: number | null
+          status?: Database["public"]["Enums"]["goal_status"]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          goal_text?: string | null
+          id?: number
+          priority?: number | null
+          progress_percentage?: number | null
+          status?: Database["public"]["Enums"]["goal_status"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       agi_goals_enhanced: {
         Row: {
           goal_id: number
