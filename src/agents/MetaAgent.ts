@@ -80,7 +80,7 @@ export async function MetaAgentRunner(context: AgentContext): Promise<AgentRespo
 
     // Log to supervisor queue
     await supabase
-      .from('supervisor_queue')
+      .from('api.supervisor_queue' as any)
       .insert({
         user_id: context.user_id || 'meta_agent',
         agent_name: 'meta_agent',

@@ -59,16 +59,17 @@ export class GoalMemoryAgent {
       .select('*');
 
     // Only keep properly shaped goal rows
-    const goalData = (goalDataRaw || []).filter(g =>
-      !!g &&
-      typeof g === 'object' &&
-      'status' in g &&
-      'goal_id' in g &&
-      'goal_text' in g &&
-      'priority' in g &&
-      'progress_percentage' in g &&
-      (g as any).status &&
-      ((g as any).status === 'active' || (g as any).status === 'completed')
+    const goalData = (goalDataRaw || []).filter(
+      g =>
+        !!g &&
+        typeof g === 'object' &&
+        'status' in g &&
+        'goal_id' in g &&
+        'goal_text' in g &&
+        'priority' in g &&
+        'progress_percentage' in g &&
+        (g as any).status &&
+        ((g as any).status === 'active' || (g as any).status === 'completed')
     );
 
     // Load agent memory for detailed goal tracking
