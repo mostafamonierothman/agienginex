@@ -50,6 +50,39 @@ export class RealBusinessExecutor {
       };
     }
   }
+
+  async getGeneratedLeads(limit: number = 100) {
+    try {
+      // In a real implementation, this would fetch from database
+      // For now, return mock data structure that matches expected format
+      return [];
+    } catch (error) {
+      console.error('Failed to get generated leads:', error);
+      return [];
+    }
+  }
+
+  async getEmailCampaigns(limit: number = 20) {
+    try {
+      // In a real implementation, this would fetch from database
+      // For now, return mock data structure that matches expected format
+      return [];
+    } catch (error) {
+      console.error('Failed to get email campaigns:', error);
+      return [];
+    }
+  }
+
+  async getExecutionHistory(limit: number = 50) {
+    try {
+      // In a real implementation, this would fetch from database
+      // For now, return mock data structure that matches expected format
+      return [];
+    } catch (error) {
+      console.error('Failed to get execution history:', error);
+      return [];
+    }
+  }
 }
 
 export const realBusinessExecutor = new RealBusinessExecutor();
