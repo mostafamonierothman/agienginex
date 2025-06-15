@@ -9,33 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      agent_memory: {
-        Row: {
-          agent_name: string | null
-          id: string
-          memory_key: string | null
-          memory_value: string | null
-          timestamp: string
-          user_id: string | null
-        }
-        Insert: {
-          agent_name?: string | null
-          id?: string
-          memory_key?: string | null
-          memory_value?: string | null
-          timestamp?: string
-          user_id?: string | null
-        }
-        Update: {
-          agent_name?: string | null
-          id?: string
-          memory_key?: string | null
-          memory_value?: string | null
-          timestamp?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       agent_registry: {
         Row: {
           agent_name: string
@@ -140,54 +113,6 @@ export type Database = {
         }
         Relationships: []
       }
-      agi_goals_enhanced: {
-        Row: {
-          goal_id: number
-          goal_text: string | null
-          priority: number | null
-          progress_percentage: number | null
-          status: Database["public"]["Enums"]["goal_status"]
-          timestamp: string | null
-        }
-        Insert: {
-          goal_id?: number
-          goal_text?: string | null
-          priority?: number | null
-          progress_percentage?: number | null
-          status?: Database["public"]["Enums"]["goal_status"]
-          timestamp?: string | null
-        }
-        Update: {
-          goal_id?: number
-          goal_text?: string | null
-          priority?: number | null
-          progress_percentage?: number | null
-          status?: Database["public"]["Enums"]["goal_status"]
-          timestamp?: string | null
-        }
-        Relationships: []
-      }
-      agi_state: {
-        Row: {
-          id: string
-          key: string
-          state: Json
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          key: string
-          state: Json
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          key?: string
-          state?: Json
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       cv_files: {
         Row: {
           content_type: string | null
@@ -214,143 +139,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
-      }
-      email_campaigns: {
-        Row: {
-          created_at: string
-          emails_opened: number | null
-          emails_sent: number | null
-          id: string
-          name: string
-          replies_received: number | null
-          status: Database["public"]["Enums"]["campaign_status"]
-          subject: string
-          target_industry: string | null
-          template: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          emails_opened?: number | null
-          emails_sent?: number | null
-          id?: string
-          name: string
-          replies_received?: number | null
-          status?: Database["public"]["Enums"]["campaign_status"]
-          subject: string
-          target_industry?: string | null
-          template: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          emails_opened?: number | null
-          emails_sent?: number | null
-          id?: string
-          name?: string
-          replies_received?: number | null
-          status?: Database["public"]["Enums"]["campaign_status"]
-          subject?: string
-          target_industry?: string | null
-          template?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      email_logs: {
-        Row: {
-          campaign_id: string | null
-          content: string
-          email: string
-          id: string
-          lead_id: string | null
-          opened_at: string | null
-          replied_at: string | null
-          resend_email_id: string | null
-          sent_at: string
-          status: Database["public"]["Enums"]["email_status"]
-          subject: string
-        }
-        Insert: {
-          campaign_id?: string | null
-          content: string
-          email: string
-          id?: string
-          lead_id?: string | null
-          opened_at?: string | null
-          replied_at?: string | null
-          resend_email_id?: string | null
-          sent_at?: string
-          status?: Database["public"]["Enums"]["email_status"]
-          subject: string
-        }
-        Update: {
-          campaign_id?: string | null
-          content?: string
-          email?: string
-          id?: string
-          lead_id?: string | null
-          opened_at?: string | null
-          replied_at?: string | null
-          resend_email_id?: string | null
-          sent_at?: string
-          status?: Database["public"]["Enums"]["email_status"]
-          subject?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "email_logs_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "email_campaigns"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "email_logs_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      follow_ups: {
-        Row: {
-          completed_at: string | null
-          content: string
-          created_at: string
-          id: string
-          lead_id: string | null
-          scheduled_for: string | null
-          type: Database["public"]["Enums"]["follow_up_type"]
-        }
-        Insert: {
-          completed_at?: string | null
-          content: string
-          created_at?: string
-          id?: string
-          lead_id?: string | null
-          scheduled_for?: string | null
-          type: Database["public"]["Enums"]["follow_up_type"]
-        }
-        Update: {
-          completed_at?: string | null
-          content?: string
-          created_at?: string
-          id?: string
-          lead_id?: string | null
-          scheduled_for?: string | null
-          type?: Database["public"]["Enums"]["follow_up_type"]
-        }
-        Relationships: [
-          {
-            foreignKeyName: "follow_ups_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       imported_conversations: {
         Row: {
@@ -400,57 +188,6 @@ export type Database = {
         }
         Relationships: []
       }
-      leads: {
-        Row: {
-          company: string | null
-          created_at: string
-          email: string
-          first_name: string | null
-          id: string
-          industry: string | null
-          job_title: string | null
-          last_name: string | null
-          linkedin_url: string | null
-          location: string | null
-          phone: string | null
-          source: string
-          status: Database["public"]["Enums"]["lead_status"]
-          updated_at: string
-        }
-        Insert: {
-          company?: string | null
-          created_at?: string
-          email: string
-          first_name?: string | null
-          id?: string
-          industry?: string | null
-          job_title?: string | null
-          last_name?: string | null
-          linkedin_url?: string | null
-          location?: string | null
-          phone?: string | null
-          source: string
-          status?: Database["public"]["Enums"]["lead_status"]
-          updated_at?: string
-        }
-        Update: {
-          company?: string | null
-          created_at?: string
-          email?: string
-          first_name?: string | null
-          id?: string
-          industry?: string | null
-          job_title?: string | null
-          last_name?: string | null
-          linkedin_url?: string | null
-          location?: string | null
-          phone?: string | null
-          source?: string
-          status?: Database["public"]["Enums"]["lead_status"]
-          updated_at?: string
-        }
-        Relationships: []
-      }
       secrets: {
         Row: {
           created_at: string
@@ -469,39 +206,6 @@ export type Database = {
           id?: string
           name?: string
           value?: string
-        }
-        Relationships: []
-      }
-      supervisor_queue: {
-        Row: {
-          action: string | null
-          agent_name: string | null
-          id: string
-          input: string | null
-          output: string | null
-          status: string | null
-          timestamp: string
-          user_id: string | null
-        }
-        Insert: {
-          action?: string | null
-          agent_name?: string | null
-          id?: string
-          input?: string | null
-          output?: string | null
-          status?: string | null
-          timestamp?: string
-          user_id?: string | null
-        }
-        Update: {
-          action?: string | null
-          agent_name?: string | null
-          id?: string
-          input?: string | null
-          output?: string | null
-          status?: string | null
-          timestamp?: string
-          user_id?: string | null
         }
         Relationships: []
       }
