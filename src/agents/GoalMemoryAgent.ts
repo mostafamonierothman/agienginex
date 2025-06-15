@@ -1,3 +1,4 @@
+
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { supabase } from '@/integrations/supabase/client';
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
@@ -95,7 +96,10 @@ export class GoalMemoryAgent {
         m => !!m && typeof m === 'object' && (m as any).memory_key === `goal_${(g as any).goal_id}`
       );
       let goalMemory: GoalMemory;
-      if (memoryEntry && typeof (memoryEntry as any).memory_value === "string") {
+      if (
+        memoryEntry &&
+        typeof (memoryEntry as any).memory_value === "string"
+      ) {
         goalMemory = JSON.parse((memoryEntry as any).memory_value);
       } else {
         goalMemory = {
