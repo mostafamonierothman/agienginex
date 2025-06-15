@@ -251,7 +251,7 @@ export class AutonomyTriggerAgent {
           input: JSON.stringify({ condition: actions[i] }),
           status: results[i]?.success ? 'completed' : 'failed',
           output: JSON.stringify(results[i])
-        } as any]);
+        } as TablesInsert<'supervisor_queue'>]);
     }
   }
 }

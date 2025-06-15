@@ -1,5 +1,6 @@
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { supabase } from '@/integrations/supabase/client';
+import type { TablesInsert } from '@/integrations/supabase/types';
 
 export async function CollaborationAgent(context: AgentContext): Promise<AgentResponse> {
   try {
@@ -52,7 +53,7 @@ export async function CollaborationAgent(context: AgentContext): Promise<AgentRe
         memory_key: 'collaboration_analysis',
         memory_value: collaborationInsight,
         timestamp: new Date().toISOString()
-      } as any]);
+      } as TablesInsert<'agent_memory'>]);
 
     // Log collaboration activity
     await supabase
@@ -64,7 +65,7 @@ export async function CollaborationAgent(context: AgentContext): Promise<AgentRe
         input: JSON.stringify({ collaboration_score: collaborationScore }),
         status: 'completed',
         output: collaborationInsight
-      } as any]);
+      } as TablesInsert<'supervisor_queue'>]);
 
     console.log(`🤝 CollaborationAgent: ${collaborationInsight}`);
 

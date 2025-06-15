@@ -1,5 +1,6 @@
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { supabase } from '@/integrations/supabase/client';
+import type { TablesInsert } from '@/integrations/supabase/types';
 
 export async function CoordinationAgent(context: AgentContext): Promise<AgentResponse> {
   try {
@@ -42,7 +43,7 @@ export async function CoordinationAgent(context: AgentContext): Promise<AgentRes
         memory_key: 'coordination_strategy',
         memory_value: coordination,
         timestamp: new Date().toISOString()
-      } as any]);
+      } as TablesInsert<'agent_memory'>]);
 
     // Log coordination activity
     await supabase
@@ -54,7 +55,7 @@ export async function CoordinationAgent(context: AgentContext): Promise<AgentRes
         input: JSON.stringify({ active_agents: activeAgentCount }),
         status: 'completed',
         output: coordination
-      } as any]);
+      } as TablesInsert<'supervisor_queue'>]);
 
     console.log(`🤝 CoordinationAgent: ${coordination}`);
 

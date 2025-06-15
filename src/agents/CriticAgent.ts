@@ -1,6 +1,6 @@
-
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { supabase } from '@/integrations/supabase/client';
+import type { TablesInsert } from '@/integrations/supabase/types';
 
 export async function CriticAgent(context: AgentContext): Promise<AgentResponse> {
   try {
@@ -42,19 +42,19 @@ export async function CriticAgent(context: AgentContext): Promise<AgentResponse>
 
     // Store critique in memory
     await supabase
-      .from('api.agent_memory' as any)
-      .insert({
+      .from('agent_memory')
+      .insert([{
         user_id: context.user_id || 'demo_user',
         agent_name: 'critic_agent',
         memory_key: 'performance_critique',
         memory_value: critique,
         timestamp: new Date().toISOString()
-      });
+      } as TablesInsert<'agent_memory'>]);
 
     // Log critique to supervisor queue
     await supabase
-      .from('api.supervisor_queue' as any)
-      .insert({
+      .from('supervisor_queue')
+      .insert([{
         user_id: context.user_id || 'demo_user',
         agent_name: 'critic_agent',
         action: 'performance_evaluation',
@@ -62,7 +62,7 @@ export async function CriticAgent(context: AgentContext): Promise<AgentResponse>
         status: 'completed',
         output: critique,
         timestamp: new Date().toISOString()
-      });
+      } as TablesInsert<'supervisor_queue'>]);
 
     console.log(`🎭 CriticAgent evaluation: ${critique}`);
 

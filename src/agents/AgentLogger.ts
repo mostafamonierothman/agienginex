@@ -1,5 +1,5 @@
-
 import { supabase } from '@/integrations/supabase/client';
+import type { TablesInsert } from '@/integrations/supabase/types';
 
 export interface LogEntry {
   id?: string;
@@ -27,7 +27,6 @@ export class AgentLogger {
 
     // Store in Supabase
     try {
-      // Fix: pass insert payload as an array
       await supabase
         .from('supervisor_queue')
         .insert([{
@@ -37,7 +36,7 @@ export class AgentLogger {
           input: JSON.stringify({ action }),
           status: level === 'error' ? 'error' : 'completed',
           output: result
-        } as any]); // 'as any' workaround for types that may be missing user_id
+        } as TablesInsert<'supervisor_queue'>]);
     } catch (error) {
       console.error('Failed to store log:', error);
     }

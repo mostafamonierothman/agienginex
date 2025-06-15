@@ -1,5 +1,6 @@
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { supabase } from '@/integrations/supabase/client';
+import type { TablesInsert } from '@/integrations/supabase/types';
 
 export class CreativityAgent {
   private ideaTemplates = [
@@ -95,15 +96,15 @@ export async function CreativityAgentRunner(context: AgentContext): Promise<Agen
 
     // Log to supervisor queue
     await supabase
-      .from('api.supervisor_queue' as any)
-      .insert({
+      .from('supervisor_queue')
+      .insert([{
         user_id: context.user_id || 'creativity_agent',
         agent_name: 'creativity_agent',
         action: 'brainstorm_session',
         input: JSON.stringify({ theme: randomTheme }),
         status: 'completed',
         output: `Generated ${brainstormResult.individualIdeas.length} ideas for ${randomTheme}. Innovation score: ${brainstormResult.potentialImpact.innovationScore}`
-      });
+      } as TablesInsert<'supervisor_queue'>]);
 
     return {
       success: true,
