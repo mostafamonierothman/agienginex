@@ -12,6 +12,7 @@ export class AGIMemoryOps {
 
   async storeToVectorMemory(key: string, value: any, memory: any) {
     const summary = (typeof value === "string") ? value : (value?.goal || "") + " | " + (value?.result || "");
+    // The new vectorMemoryService now persists to Supabase
     await vectorMemoryService.storeMemory(
       this.vectorMemoryId,
       summary,

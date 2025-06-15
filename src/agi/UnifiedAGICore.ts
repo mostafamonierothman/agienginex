@@ -10,6 +10,8 @@ import { AGIAgentLoop } from "./AGIAgentLoop";
 import { AgentTeamManager } from "./AgentTeamManager";
 import { DataFusionEngine } from "@/utils/data_fusion";
 import { vectorMemoryService } from "@/services/VectorMemoryService";
+import { SupabaseVectorMemoryService } from "@/services/SupabaseVectorMemoryService";
+import { autonomousLoop } from "@/loops/AutonomousLoop";
 
 // --- NEW: Import advanced AGI capabilities
 import { AutonomousResearchEngine } from "./AutonomousResearchEngine";
@@ -68,6 +70,12 @@ class UnifiedAGICore {
   static getInstance() {
     if (!UnifiedAGICore.instance) {
       UnifiedAGICore.instance = new UnifiedAGICore();
+      // Migrate vector memory on first boot
+      SupabaseVectorMemoryService.migrateLocalStorageToSupabase("core-agi-agent").then(migrated => {
+        if (migrated) {
+          UnifiedAGICore.instance.log("🗃️ Migrated legacy vector memory from localStorage to Supabase!");
+        }
+      });
     }
     return UnifiedAGICore.instance;
   }
@@ -81,13 +89,23 @@ class UnifiedAGICore {
     }
     this.stateManager.setState({ running: true });
     this.log("🔄 Unified Functional AGI Started - Full Capability Mode (100%).");
-    
+    // --- AUTONOMOUS AGI LOOP ACTIVATION ---
+    if (typeof autonomousLoop !== "undefined") {
+      autonomousLoop.start();
+      this.log("🔁 AutonomousLoop started.");
+    } else {
+      this.log("⚠️ AutonomousLoop is undefined or missing.");
+    }
     // Enhanced startup sequence
     await this.absorbWorldState();
     await this.advancedCapabilities.initialize();
     await this.stateManager.persistState();
     this.loop();
     this.notify();
+    // --- PHASE 2 TRIGGER (AUTOMATIC) ---
+    setTimeout(() => {
+      this.goPhase2();
+    }, 3000);
   }
 
   // --- NEW: Initialize advanced capabilities

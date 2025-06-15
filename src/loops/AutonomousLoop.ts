@@ -1,4 +1,3 @@
-
 import { unifiedAGI } from "@/agi/UnifiedAGICore";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -9,6 +8,8 @@ class AutonomousLoop {
 
   async start() {
     this.running = true;
+    // Ensure only one loop runs
+    if (this.loopTimer) clearTimeout(this.loopTimer);
     this.runLoop();
   }
 
@@ -62,22 +63,25 @@ class AutonomousLoop {
       console.error("Autonomous loop error:", e);
     }
 
-    // After every cycle, persist a summary into Supabase supervisor_queue
-    await supabase
-      .from("supervisor_queue")
-      .insert({
-        user_id: "system",
-        agent_name: "autonomous_loop",
-        action: "cycle",
-        input: JSON.stringify({ cycle: this.cycleCount }),
-        status: "completed",
-        output: `Loop cycle ${this.cycleCount} persisted at ${new Date().toISOString()}`,
-      });
+    // Persist summary into Supabase supervisor_queue after every cycle
+    try {
+      await supabase
+        .from("supervisor_queue")
+        .insert({
+          user_id: "system",
+          agent_name: "autonomous_loop",
+          action: "cycle",
+          input: JSON.stringify({ cycle: this.cycleCount }),
+          status: "completed",
+          output: `Loop cycle ${this.cycleCount} persisted at ${new Date().toISOString()}`,
+        });
+    } catch (e) {
+      console.error("Autonomous loop supervisor_queue persist error:", e);
+    }
 
     // Schedule next
-    this.loopTimer = setTimeout(() => this.runLoop(), 8000); // e.g., 8s between cycles
+    this.loopTimer = setTimeout(() => this.runLoop(), 8000);
   }
 }
 
 export const autonomousLoop = new AutonomousLoop();
-
