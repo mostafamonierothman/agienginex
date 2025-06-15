@@ -45,184 +45,64 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Invalid method" }), { status: 405, headers: corsHeaders });
     }
     const request = await req.json();
-    const { 
-      path, 
-      payload, 
-      command, 
-      goal, 
-      message, 
-      code_request, 
-      code_instruction, 
-      endpoint, 
-      agent_action, 
-      agent_name 
+    const {
+      path,
+      goal,
+      message,
+      endpoint
     } = request;
 
-    // --- 1. AGI CHAT (with REAL agent control and lead generation) ---
-    if (path === "agi-chat" || (!path && message)) {
+    // --- 1. AGI CHAT: Delegate to SupervisorAgent via API ---
+    if (
+      path === "agi-chat" ||
+      (!path && message)
+    ) {
       const prompt = message || "";
-      
-      // Check for lead generation commands - ENHANCED DETECTION WITH REAL EXECUTION
-      if (detectLeadGenerationCommand(prompt)) {
-        console.log("🎯 Medical Tourism Lead Generation Detected - EXECUTING REAL SYSTEM");
-        
-        const leadCount = prompt.match(/(\d+)/) ? parseInt(prompt.match(/(\d+)/)?.[1] || "50") : 50;
-        
-        try {
-          // Execute REAL lead generation through business executor
-          const realResult = await executeRealLeadGeneration(leadCount, 'medical tourism', supabase, supabaseUrl, supabaseKey);
-          
-          // Log the successful REAL lead generation
-          await supabase.from('supervisor_queue').insert({
-            user_id: 'agi_chat_user',
-            agent_name: 'real_medical_tourism_executor',
-            action: 'real_lead_generation',
-            input: JSON.stringify({ requested_count: leadCount, command: prompt }),
-            status: 'completed',
-            output: `REAL EXECUTION: Generated ${realResult.leads_generated} actual leads in database`
-          });
 
-          const response = `✅ **REAL Medical Tourism Lead Generation Complete!**
-
-🎯 **Generated ${realResult.leads_generated} ACTUAL medical tourism leads in database:**
-
-**Real Business Execution Summary:**
-• 🔥 ${realResult.leads_generated} real leads created and stored
-• 💰 Total estimated pipeline value: €${realResult.revenue_potential?.toLocaleString() || '0'}
-• 📧 Ready for real email outreach campaigns
-• 🎯 All leads have valid contact information and source tracking
-• 💾 Data stored in production database for CRM access
-
-**Lead Generation Details:**
-${realResult.description}
-
-**Next Real Actions Available:**
-${realResult.next_steps?.map(step => `• *"${step}"*`).join('\n') || '• Check database for generated leads\n• Start email outreach campaign'}
-
-**⚠️ IMPORTANT:** This was REAL business execution. Check your leads table in the database to see the actual generated leads with real contact information.`;
-
-          return new Response(JSON.stringify({
-            success: true,
-            response: response,
-            leads_generated: realResult.leads_generated,
-            estimated_value: realResult.revenue_potential,
-            actual_leads_count: realResult.actual_leads?.length || 0,
-            agent_used: "real_business_executor",
-            execution_type: "REAL_DATABASE_EXECUTION"
-          }), { headers: corsHeaders });
-          
-        } catch (error) {
-          console.error('Real lead generation failed:', error);
-          return new Response(JSON.stringify({
-            success: false,
-            response: `❌ **REAL Lead Generation Failed:** ${error.message}\n\nThe system attempted to execute real business logic but encountered an error. This is actual business execution, not simulation.`,
-            agent_used: "real_business_executor",
-            execution_type: "REAL_EXECUTION_FAILED"
-          }), { headers: corsHeaders });
-        }
-      }
-
-      // Other agent deployment patterns
-      const deployRegex = /(deploy|create|launch) (new )?(agent|ai|bot) (?:named )?["']?([\w\- ]{3,100})["']?/i;
-      const startRegex = /(start|run)\s+agent\s+["']?([\w\- ]{3,100})["']?/i;
-      const stopRegex = /(stop|terminate|pause)\s+agent\s+["']?([\w\- ]{3,100})["']?/i;
-      const listRegex = /(list|show)\s+(live|running)?\s?agents/i;
-      const scaleRegex = /(scale|increase|expand)\s+agents?\s*(?:to|by)?\s*(\d+)?/i;
-
-      // 1. Deploy new agent via chat
-      if (deployRegex.test(prompt)) {
-        try {
-          const match = prompt.match(deployRegex);
-          const agentNameToUse = match ? match[4] || ("agent-" + Date.now()) : ("agent-" + Date.now());
-          const result = await deployAgent(agentNameToUse, prompt, openAIApiKey, supabase);
-          
-          return new Response(JSON.stringify({
-            success: true,
-            response: `✅ Agent "${result.agent_name}" deployed, code saved as "${result.filepath}", version ${result.version}.`,
-            agent_name: result.agent_name,
-            agent_id: result.agent_id,
-            version: result.version
-          }), { headers: corsHeaders });
-        } catch (error) {
-          return new Response(JSON.stringify({ success: false, error: error.message }), { status: 500, headers: corsHeaders });
-        }
-      }
-
-      // 2. Start agent via chat
-      if (startRegex.test(prompt)) {
-        try {
-          const match = prompt.match(startRegex);
-          const name = match?.[2] || agent_name || "";
-          const agent = await startAgent(name, supabase);
-          return new Response(JSON.stringify({
-            success: true,
-            response: `▶️ Agent "${name}" started (Performance: ${agent.performance_score ?? 0}%)`,
-            agent_name: name,
-            performance_score: agent.performance_score ?? 0
-          }), { headers: corsHeaders });
-        } catch (error) {
-          return new Response(JSON.stringify({ success: false, error: error.message }), { status: 404, headers: corsHeaders });
-        }
-      }
-
-      // 3. Stop agent via chat
-      if (stopRegex.test(prompt)) {
-        try {
-          const match = prompt.match(stopRegex);
-          const name = match?.[2] || agent_name || "";
-          const agent = await stopAgent(name, supabase);
-          return new Response(JSON.stringify({
-            success: true,
-            response: `⏹️ Agent "${name}" stopped (Performance: ${agent.performance_score ?? 0}%)`,
-            agent_name: name,
-            performance_score: agent.performance_score ?? 0
-          }), { headers: corsHeaders });
-        } catch (error) {
-          return new Response(JSON.stringify({ success: false, error: error.message }), { status: 404, headers: corsHeaders });
-        }
-      }
-
-      // 4. List agents via chat
-      if (listRegex.test(prompt)) {
-        try {
-          const agents = await listAgents(supabase);
-          const lines = agents.map((a: any) =>
-            `- ${a.agent_name} (${a.status}, Performance: ${a.performance_score ?? 0}%)`
-          );
-          return new Response(JSON.stringify({
-            success: true,
-            agents: agents,
-            response: `Live Agents:\n${lines.join("\n")}`
-          }), { headers: corsHeaders });
-        } catch (error) {
-          return new Response(JSON.stringify({ success: false, error: error.message }), { status: 500, headers: corsHeaders });
-        }
-      }
-
-      // 5. Scale agents via chat (simulated)
-      if (scaleRegex.test(prompt)) {
-        const match = prompt.match(scaleRegex);
-        const scaleTo = parseInt(match?.[2] || "0");
-        if (scaleTo > 0) {
-          return new Response(JSON.stringify({
-            success: true,
-            response: `🪄 Scaling agents to target ${scaleTo} instances. (This is a simulated response. Real scaling requires infra changes.)`
-          }), { headers: corsHeaders });
-        } else {
-          return new Response(JSON.stringify({
-            success: false,
-            response: `Provide a number, e.g. "scale agents to 10". (Scaling is not yet implemented.)`
-          }), { headers: corsHeaders });
-        }
-      }
-
-      // Default AGI chat if no command matched
+      // Instead of local logic, we POST to our own backend SupervisorAgent API
+      const supervisorApiUrl = "https://dab85fe5-494f-4f16-b3d1-6b26f771a943.lovableproject.com/api/supervisor-agent";
+      let supervisorResponse;
       try {
-        const content = await processAGIChat(prompt, openAIApiKey, supabase);
-        return new Response(JSON.stringify({ success: true, response: content }), { headers: corsHeaders });
-      } catch (err) {
-        return new Response(JSON.stringify({ success: false, error: "OpenAI error", detail: err?.message || String(err) }), { status: 500, headers: corsHeaders });
+        const supRes = await fetch(supervisorApiUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            user_id: "agi_chat_user",
+            input: { goal: prompt, message: prompt }
+          })
+        });
+
+        if (!supRes.ok) {
+          const errText = await supRes.text();
+          return new Response(JSON.stringify({
+            success: false,
+            response: `SupervisorAgent API Error: ${supRes.status} - ${errText}`
+          }), { status: supRes.status, headers: corsHeaders });
+        }
+
+        supervisorResponse = await supRes.json();
+      } catch (e) {
+        return new Response(JSON.stringify({
+          success: false,
+          response: "Could not reach SupervisorAgent API: " + (e?.message || String(e))
+        }), { status: 500, headers: corsHeaders });
       }
+
+      // Proof: Echo live SupervisorAgent result for traceability & diagnostics
+      return new Response(JSON.stringify({
+        success: supervisorResponse.success,
+        supervisor_agent: true,
+        supervisor_message: supervisorResponse.message,
+        supervisor_data: supervisorResponse.data,
+        proof_of_execution: {
+          total_leads_in_db: supervisorResponse.data?.total_leads_db,
+          total_supervisor_actions: supervisorResponse.data?.total_supervisor_actions,
+          last_agent_run: supervisorResponse.data?.last_agent_run
+        },
+        timestamp: new Date().toISOString()
+      }), { headers: corsHeaders });
     }
 
     // --- 2. Agent Deployment and Management API (explicit) ---
@@ -335,21 +215,27 @@ ${realResult.next_steps?.map(step => `• *"${step}"*`).join('\n') || '• Check
       }
     }
 
-    // --- DEFAULT: Unknown path, health check ---
+    // --- DEFAULT: Unknown paths/endpoints ---
     return new Response(
-      JSON.stringify({ status: "ok", endpoints: [
-        "agi-chat", 
-        "agent-deploy", 
-        "agent-start", 
-        "agent-stop", 
-        "agents-list", 
-        "agi-goals", 
-        "get-agi-goals", 
-        "code-generation"
-      ] }),
+      JSON.stringify({
+        status: "ok",
+        endpoints: [
+          "agi-chat",
+          "agent-deploy",
+          "agent-start",
+          "agent-stop",
+          "agents-list",
+          "agi-goals",
+          "get-agi-goals",
+          "code-generation"
+        ]
+      }),
       { headers: corsHeaders }
     );
   } catch (error) {
-    return new Response(JSON.stringify({ success: false, error: error?.message || String(error) }), { status: 500, headers: corsHeaders });
+    return new Response(
+      JSON.stringify({ success: false, error: error?.message || String(error) }),
+      { status: 500, headers: corsHeaders }
+    );
   }
 });
