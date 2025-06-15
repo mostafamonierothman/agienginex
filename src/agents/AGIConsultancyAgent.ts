@@ -205,7 +205,7 @@ export class AGIConsultancyAgent {
   private async storeConsultancyData(data: any) {
     try {
       await supabase
-        .from('agent_memory')
+        .from('api.agent_memory' as any)
         .insert({
           user_id: 'agi_consultancy_research',
           agent_name: 'AGIConsultancyAgent',

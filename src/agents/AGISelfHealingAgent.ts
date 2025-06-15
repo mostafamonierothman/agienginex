@@ -80,7 +80,7 @@ export class AGISelfHealingAgent {
 
     try {
       // Check database connectivity
-      const { error: dbError } = await supabase.from('leads').select('count').limit(1);
+      const { error: dbError } = await supabase.from('api.leads' as any).select('count').limit(1);
       if (dbError) {
         issues.push({
           type: 'database_error',
@@ -91,7 +91,7 @@ export class AGISelfHealingAgent {
 
       // Check agent execution health
       const { data: recentAgentsData, error: agentError } = await supabase
-        .from('supervisor_queue')
+        .from('api.supervisor_queue' as any)
         .select('status')
         .gte('timestamp', new Date(Date.now() - 5 * 60 * 1000).toISOString());
 
@@ -150,7 +150,7 @@ export class AGISelfHealingAgent {
       
       // Attempt to reconnect and verify schema
       const { data, error } = await supabase
-        .from('leads')
+        .from('api.leads' as any)
         .select('id')
         .limit(1);
 
@@ -198,7 +198,7 @@ export class AGISelfHealingAgent {
     
     // Log successful agent restart to supervisor queue
     await supabase
-      .from('supervisor_queue')
+      .from('api.supervisor_queue' as any)
       .insert({
         user_id: 'agi_healing_system',
         agent_name: 'agi_self_healing_agent',
@@ -291,7 +291,7 @@ export class AGISelfHealingAgent {
 
     // Store learning data for future improvements
     await supabase
-      .from('agi_state')
+      .from('api.agi_state' as any)
       .upsert({
         key: 'healing_performance',
         state: {

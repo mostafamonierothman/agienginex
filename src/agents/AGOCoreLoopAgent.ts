@@ -150,7 +150,7 @@ export class AGOCoreLoopAgent {
 
     // Log to supervisor queue for tracking
     await supabase
-      .from('supervisor_queue')
+      .from('api.supervisor_queue' as any)
       .insert({
         user_id: 'ago_core_loop',
         agent_name: 'ago_core_loop_agent',
