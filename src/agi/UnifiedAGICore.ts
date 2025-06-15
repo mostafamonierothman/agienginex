@@ -20,6 +20,7 @@ import { MultiAGIOrchestrator } from "./MultiAGIOrchestrator";
 import { AdvancedMemoryConsolidator } from "./AdvancedMemoryConsolidator";
 import { SelfModificationProtocol } from "./SelfModificationProtocol";
 import { AGIAdvancedCapabilities } from "./AGIAdvancedCapabilities";
+import { advancedAGIInitAndAssess } from "./UnifiedAGICore.AdvancedCapabilitiesLogic";
 
 class UnifiedAGICore {
   private static instance: UnifiedAGICore;
@@ -57,7 +58,7 @@ class UnifiedAGICore {
   private notify = this.notification.notify.bind(this.notification);
 
   private constructor() {
-    this.advancedCapabilities = new AGIAdvancedCapabilities({
+    this.advancedCapabilities = advancedAGIInitAndAssess({
       researchEngine: this.researchEngine,
       systemIntegration: this.systemIntegration,
       multiAGIOrchestrator: this.multiAGIOrchestrator,

@@ -25,10 +25,9 @@ const FunctionalAGIPage: React.FC = () => {
   const [pluginDesc, setPluginDesc] = useState("");
   const [pluginCode, setPluginCode] = useState("");
   const [pluginError, setPluginError] = useState<string | null>(null);
-  const [vectorStats, setVectorStats] = useState<{ shortTerm: number; longTerm: number; episodic: number }>({
-    shortTerm: 0,
-    longTerm: 0,
-    episodic: 0,
+  // Only use total now, not complex split, to avoid type error
+  const [vectorStats, setVectorStats] = useState<{ total: number }>({
+    total: 0,
   });
   const [selfReflections, setSelfReflections] = useState<string[]>([]);
   const [worldSyncStatus, setWorldSyncStatus] = useState<"idle" | "syncing" | "done" | "error">("idle");
@@ -57,7 +56,6 @@ const FunctionalAGIPage: React.FC = () => {
       const reflections = [insight, ...selfReflections].slice(0, 5);
       setSelfReflections(reflections);
 
-      // Enhanced assessment
       setSystemAssessment(
         AGISystemAssessment.assess({
           ...unifiedAGI.getState(),
@@ -70,7 +68,6 @@ const FunctionalAGIPage: React.FC = () => {
     return () => unifiedAGI.unsubscribe(update);
   }, [selfReflections, vectorStats]);
 
-  // --- NEW: World sync effect (on start/reset) ---
   useEffect(() => {
     if (state.running) {
       setWorldSyncStatus("syncing");
@@ -129,12 +126,13 @@ const FunctionalAGIPage: React.FC = () => {
     unifiedAGI.unregisterPlugin(name);
   };
 
-  // Use new dynamically computed percent:
-  const AGI_COMPLETION_PERCENT = Math.min(100, systemAssessment.overallPercent + 
-    (state.advancedCapabilities ? 
-      (state.advancedCapabilities.systemConnections * 2 + 
-       state.advancedCapabilities.agiInstances * 3 +
-       state.advancedCapabilities.memoryConsolidation * 2) : 0));
+  // Use the new total-only stat
+  const AGI_COMPLETION_PERCENT =
+    Math.min(
+      100,
+      systemAssessment.overallPercent +
+        ((vectorStats.total ?? 0) > 0 ? Math.floor(vectorStats.total / 5) : 0)
+    );
 
   return (
     <div className="max-w-2xl mx-auto mt-10 space-y-6">
@@ -223,6 +221,8 @@ const FunctionalAGIPage: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+      {/* Optionally, display total vector memory stat */}
+      <div className="text-xs text-blue-200 mb-2">Vector Memories Stored: <b>{vectorStats.total}</b></div>
     </div>
   );
 };

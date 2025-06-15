@@ -1,5 +1,4 @@
 
-// SupabaseVectorMemoryService: Vector memory, migrated from localStorage to Supabase
 import { supabase } from "@/integrations/supabase/client";
 
 export interface SupabaseVectorMemory {
@@ -14,7 +13,6 @@ export interface SupabaseVectorMemory {
 }
 
 export class SupabaseVectorMemoryService {
-  // Store a new vector memory
   static async storeMemory(agentId: string, content: string, source: string, importance: number = 0.5, tags: string[] = [], embedding: number[] = []) {
     const { error } = await supabase.from("vector_memories").insert({
       agent_id: agentId,
@@ -27,7 +25,6 @@ export class SupabaseVectorMemoryService {
     if (error) throw new Error("Supabase vector memory insert error: " + error.message);
   }
 
-  // Simple mimic embedding generator for now (move logic from VectorMemoryService)
   static generateEmbedding(text: string): number[] {
     const words = text.toLowerCase().split(/\s+/);
     const embedding = new Array(384).fill(0);
@@ -40,9 +37,7 @@ export class SupabaseVectorMemoryService {
     return embedding.map(val => val / (magnitude || 1));
   }
 
-  // Retrieve memories by similarity (top N); simple implementation
   static async retrieveMemories(agentId: string, query: string, limit: number = 10): Promise<SupabaseVectorMemory[]> {
-    // Fetch all for this agent and do cosine similarity in-memory (can optimize)
     const { data, error } = await supabase
       .from("vector_memories")
       .select("*")
@@ -51,24 +46,38 @@ export class SupabaseVectorMemoryService {
       .limit(200);
     if (error) return [];
     const queryEmbedding = this.generateEmbedding(query);
-    const withScores = (data || []).map(mem => ({
-      ...mem,
-      score: this.cosineSimilarity(queryEmbedding, mem.embedding || [])
-    }));
-    return withScores
-      .sort((a, b) => b.score - a.score)
-      .slice(0, limit);
+    // Embedding in db is JSON, so ensure it's parsed as number[]
+    const withScores: SupabaseVectorMemory[] = [];
+    (data || []).forEach(raw => {
+      let embedding: number[] = [];
+      if (Array.isArray(raw.embedding)) {
+        embedding = raw.embedding as number[];
+      } else if (typeof raw.embedding === "string") {
+        try {
+          embedding = JSON.parse(raw.embedding);
+        } catch {
+          embedding = [];
+        }
+      }
+      // Compute similarity for in-memory sort, but do not add score to returned object
+      (raw as any).score = this.cosineSimilarity(queryEmbedding, embedding);
+      withScores.push({
+        ...raw,
+        embedding,
+      });
+    });
+    withScores.sort((a, b) => (b as any).score - (a as any).score);
+    return withScores.slice(0, limit);
   }
 
   static cosineSimilarity(a: number[], b: number[]): number {
-    if (a.length !== b.length) return 0;
-    const dotProduct = a.reduce((sum, val, i) => sum + val * b[i], 0);
+    if (a.length !== b.length || a.length === 0) return 0;
+    const dotProduct = a.reduce((sum, val, i) => sum + val * (b[i] ?? 0), 0);
     const magnitudeA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));
     const magnitudeB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
-    return dotProduct / (magnitudeA * magnitudeB || 1);
+    return dotProduct / ((magnitudeA * magnitudeB) || 1);
   }
 
-  // Migrate from old localStorage keys
   static async migrateLocalStorageToSupabase(agentId: string) {
     const key = "agi_vector_memories";
     const memoriesRaw = localStorage.getItem(key);
@@ -89,12 +98,11 @@ export class SupabaseVectorMemoryService {
       }
       localStorage.removeItem(key);
     } catch (e) {
-      // migration failed, ignore
+      // ignore
     }
     return migrated > 0;
   }
 
-  // Memory stats (counts) for UI
   static async getMemoryStats(agentId: string): Promise<{ total: number }> {
     const { count } = await supabase
       .from("vector_memories")
