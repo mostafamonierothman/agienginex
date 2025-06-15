@@ -211,7 +211,7 @@ Focus on IMMEDIATE actions that can generate leads and revenue TODAY using the a
       let totalRevenue = 0;
       if (Array.isArray(data)) {
         data.forEach((item) => {
-          if (item == null) return; // Explicit null check to satisfy TypeScript
+          if (item == null) return; // Explicit null check to prevent TS18047 error
           if (
             typeof item === 'object' &&
             'output' in item &&
