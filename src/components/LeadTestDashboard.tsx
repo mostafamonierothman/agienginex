@@ -1,4 +1,3 @@
-
 // REMOVE the duplicate Lead interface (conflicts with import)
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,29 +11,6 @@ import type { Lead, LeadStatus } from '@/types/DatabaseTypes';
 
 // Emergency deployer agent
 import { EmergencyAgentDeployerRunner } from '@/agents/EmergencyAgentDeployer';
-
-interface Lead {
-  id: string;
-  email: string;
-  first_name?: string | null;
-  last_name?: string | null;
-  company?: string | null;
-  job_title?: string | null;
-  phone?: string | null;
-  linkedin_url?: string | null;
-  source: string;
-  industry?: string | null;
-  location?: string | null;
-  status:
-    | 'new'
-    | 'contacted'
-    | 'replied'
-    | 'qualified'
-    | 'converted'
-    | 'unsubscribed';
-  created_at: string;
-  updated_at?: string | null;
-}
 
 export default function LeadTestDashboard() {
   const [leads, setLeads] = useState<Lead[]>([]);

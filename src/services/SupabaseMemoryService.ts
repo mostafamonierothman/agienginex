@@ -27,12 +27,16 @@ export class SupabaseMemoryService {
         .eq('memory_key', sessionId)
         .order('timestamp', { ascending: false })
         .limit(1);
+
       if (error) throw error;
       if (!data || data.length === 0) {
         return null;
       }
       const record = data[0];
-      const memoryValue = record && typeof record === "object" && "memory_value" in record ? record.memory_value : null;
+      const memoryValue =
+        record && typeof record === "object" && record !== null && "memory_value" in record
+          ? (record as any).memory_value
+          : null;
       if (memoryValue) {
         try {
           return JSON.parse(memoryValue);
@@ -64,4 +68,3 @@ export class SupabaseMemoryService {
     }
   }
 }
-

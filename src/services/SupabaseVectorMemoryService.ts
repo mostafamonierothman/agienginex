@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface SupabaseVectorMemory {
@@ -44,31 +43,42 @@ export class SupabaseVectorMemoryService {
       .eq("agent_id", agentId)
       .order("created_at", { ascending: false })
       .limit(200);
+
     if (error || !Array.isArray(data)) return [];
     const queryEmbedding = this.generateEmbedding(query);
 
     const withScores: SupabaseVectorMemory[] = [];
     (data as any[]).forEach(raw => {
-      if (!raw || typeof raw !== "object" || !("embedding" in raw)) return;
+      if (
+        !raw ||
+        typeof raw !== "object" ||
+        !("embedding" in raw) ||
+        raw === null
+      )
+        return;
       let embedding: number[] = [];
-      if (Array.isArray(raw.embedding)) {
-        embedding = raw.embedding as number[];
-      } else if (typeof raw.embedding === "string") {
+      if (Array.isArray((raw as any).embedding)) {
+        embedding = (raw as any).embedding as number[];
+      } else if (typeof (raw as any).embedding === "string") {
         try {
-          embedding = JSON.parse(raw.embedding);
+          embedding = JSON.parse((raw as any).embedding);
         } catch {
           embedding = [];
         }
       }
       const score = this.cosineSimilarity(queryEmbedding, embedding);
-      if (typeof raw.id === "string" && typeof raw.content === "string") {
+      if (
+        typeof (raw as any).id === "string" &&
+        typeof (raw as any).content === "string"
+      ) {
         withScores.push({
-          ...raw,
+          ...(raw as object),
           embedding,
           score,
-        });
+        } as any); // safe to spread, since we know raw is object
       }
     });
+
     withScores.sort((a, b) => (b as any).score - (a as any).score);
     return withScores.slice(0, limit);
   }
@@ -114,4 +124,3 @@ export class SupabaseVectorMemoryService {
     return { total: count || 0 };
   }
 }
-
