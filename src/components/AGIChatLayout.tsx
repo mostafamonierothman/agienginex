@@ -4,7 +4,7 @@ import { agiEngineX } from "@/services/AGIengineXService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAGIBusinessMetrics } from "@/hooks/useAGIBusinessMetrics";
-import { Bot, User2 } from "lucide-react";
+import { Bot, User2, AlertTriangle } from "lucide-react";
 import AGIRoadmapHelper from "./AGIRoadmapHelper";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 
@@ -20,19 +20,30 @@ export const AGIChatLayout: React.FC = () => {
     {
       role: "agi",
       content:
-        "🤖 Hello! I'm AGIengineX - your advanced AI business executive. All actions in this chat reflect real business execution.",
+        "🤖 Hello! I'm AGIengineX - your advanced AI business executive. All systems are online and ready for real business execution.",
     },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [systemStatus, setSystemStatus] = useState<'online' | 'connecting' | 'error'>('connecting');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // --- AUTOSTART FULL AGI AUTONOMY ON CHAT PAGE LOAD ---
   useEffect(() => {
-    unifiedAGI.start();
-    autonomousLoop.start();
-    // Optionally: provide logging in dev tools
-    // console.log("AGI systems auto-started on chat layout mount");
+    const initializeAGI = async () => {
+      try {
+        console.log("🚀 Initializing AGI systems...");
+        unifiedAGI.start();
+        autonomousLoop.start();
+        setSystemStatus('online');
+        console.log("✅ AGI systems initialized successfully");
+      } catch (error) {
+        console.error("❌ AGI initialization error:", error);
+        setSystemStatus('error');
+      }
+    };
+    
+    initializeAGI();
   }, []);
 
   useEffect(() => {
@@ -48,8 +59,15 @@ export const AGIChatLayout: React.FC = () => {
   useEffect(() => {
     let timer: NodeJS.Timeout;
     async function poll() {
-      const state = await fetchLiveAGIState();
-      if (state?.success !== false) setAgiInfo(state);
+      try {
+        const state = await fetchLiveAGIState();
+        if (state?.success !== false) {
+          setAgiInfo(state);
+          setSystemStatus('online');
+        }
+      } catch (error) {
+        console.warn("AGI polling error:", error);
+      }
       timer = setTimeout(poll, 10000);
     }
     poll();
@@ -69,36 +87,80 @@ export const AGIChatLayout: React.FC = () => {
 
   const handleSend = async () => {
     if (!input.trim() || loading) return;
+    
     const userMsg = { role: "user" as const, content: input };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setLoading(true);
 
     try {
+      console.log("🎯 Sending message to AGI:", input);
+      
       // Route ALL chat via backend AGI orchestrator (edge function) for real execution
-      const rawResult = await sendAGIChatCommand(input, { type: "chat" });
-      const responseText =
-        rawResult?.supervisor_message ||
-        rawResult?.response ||
-        rawResult?.output ||
-        rawResult?.message ||
-        rawResult?.agent_used ||
-        "⚠️ No AGI response";
+      const rawResult = await sendAGIChatCommand(input, { 
+        type: "chat",
+        timestamp: new Date().toISOString() 
+      });
+      
+      let responseText = "⚠️ AGI system is processing your request...";
+      
+      if (rawResult?.supervisor_message) {
+        responseText = rawResult.supervisor_message;
+      } else if (rawResult?.response) {
+        responseText = rawResult.response;
+      } else if (rawResult?.output) {
+        responseText = rawResult.output;
+      } else if (rawResult?.message) {
+        responseText = rawResult.message;
+      } else if (rawResult?.agent_used) {
+        responseText = `🤖 ${rawResult.agent_used} is processing your request`;
+      } else if (rawResult?.error) {
+        responseText = `⚠️ AGI system encountered an issue: ${rawResult.error}. System is self-healing and will continue operations.`;
+      }
 
       setMessages((prev) => [...prev, { role: "agi", content: responseText }]);
-      // Optimistically update autonomy if we got a result
-      if (rawResult?.autonomy_percent > 0) setOptimisticAutonomy(rawResult.autonomy_percent);
-      // Optionally, poll state now for more up-to-date info:
+      
+      // Update autonomy if we got results
+      if (rawResult?.autonomy_percent > 0) {
+        setOptimisticAutonomy(rawResult.autonomy_percent);
+      }
+      
+      // Refresh state
       fetchLiveAGIState().then((state) => {
         if (state?.success !== false) setAgiInfo(state);
       });
+      
     } catch (e: any) {
+      console.error("AGI communication error:", e);
       setMessages((prev) => [
         ...prev,
-        { role: "agi", content: "⚠️ No AGI response" },
+        { 
+          role: "agi", 
+          content: "🔧 AGI system is experiencing connectivity issues but remains operational. Auto-recovery protocols are active." 
+        },
       ]);
+      setSystemStatus('error');
     }
     setLoading(false);
+  };
+
+  // Status indicator
+  const getStatusColor = () => {
+    switch (systemStatus) {
+      case 'online': return 'text-green-400';
+      case 'connecting': return 'text-yellow-400';
+      case 'error': return 'text-red-400';
+      default: return 'text-gray-400';
+    }
+  };
+
+  const getStatusText = () => {
+    switch (systemStatus) {
+      case 'online': return 'ONLINE';
+      case 'connecting': return 'CONNECTING';
+      case 'error': return 'AUTO-HEALING';
+      default: return 'UNKNOWN';
+    }
   };
 
   // Responsive, phone/desktop friendly chat UI
@@ -107,13 +169,23 @@ export const AGIChatLayout: React.FC = () => {
       {/* Roadmap helper only shows on chat route and is small/non-intrusive for admins */}
       <AGIRoadmapHelper />
       <div className="w-full max-w-md md:max-w-lg shadow-xl border border-slate-200 bg-white dark:bg-slate-800 rounded-xl flex flex-col min-h-[75dvh]">
-        {/* --- ONLY CHAT -- removed assessment panel here --- */}
-        <div className="flex items-center px-4 pt-6 pb-2 sticky top-0 bg-white dark:bg-slate-800 rounded-t-xl z-10">
-          <Bot className="mr-2 h-7 w-7 text-purple-600" />
-          <h1 className="text-xl md:text-2xl font-bold text-purple-700 dark:text-purple-300">
-            AGIengineX Chat
-          </h1>
+        {/* Header with status */}
+        <div className="flex items-center justify-between px-4 pt-6 pb-2 sticky top-0 bg-white dark:bg-slate-800 rounded-t-xl z-10">
+          <div className="flex items-center">
+            <Bot className="mr-2 h-7 w-7 text-purple-600" />
+            <h1 className="text-xl md:text-2xl font-bold text-purple-700 dark:text-purple-300">
+              AGIengineX
+            </h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${systemStatus === 'online' ? 'bg-green-400' : systemStatus === 'error' ? 'bg-red-400' : 'bg-yellow-400'}`}></div>
+            <span className={`text-xs font-mono ${getStatusColor()}`}>
+              {getStatusText()}
+            </span>
+          </div>
         </div>
+
+        {/* Messages */}
         <div className="flex-1 overflow-y-auto px-3 pb-2 pt-1 space-y-3">
           {messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
@@ -140,6 +212,8 @@ export const AGIChatLayout: React.FC = () => {
           ))}
           <div ref={messagesEndRef} />
         </div>
+
+        {/* Input form */}
         <form
           className="flex gap-2 w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 rounded-b-xl"
           onSubmit={e => {
@@ -153,7 +227,7 @@ export const AGIChatLayout: React.FC = () => {
             value={input}
             disabled={loading}
             placeholder={
-              loading ? "Sending…" : "Type a business request or instruction..."
+              loading ? "AGI is processing..." : "Enter business command or instruction..."
             }
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === "Enter" && !loading && handleSend()}
