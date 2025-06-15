@@ -89,21 +89,21 @@ export class SupervisorAgent {
     try {
       // Check for deployed real agents
       const { data: deployedAgents, error: deployError } = await supabase
-        .from('supervisor_queue')
+        .from('api.supervisor_queue' as any)
         .select('*')
         .eq('action', 'agent_deployed')
         .eq('user_id', 'demo_user');
 
       // Check for completed agents
       const { data: completedAgents, error: completeError } = await supabase
-        .from('supervisor_queue')
+        .from('api.supervisor_queue' as any)
         .select('*')
         .eq('action', 'lead_generation_complete')
         .eq('user_id', 'demo_user');
 
       // Check for actual leads in database
       const { data: leads, error: leadsError } = await supabase
-        .from('leads')
+        .from('api.leads' as any)
         .select('id, industry')
         .eq('source', 'lead_generation_agent');
 

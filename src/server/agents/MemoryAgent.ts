@@ -11,7 +11,7 @@ export class MemoryAgent {
       const memoryValue = JSON.stringify(context.input || {});
 
       const { error } = await supabase
-        .from('agent_memory')
+        .from('api.agent_memory' as any)
         .insert({
           user_id: context.user_id || 'memory_agent_server',
           agent_name: 'memory_agent_server',

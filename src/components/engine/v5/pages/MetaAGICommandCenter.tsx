@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { agentRegistry } from "@/config/AgentRegistry";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -29,7 +28,7 @@ const fetchMetaInsights = async () => {
   let metaText = "Thinking...";
   try {
     const { data, error } = await supabase
-      .from("supervisor_queue")
+      .from("api.supervisor_queue" as any)
       .select("output, agent_name, timestamp")
       .order("timestamp", { ascending: false })
       .limit(10);
@@ -216,4 +215,3 @@ const MetaAGICommandCenter = () => {
 };
 
 export default MetaAGICommandCenter;
-
