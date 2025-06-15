@@ -11,17 +11,19 @@ export class SupabaseVectorMemoryService {
           source: source,
           content: content,
           importance: importance,
-          embedding: metadata // Store metadata as embedding for now
+          embedding: metadata || {} // Store metadata as embedding for now
         });
 
       if (error) {
         console.error('Supabase vector memory insert error:', error.message);
-        throw new Error(`Supabase vector memory insert error: ${error.message}`);
+        // Don't throw error, just log it to prevent breaking the system
+        return null;
       }
       return data;
     } catch (error: any) {
       console.error('Supabase vector memory insert error:', error.message);
-      throw new Error(`Supabase vector memory insert error: ${error.message}`);
+      // Return null instead of throwing to prevent system crashes
+      return null;
     }
   }
 

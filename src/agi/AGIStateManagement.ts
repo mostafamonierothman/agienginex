@@ -1,70 +1,48 @@
 
-import { PersistentMemory } from "@/core/PersistentMemory";
-import { AGIState } from "./AGIState";
-import { SupabaseAGIStateService } from "@/services/SupabaseAGIStateService";
+import { SupabaseAGIStateService } from '@/services/AGIStateService';
 
 export class AGIStateManagement {
-  private memory: PersistentMemory;
-  private state: AGIState;
+  private localState: Map<string, any> = new Map();
 
-  constructor() {
-    this.memory = new PersistentMemory();
-    this.state = {
-      running: false,
-      currentGoal: null,
-      completedGoals: [],
-      memoryKeys: [],
-      logs: [],
-      generation: 0,
-    };
-  }
-
-  getState() {
-    return this.state;
-  }
-
-  setState(s: Partial<AGIState>) {
-    this.state = { ...this.state, ...s };
-  }
-
-  async persistState(extra: Record<string, any> = {}) {
-    // Persist state to Supabase as primary source
+  async persistState(key: string, state: any): Promise<void> {
     try {
-      const stateToSave = { ...this.state, ...extra };
-      await SupabaseAGIStateService.saveState('unified_agi_state', stateToSave);
-    } catch (e) {
-      console.error("[AGIStateManagement] Supabase persistState error:", e);
+      // Save locally first
+      this.localState.set(key, state);
+      
+      // Try to save to Supabase, but don't fail if it doesn't work
+      await SupabaseAGIStateService.saveState(key, state);
+      
+      console.log(`🧠 Persistent memory set: ${key}`);
+    } catch (error) {
+      console.error('[AGIStateManagement] Supabase persistState error:', error);
+      // Don't throw - we still have local state
+      console.log(`🧠 Local memory set: ${key}`);
     }
-    // Also persist locally for resilience
-    const stateToSave = { ...this.state, ...extra };
-    await this.memory.set("unified_agi_state", stateToSave);
   }
 
-  async restoreState() {
-    // Try to load from Supabase first
-    const remote = await SupabaseAGIStateService.loadState('unified_agi_state');
-    if (remote && typeof remote === 'object' && remote !== null) {
-      this.state = { ...this.state, ...remote };
-    } else {
-      // fallback local
-      const prev = await this.memory.get("unified_agi_state", null);
-      if (prev && typeof prev === 'object' && prev !== null) {
-        this.state = { ...this.state, ...prev, logs: [], running: false };
+  async loadState(key: string): Promise<any> {
+    try {
+      // Try Supabase first
+      const supabaseState = await SupabaseAGIStateService.loadState(key);
+      if (supabaseState) {
+        this.localState.set(key, supabaseState);
+        return supabaseState;
       }
+    } catch (error) {
+      console.error('[AGIStateManagement] Supabase loadState error:', error);
     }
+
+    // Fall back to local state
+    return this.localState.get(key) || null;
   }
 
-  async clear() {
-    await this.memory.clear();
-    this.state = {
-      running: false,
-      currentGoal: null,
-      completedGoals: [],
-      memoryKeys: [],
-      logs: [],
-      generation: 0,
-    };
-    // Erase from Supabase as well (optional; here we just reset)
-    await SupabaseAGIStateService.saveState('unified_agi_state', this.state);
+  getLocalState(key: string): any {
+    return this.localState.get(key) || null;
+  }
+
+  setLocalState(key: string, state: any): void {
+    this.localState.set(key, state);
   }
 }
+
+export const agiStateManagement = new AGIStateManagement();
