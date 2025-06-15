@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { agiEngineX } from "@/services/AGIengineXService";
 import { Button } from "@/components/ui/button";
@@ -5,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { useAGIBusinessMetrics } from "@/hooks/useAGIBusinessMetrics";
 import { Bot, User2 } from "lucide-react";
 import AGIRoadmapHelper from "./AGIRoadmapHelper";
+import { MarkdownRenderer } from "./MarkdownRenderer";
 
 // --- Import AGI AUTO-START modules ---
 import { unifiedAGI } from "@/agi/UnifiedAGICore";
@@ -127,7 +129,9 @@ export const AGIChatLayout: React.FC = () => {
                   {m.role === "user" && (
                     <User2 className="inline h-5 w-5 text-gray-200 mr-1" />
                   )}
-                  <span className="block text-sm whitespace-pre-wrap">{m.content}</span>
+                  <div className="block text-sm">
+                    <MarkdownRenderer content={m.content} />
+                  </div>
                 </div>
               </div>
             </div>
