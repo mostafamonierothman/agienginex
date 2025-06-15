@@ -1,3 +1,4 @@
+
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { supabase } from '@/integrations/supabase/client';
 import type { TablesInsert } from '@/integrations/supabase/types';
@@ -45,27 +46,29 @@ export async function CollaborationAgent(context: AgentContext): Promise<AgentRe
     const collaborationInsight = `Collaboration strategy: ${selectedStrategy}. Network efficiency: ${collaborationScore.toFixed(1)}% across ${uniqueAgents} agents with ${totalInteractions} interactions.`;
 
     // Store collaboration insight
+    const collabMem: TablesInsert<'agent_memory'> = {
+      user_id: context.user_id || 'demo_user',
+      agent_name: 'collaboration_agent',
+      memory_key: 'collaboration_analysis',
+      memory_value: collaborationInsight,
+      // timestamp omitted; DB handles default
+    };
     await supabase
       .from('agent_memory')
-      .insert([{
-        user_id: context.user_id || 'demo_user',
-        agent_name: 'collaboration_agent',
-        memory_key: 'collaboration_analysis',
-        memory_value: collaborationInsight,
-        timestamp: new Date().toISOString()
-      } as TablesInsert<'agent_memory'>]);
+      .insert([collabMem]);
 
     // Log collaboration activity
+    const collabLog: TablesInsert<'supervisor_queue'> = {
+      user_id: context.user_id || 'demo_user',
+      agent_name: 'collaboration_agent',
+      action: 'collaboration_optimization',
+      input: JSON.stringify({ collaboration_score: collaborationScore }),
+      status: 'completed',
+      output: collaborationInsight,
+    };
     await supabase
       .from('supervisor_queue')
-      .insert([{
-        user_id: context.user_id || 'demo_user',
-        agent_name: 'collaboration_agent',
-        action: 'collaboration_optimization',
-        input: JSON.stringify({ collaboration_score: collaborationScore }),
-        status: 'completed',
-        output: collaborationInsight
-      } as TablesInsert<'supervisor_queue'>]);
+      .insert([collabLog]);
 
     console.log(`🤝 CollaborationAgent: ${collaborationInsight}`);
 
@@ -89,3 +92,4 @@ export async function CollaborationAgent(context: AgentContext): Promise<AgentRe
     };
   }
 }
+

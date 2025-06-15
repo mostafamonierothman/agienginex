@@ -35,27 +35,28 @@ export async function CoordinationAgent(context: AgentContext): Promise<AgentRes
     const coordination = `Coordinating ${activeAgentCount} agents across ${totalActivities} activities. Optimizing workflow distribution and resource allocation.`;
 
     // Store coordination insights
+    const memEntry: TablesInsert<'agent_memory'> = {
+      user_id: context.user_id || 'demo_user',
+      agent_name: 'coordination_agent',
+      memory_key: 'coordination_strategy',
+      memory_value: coordination,
+    };
     await supabase
       .from('agent_memory')
-      .insert([{
-        user_id: context.user_id || 'demo_user',
-        agent_name: 'coordination_agent',
-        memory_key: 'coordination_strategy',
-        memory_value: coordination,
-        timestamp: new Date().toISOString()
-      } as TablesInsert<'agent_memory'>]);
+      .insert([memEntry]);
 
     // Log coordination activity
+    const logEntry: TablesInsert<'supervisor_queue'> = {
+      user_id: context.user_id || 'demo_user',
+      agent_name: 'coordination_agent',
+      action: 'agent_coordination',
+      input: JSON.stringify({ active_agents: activeAgentCount }),
+      status: 'completed',
+      output: coordination,
+    };
     await supabase
       .from('supervisor_queue')
-      .insert([{
-        user_id: context.user_id || 'demo_user',
-        agent_name: 'coordination_agent',
-        action: 'agent_coordination',
-        input: JSON.stringify({ active_agents: activeAgentCount }),
-        status: 'completed',
-        output: coordination
-      } as TablesInsert<'supervisor_queue'>]);
+      .insert([logEntry]);
 
     console.log(`🤝 CoordinationAgent: ${coordination}`);
 

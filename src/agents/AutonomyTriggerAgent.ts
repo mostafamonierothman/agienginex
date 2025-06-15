@@ -242,16 +242,18 @@ export class AutonomyTriggerAgent {
 
   private async logAutonomousActions(actions: AutonomyCondition[], results: any[]) {
     for (let i = 0; i < actions.length; i++) {
+      const dbEntry: TablesInsert<'supervisor_queue'> = {
+        user_id: 'autonomy_trigger_agent',
+        agent_name: 'autonomy_trigger_agent',
+        action: 'autonomous_trigger',
+        input: JSON.stringify({ condition: actions[i] }),
+        status: results[i]?.success ? 'completed' : 'failed',
+        output: JSON.stringify(results[i])
+        // Don't add timestamp or id, handled by DB defaults
+      };
       await supabase
         .from('supervisor_queue')
-        .insert([{
-          user_id: 'autonomy_trigger_agent',
-          agent_name: 'autonomy_trigger_agent',
-          action: 'autonomous_trigger',
-          input: JSON.stringify({ condition: actions[i] }),
-          status: results[i]?.success ? 'completed' : 'failed',
-          output: JSON.stringify(results[i])
-        } as TablesInsert<'supervisor_queue'>]);
+        .insert([dbEntry]);
     }
   }
 }

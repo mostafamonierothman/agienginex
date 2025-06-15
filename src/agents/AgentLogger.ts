@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import type { TablesInsert } from '@/integrations/supabase/types';
 
@@ -27,16 +28,18 @@ export class AgentLogger {
 
     // Store in Supabase
     try {
+      const dbEntry: TablesInsert<'supervisor_queue'> = {
+        user_id: 'system_logger',
+        agent_name,
+        action,
+        input: JSON.stringify({ action }),
+        status: level === 'error' ? 'error' : 'completed',
+        output: result,
+        // Don't pass timestamp or id; defaults are used
+      };
       await supabase
         .from('supervisor_queue')
-        .insert([{
-          user_id: 'system_logger',
-          agent_name,
-          action,
-          input: JSON.stringify({ action }),
-          status: level === 'error' ? 'error' : 'completed',
-          output: result
-        } as TablesInsert<'supervisor_queue'>]);
+        .insert([dbEntry]);
     } catch (error) {
       console.error('Failed to store log:', error);
     }
@@ -66,3 +69,4 @@ export class AgentLogger {
 
 // Export singleton instance
 export const agentLogger = new AgentLogger();
+
