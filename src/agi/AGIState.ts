@@ -1,4 +1,3 @@
-
 export type AGIState = {
   running: boolean;
   currentGoal: string | null;
@@ -8,4 +7,6 @@ export type AGIState = {
   generation: number;
   // --- NEW for dynamic knowledge/world state
   lastRecalledWorldState?: any[];
+  // --- Phase 2 activation flag
+  phase2?: boolean;
 };
