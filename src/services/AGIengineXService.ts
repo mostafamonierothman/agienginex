@@ -70,11 +70,12 @@ class AGIengineXService {
 
   async chat(message: string): Promise<AGIResponse> {
     try {
-      // POST always to root; route by endpoint in body
+      // Send POST with correct API signature for chat flow → matches edge function, triggers supervisor logic!
       const response = await fetch(this.baseUrl, {
         method: 'POST',
         headers: this.getHeaders(),
-        body: JSON.stringify({ endpoint: 'chat', message }),
+        // Note the path! Edge function expects { path: "agi-chat", message }
+        body: JSON.stringify({ path: 'agi-chat', message }),
       });
 
       if (!response.ok) {
@@ -95,9 +96,11 @@ class AGIengineXService {
         };
       }
       const data = await response.json();
+
+      // If "supervisor_message" is present, show that (real business logic ran)
       return {
-        response: data.response || data.message || 'AGI processed your message',
-        agent_used: data.agent_used || 'agienginex',
+        response: data.supervisor_message || data.response || data.message || 'AGI processed your message',
+        agent_used: data.agent_used || (data.supervisor_agent ? "SuperVisorAgent" : 'agienginex'),
         timestamp: new Date().toISOString()
       };
     } catch (error: any) {
