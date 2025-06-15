@@ -340,6 +340,70 @@ class UnifiedAGICore {
   }
 
   /**
+   * POLLING: Provide a method to fetch the latest AGI core state for cross-instance sync.
+   */
+  public getSerializableState() {
+    // Only relevant serializable state for syncing
+    const s = this.getState();
+    // Avoid leaking logs and sensitive data, trim as needed
+    return {
+      running: s.running,
+      currentGoal: s.currentGoal,
+      completedGoals: s.completedGoals,
+      memoryKeys: s.memoryKeys,
+      lessonsLearned: s.lessonsLearned,
+      plugins: s.plugins,
+      goalQueue: s.goalQueue
+    };
+  }
+
+  /**
+   * Synchronize state with a foreign AGI instance (i.e., cross-instance)
+   * Accepts state from other "core" AGIs and merges memories and goals.
+   */
+  public mergeExternalAGIState(external: Partial<ReturnType<UnifiedAGICore['getSerializableState']>>) {
+    // Merge completed goals and memoryKeys only if not present
+    if (external?.completedGoals?.length) {
+      const current = this.stateManager.getState().completedGoals ?? [];
+      const merged = [
+        ...current,
+        ...external.completedGoals.filter(
+          (eg: any) =>
+            !current.some(
+              (cg: any) => cg.goal === eg.goal && cg.timestamp === eg.timestamp
+            )
+        ),
+      ];
+      this.stateManager.setState({ completedGoals: merged });
+    }
+
+    // Merge memory keys
+    if (external?.memoryKeys?.length) {
+      const current = this.stateManager.getState().memoryKeys ?? [];
+      const merged = Array.from(new Set([...current, ...external.memoryKeys]));
+      this.stateManager.setState({ memoryKeys: merged });
+    }
+
+    // Merge goals if not present
+    if (external?.goalQueue?.length) {
+      const curGoals = this.goalScheduler.getQueue().map(g => g.goal);
+      (external.goalQueue as any[]).forEach(g =>
+        !curGoals.includes(g.goal) ? this.goalScheduler.addGoal(g.goal, g.priority) : null
+      );
+    }
+
+    this.log("🔄 Synced in memory/goals from another AGI instance.");
+    this.notify();
+  }
+
+  /**
+   * Backend polling handler (for REST/edge function usage)
+   */
+  public async handleBackendStatePolling() {
+    return this.getSerializableState();
+  }
+
+  /**
    * PHASE 2 ACTIVATION ENTRYPOINT
    * Unlocks advanced AGI capabilities ("Phase 2") and persists the new state.
    */

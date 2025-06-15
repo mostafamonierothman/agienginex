@@ -289,3 +289,14 @@ class AGIengineXService {
 }
 
 export const agiEngineX = new AGIengineXService();
+
+/**
+ * Poll backend AGI (via edge or direct REST call) and get latest state for real-time sync.
+ */
+export async function pollBackendAGIState() {
+  // Replace with your backend agi endpoint as needed, or use Edge Function if exposed there
+  const resp = await fetch("https://hnudinfejowoxlybifqq.supabase.co/functions/v1/agienginex?poll_state=1");
+  if (!resp.ok) throw new Error('Failed to poll backend AGI state');
+  const data = await resp.json();
+  return data;
+}
