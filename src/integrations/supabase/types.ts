@@ -368,6 +368,39 @@ export type Database = {
         }
         Relationships: []
       }
+      vector_memories: {
+        Row: {
+          agent_id: string
+          content: string
+          created_at: string | null
+          embedding: Json
+          id: string
+          importance: number | null
+          source: string | null
+          tags: string[] | null
+        }
+        Insert: {
+          agent_id: string
+          content: string
+          created_at?: string | null
+          embedding: Json
+          id?: string
+          importance?: number | null
+          source?: string | null
+          tags?: string[] | null
+        }
+        Update: {
+          agent_id?: string
+          content?: string
+          created_at?: string | null
+          embedding?: Json
+          id?: string
+          importance?: number | null
+          source?: string | null
+          tags?: string[] | null
+        }
+        Relationships: []
+      }
       website_visits: {
         Row: {
           browser: string | null

@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface SupabaseVectorMemory {
@@ -9,19 +10,27 @@ export interface SupabaseVectorMemory {
   importance?: number;
   tags?: string[];
   created_at?: string;
+  score?: number; // for similarity
 }
 
 export class SupabaseVectorMemoryService {
   static async storeMemory(agentId: string, content: string, source: string, importance: number = 0.5, tags: string[] = [], embedding: number[] = []) {
-    const { error } = await supabase.from("vector_memories").insert({
-      agent_id: agentId,
-      content,
-      embedding,
-      source,
-      importance,
-      tags,
-    });
-    if (error) throw new Error("Supabase vector memory insert error: " + error.message);
+    // EXPLICIT table name typing to satisfy TS: 'vector_memories' is now valid post-migration
+    const { error } = await supabase
+      .from("vector_memories")
+      .insert({
+        agent_id: agentId,
+        content,
+        embedding,
+        source,
+        importance,
+        tags,
+      } as any); // use 'as any' only at DB boundary
+    
+    if (error) {
+      console.error("Supabase vector memory insert error:", error.message);
+      throw new Error("Supabase vector memory insert error: " + error.message);
+    }
   }
 
   static generateEmbedding(text: string): number[] {
@@ -37,6 +46,7 @@ export class SupabaseVectorMemoryService {
   }
 
   static async retrieveMemories(agentId: string, query: string, limit: number = 10): Promise<SupabaseVectorMemory[]> {
+    // EXPLICIT table name typing
     const { data, error } = await supabase
       .from("vector_memories")
       .select("*")
@@ -44,42 +54,48 @@ export class SupabaseVectorMemoryService {
       .order("created_at", { ascending: false })
       .limit(200);
 
-    if (error || !Array.isArray(data)) return [];
+    if (error || !Array.isArray(data)) {
+      if (error) console.error("Supabase vector memory retrieval error:", error);
+      return [];
+    }
     const queryEmbedding = this.generateEmbedding(query);
 
     const withScores: SupabaseVectorMemory[] = [];
-    (data as any[]).forEach(raw => {
+    for (const raw of data as any[]) {
       if (
         !raw ||
         typeof raw !== "object" ||
-        !("embedding" in raw) ||
-        raw === null
-      )
-        return;
+        !("embedding" in raw)
+      ) continue;
       let embedding: number[] = [];
-      if (Array.isArray((raw as any).embedding)) {
-        embedding = (raw as any).embedding as number[];
-      } else if (typeof (raw as any).embedding === "string") {
+      if (Array.isArray(raw.embedding)) {
+        embedding = raw.embedding as number[];
+      } else if (typeof raw.embedding === "string") {
         try {
-          embedding = JSON.parse((raw as any).embedding);
+          embedding = JSON.parse(raw.embedding);
         } catch {
           embedding = [];
         }
+      } else if (typeof raw.embedding === "object" && raw.embedding !== null) {
+        // If the embedding is stored as JSONB array/object
+        embedding = Array.isArray(raw.embedding)
+          ? (raw.embedding as number[])
+          : [];
       }
       const score = this.cosineSimilarity(queryEmbedding, embedding);
       if (
-        typeof (raw as any).id === "string" &&
-        typeof (raw as any).content === "string"
+        typeof raw.id === "string" &&
+        typeof raw.content === "string"
       ) {
         withScores.push({
-          ...(raw as object),
+          ...raw,
           embedding,
           score,
-        } as any); // safe to spread, since we know raw is object
+        });
       }
-    });
+    }
 
-    withScores.sort((a, b) => (b as any).score - (a as any).score);
+    withScores.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
     return withScores.slice(0, limit);
   }
 
@@ -117,6 +133,7 @@ export class SupabaseVectorMemoryService {
   }
 
   static async getMemoryStats(agentId: string): Promise<{ total: number }> {
+    // EXPLICIT table name typing
     const { count } = await supabase
       .from("vector_memories")
       .select("id", { count: "exact", head: true })

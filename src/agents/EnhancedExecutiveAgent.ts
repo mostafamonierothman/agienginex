@@ -207,15 +207,12 @@ Focus on IMMEDIATE actions that can generate leads and revenue TODAY using the a
 
   private async getTotalRevenue() {
     try {
-      const { data } = await supabase.from('api.supervisor_queue' as any)
-        .select('output')
-        .eq('agent_name', 'RealBusinessExecutor');
-
+      const { data } = await supabase.from('api.supervisor_queue' as any).select('output').eq('agent_name', 'RealBusinessExecutor');
       let totalRevenue = 0;
       if (Array.isArray(data)) {
         data.forEach((item) => {
           if (
-            item &&
+            item != null && // fixed: checks for null or undefined
             typeof item === 'object' &&
             'output' in item &&
             typeof (item as any).output === 'string'
