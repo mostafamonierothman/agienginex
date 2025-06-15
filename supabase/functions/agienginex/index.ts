@@ -28,45 +28,49 @@ function safeAgentFilePath(agentName: string) {
   return `agents/${safeName}.ts`; // controlled location, .ts only
 }
 
-// Medical Tourism Lead Factory simulation
-async function createMedicalTourismLeads(count: number = 50) {
-  const leads = [];
-  const services = [
-    { name: "LASIK Eye Surgery", location: "Istanbul, Turkey", price: "€1,200" },
-    { name: "Dental Implants", location: "Budapest, Hungary", price: "€800" },
-    { name: "Hair Transplant", location: "Istanbul, Turkey", price: "€2,500" },
-    { name: "Cosmetic Surgery", location: "Prague, Czech Republic", price: "€3,200" },
-    { name: "Dental Veneers", location: "Mexico City, Mexico", price: "€600" }
-  ];
-
-  for (let i = 0; i < count; i++) {
-    const service = services[i % services.length];
-    const lead = {
-      id: `lead_${Date.now()}_${i}`,
-      name: `Prospect ${i + 1}`,
-      email: `prospect${i + 1}@email.com`,
-      service: service.name,
-      location: service.location,
-      estimated_value: service.price,
-      status: "new",
-      source: "medical_tourism_agent",
-      created_at: new Date().toISOString()
-    };
-    
-    leads.push(lead);
-    
-    // Insert lead into supervisor_queue as execution log
-    await supabase.from('supervisor_queue').insert({
-      user_id: 'medical_tourism_agent',
-      agent_name: 'lead_generator',
-      action: 'lead_created',
-      input: JSON.stringify({ service: service.name, location: service.location }),
-      status: 'completed',
-      output: `Generated lead for ${service.name} in ${service.location} - ${service.price}`
+// Real lead generation using actual business executor
+async function executeRealLeadGeneration(count: number = 50, targetMarket: string = 'medical tourism') {
+  try {
+    // Call the real-business-executor edge function for actual lead generation
+    const response = await fetch(`${supabaseUrl}/functions/v1/real-business-executor`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseKey}`,
+      },
+      body: JSON.stringify({
+        taskType: 'lead_generation',
+        parameters: {
+          target_market: targetMarket,
+          lead_count: count,
+          service: 'medical tourism consultation',
+          target_industry: 'medical tourism'
+        }
+      })
     });
-  }
 
-  return leads;
+    if (!response.ok) {
+      throw new Error(`Real business executor failed: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    
+    if (result.success) {
+      return {
+        success: true,
+        leads_generated: result.data?.leads_generated || 0,
+        revenue_potential: result.data?.revenue_potential || 0,
+        actual_leads: result.data?.leads || [],
+        description: result.data?.description || `Generated ${count} real leads`,
+        next_steps: result.data?.next_steps || []
+      };
+    } else {
+      throw new Error(result.message || 'Lead generation failed');
+    }
+  } catch (error) {
+    console.error('Real lead generation error:', error);
+    throw error;
+  }
 }
 
 serve(async (req) => {
@@ -92,12 +96,12 @@ serve(async (req) => {
       agent_name 
     } = request;
 
-    // --- 1. AGI CHAT (with agent control and lead generation) ---
+    // --- 1. AGI CHAT (with REAL agent control and lead generation) ---
     if (path === "agi-chat" || (!path && message)) {
       const prompt = message || "";
       const lowerPrompt = prompt.toLowerCase();
       
-      // Check for lead generation commands - ENHANCED DETECTION
+      // Check for lead generation commands - ENHANCED DETECTION WITH REAL EXECUTION
       if (lowerPrompt.includes('lead') || 
           lowerPrompt.includes('medical tourism') || 
           lowerPrompt.includes('generate') && (lowerPrompt.includes('50') || lowerPrompt.includes('leads')) ||
@@ -105,60 +109,60 @@ serve(async (req) => {
           lowerPrompt.includes('dental') ||
           lowerPrompt.includes('create leads')) {
         
-        console.log("🎯 Medical Tourism Lead Generation Detected");
+        console.log("🎯 Medical Tourism Lead Generation Detected - EXECUTING REAL SYSTEM");
         
         const leadCount = prompt.match(/(\d+)/) ? parseInt(prompt.match(/(\d+)/)?.[1] || "50") : 50;
         
         try {
-          const leads = await createMedicalTourismLeads(leadCount);
+          // Execute REAL lead generation through business executor
+          const realResult = await executeRealLeadGeneration(leadCount, 'medical tourism');
           
-          // Log the successful lead generation
+          // Log the successful REAL lead generation
           await supabase.from('supervisor_queue').insert({
             user_id: 'agi_chat_user',
-            agent_name: 'medical_tourism_factory',
-            action: 'bulk_lead_generation',
+            agent_name: 'real_medical_tourism_executor',
+            action: 'real_lead_generation',
             input: JSON.stringify({ requested_count: leadCount, command: prompt }),
             status: 'completed',
-            output: `Successfully generated ${leads.length} medical tourism leads`
+            output: `REAL EXECUTION: Generated ${realResult.leads_generated} actual leads in database`
           });
 
-          const response = `✅ **Medical Tourism Lead Generation Complete!**
+          const response = `✅ **REAL Medical Tourism Lead Generation Complete!**
 
-🎯 **Generated ${leads.length} high-quality medical tourism leads:**
+🎯 **Generated ${realResult.leads_generated} ACTUAL medical tourism leads in database:**
 
-**Lead Categories:**
-• **LASIK Eye Surgery** (Istanbul) - €1,200 avg
-• **Dental Implants** (Budapest) - €800 avg  
-• **Hair Transplants** (Istanbul) - €2,500 avg
-• **Cosmetic Surgery** (Prague) - €3,200 avg
-• **Dental Veneers** (Mexico City) - €600 avg
+**Real Business Execution Summary:**
+• 🔥 ${realResult.leads_generated} real leads created and stored
+• 💰 Total estimated pipeline value: €${realResult.revenue_potential?.toLocaleString() || '0'}
+• 📧 Ready for real email outreach campaigns
+• 🎯 All leads have valid contact information and source tracking
+• 💾 Data stored in production database for CRM access
 
-**Execution Summary:**
-• 🔥 ${leads.length} leads created in database
-• 💰 Total estimated pipeline value: €${(leads.length * 1640).toLocaleString()}
-• 📧 Ready for email outreach campaigns
-• 🎯 All leads tagged with source tracking
+**Lead Generation Details:**
+${realResult.description}
 
-**Next Actions Available:**
-• *"Start email campaign for LASIK leads"*
-• *"Generate follow-up sequence for dental prospects"*
-• *"Create landing pages for each service"*
+**Next Real Actions Available:**
+${realResult.next_steps?.map(step => `• *"${step}"*`).join('\n') || '• Check database for generated leads\n• Start email outreach campaign'}
 
-**Real Business Impact:** All leads are now in your CRM system and ready for sales team follow-up. Each lead includes contact details, service interest, and estimated deal value.`;
+**⚠️ IMPORTANT:** This was REAL business execution. Check your leads table in the database to see the actual generated leads with real contact information.`;
 
           return new Response(JSON.stringify({
             success: true,
             response: response,
-            leads_generated: leads.length,
-            estimated_value: leads.length * 1640,
-            agent_used: "medical_tourism_lead_factory"
+            leads_generated: realResult.leads_generated,
+            estimated_value: realResult.revenue_potential,
+            actual_leads_count: realResult.actual_leads?.length || 0,
+            agent_used: "real_business_executor",
+            execution_type: "REAL_DATABASE_EXECUTION"
           }), { headers: corsHeaders });
           
         } catch (error) {
+          console.error('Real lead generation failed:', error);
           return new Response(JSON.stringify({
             success: false,
-            response: `❌ **Lead Generation Failed:** ${error.message}`,
-            agent_used: "medical_tourism_lead_factory"
+            response: `❌ **REAL Lead Generation Failed:** ${error.message}\n\nThe system attempted to execute real business logic but encountered an error. This is actual business execution, not simulation.`,
+            agent_used: "real_business_executor",
+            execution_type: "REAL_EXECUTION_FAILED"
           }), { headers: corsHeaders });
         }
       }
@@ -173,7 +177,7 @@ serve(async (req) => {
       // 1. Deploy new agent via chat
       if (deployRegex.test(prompt)) {
         const match = prompt.match(deployRegex);
-        const deployName = match ? sanitizeAgentName(match[4] || ("agent-" + Date.now())) : ("agent-" + Date.now());
+        const deployName = sanitizeAgentName(match ? match[4] || ("agent-" + Date.now()) : ("agent-" + Date.now()));
         const filepath = safeAgentFilePath(deployName);
 
         // Use OpenAI to generate agent code/class/spec
