@@ -54,16 +54,19 @@ export class GoalMemoryAgent {
 
   private async loadGoalMemories() {
     // Load goal memories from database
-    const { data: goalData } = await supabase
-      .from('agi_goals_enhanced')
-      .select('*')
-      .in('status', VALID_GOAL_STATUSES);
+    const { data: goalDataRaw } = await supabase
+      .from('api.agi_goals_enhanced' as any)
+      .select('*');
+
+    // Only keep properly shaped goal rows
+    const goalData = (goalDataRaw || []).filter(g => g && typeof g === 'object' && 'status' in g && 'goal_id' in g);
 
     // Load agent memory for detailed goal tracking
-    const { data: memoryData } = await supabase
-      .from('agent_memory')
+    const { data: memoryDataRaw } = await supabase
+      .from('api.agent_memory' as any)
       .select('*')
       .eq('agent_name', 'goal_memory_agent');
+    const memoryData = (memoryDataRaw || []).filter(m => m && typeof m === 'object' && 'memory_key' in m);
 
     // Combine and structure goal memories
     // Only allow valid statuses
@@ -71,12 +74,11 @@ export class GoalMemoryAgent {
       if (!VALID_GOAL_STATUSES.includes(goal.status)) return;
       const memoryEntry = memoryData?.find(m => m.memory_key === `goal_${goal.goal_id}`);
       let goalMemory: GoalMemory;
-
-      if (memoryEntry) {
+      if (memoryEntry && typeof memoryEntry.memory_value === "string") {
         goalMemory = JSON.parse(memoryEntry.memory_value);
       } else {
         goalMemory = {
-          id: goal.goal_id.toString(),
+          id: String(goal.goal_id),
           goal: goal.goal_text,
           subGoals: this.generateInitialSubGoals(goal.goal_text),
           priority: goal.priority,
@@ -87,7 +89,6 @@ export class GoalMemoryAgent {
           adaptations: []
         };
       }
-
       this.goalMemories.set(goalMemory.id, goalMemory);
     });
   }

@@ -49,11 +49,13 @@ export class CrossAgentFeedbackAgent {
 
   private async getAgentInteractions() {
     // Get recent agent activity from supervisor queue
-    const { data: recentActivity } = await supabase
+    const { data: recentActivityRaw } = await supabase
       .from('api.supervisor_queue' as any)
       .select('*')
       .order('timestamp', { ascending: false })
       .limit(100);
+
+    const recentActivity = recentActivityRaw as any[] | null;
 
     // Group by agent and analyze patterns
     const agentPerformance = {} as Record<string, any>;
@@ -84,27 +86,27 @@ export class CrossAgentFeedbackAgent {
 
       // Track agent sequences (handoffs)
       if (index > 0) {
-        const previousActivity = recentActivity[index - 1];
+        const previousActivity = (recentActivity && recentActivity[index - 1]) ? recentActivity[index - 1] : null;
         if (
           previousActivity &&
           typeof previousActivity === 'object' &&
           'agent_name' in previousActivity &&
-          (previousActivity as any).agent_name !== agentName
+          previousActivity.agent_name !== agentName
         ) {
           agentSequences.push({
-            from: (previousActivity as any).agent_name,
+            from: previousActivity.agent_name,
             to: agentName,
             context:
               activity &&
               typeof activity === 'object' &&
               'action' in activity
-                ? (activity as any).action
+                ? activity.action
                 : "",
             success:
               activity &&
               typeof activity === 'object' &&
               'status' in activity &&
-              (activity as any).status === 'completed'
+              activity.status === 'completed'
           });
         }
       }

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export class GoalEvaluator {
@@ -10,12 +9,15 @@ export class GoalEvaluator {
       .order('created_at', { ascending: false })
       .limit(100);
 
-    const { data: activity } = await supabase
+    const { data: activityRaw } = await supabase
       .from('api.supervisor_queue' as any)
       .select('*')
       .eq('status', 'completed')
       .order('timestamp', { ascending: false })
       .limit(50);
+
+    // Only keep rows with a status property
+    const activity = (activityRaw || []).filter(a => a && typeof a === 'object' && 'status' in a);
 
     const evaluation = {
       goalId: goalMemory.id,
