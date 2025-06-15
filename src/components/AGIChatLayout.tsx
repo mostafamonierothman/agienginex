@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAGIBusinessMetrics } from "@/hooks/useAGIBusinessMetrics";
 import { Bot, User2 } from "lucide-react";
+import AGIRoadmapHelper from "./AGIRoadmapHelper";
 
 // --- Import AGI AUTO-START modules ---
 import { unifiedAGI } from "@/agi/UnifiedAGICore";
@@ -99,6 +100,8 @@ export const AGIChatLayout: React.FC = () => {
   // Responsive, phone/desktop friendly chat UI
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-tr from-slate-100 via-purple-50 to-slate-200 dark:from-slate-900 dark:via-slate-800 p-1">
+      {/* Roadmap helper only shows on chat route and is small/non-intrusive for admins */}
+      <AGIRoadmapHelper />
       <div className="w-full max-w-md md:max-w-lg shadow-xl border border-slate-200 bg-white dark:bg-slate-800 rounded-xl flex flex-col min-h-[75dvh]">
         {/* --- ONLY CHAT -- removed assessment panel here --- */}
         <div className="flex items-center px-4 pt-6 pb-2 sticky top-0 bg-white dark:bg-slate-800 rounded-t-xl z-10">
