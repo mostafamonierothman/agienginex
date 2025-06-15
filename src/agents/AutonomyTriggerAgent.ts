@@ -144,9 +144,9 @@ export class AutonomyTriggerAgent {
 
   private async checkLowLeads(): Promise<boolean> {
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    
+
     const { data: recentLeads } = await supabase
-      .from('leads')
+      .from('api.leads' as any)
       .select('id')
       .gte('created_at', oneHourAgo.toISOString());
 
@@ -155,9 +155,9 @@ export class AutonomyTriggerAgent {
 
   private async checkNoActivity(): Promise<boolean> {
     const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
-    
+
     const { data: recentActivity } = await supabase
-      .from('supervisor_queue')
+      .from('api.supervisor_queue' as any)
       .select('id')
       .gte('timestamp', thirtyMinutesAgo.toISOString());
 
@@ -166,22 +166,24 @@ export class AutonomyTriggerAgent {
 
   private async checkPerformanceDrop(): Promise<boolean> {
     const { data: recentActivity } = await supabase
-      .from('supervisor_queue')
+      .from('api.supervisor_queue' as any)
       .select('status')
       .order('timestamp', { ascending: false })
       .limit(20);
 
     if (!recentActivity || recentActivity.length < 10) return false;
 
-    const successRate = recentActivity.filter(a => a.status === 'completed').length / recentActivity.length;
+    // Guard for record shape and null
+    const successful = recentActivity.filter(a => a && typeof a === "object" && (a as any).status === 'completed');
+    const successRate = successful.length / recentActivity.length;
     return successRate < 0.6;
   }
 
   private async checkGoalStagnation(): Promise<boolean> {
     const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000);
-    
+
     const { data: recentLeads } = await supabase
-      .from('leads')
+      .from('api.leads' as any)
       .select('id')
       .gte('created_at', fourHoursAgo.toISOString());
 
@@ -242,7 +244,7 @@ export class AutonomyTriggerAgent {
   private async logAutonomousActions(actions: AutonomyCondition[], results: any[]) {
     for (let i = 0; i < actions.length; i++) {
       await supabase
-        .from('supervisor_queue')
+        .from('api.supervisor_queue' as any)
         .insert({
           user_id: 'autonomy_trigger_agent',
           agent_name: 'autonomy_trigger_agent',

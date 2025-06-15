@@ -52,7 +52,7 @@ export async function APIConnectorAgentRunner(context: AgentContext): Promise<Ag
 
     // Log to supervisor queue
     await supabase
-      .from('supervisor_queue')
+      .from('api.supervisor_queue' as any)
       .insert({
         user_id: context.user_id || 'api_connector_agent',
         agent_name: 'api_connector_agent',
