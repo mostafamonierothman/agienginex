@@ -22,13 +22,15 @@ export async function RealLeadGeneration(context: any, supabase: any) {
     for (const lead of leadsToInsert) {
       const { data, error } = await supabase.from("leads").insert([lead]);
       if (error) {
-        leadInsertError = error;
+        console.error("Lead insert error:", error);
+        leadInsertError = `Database error: ${error.message || 'Unknown error'}`;
         continue;
       }
       inserted.push(data?.[0] || lead);
     }
   } catch (e) {
-    leadInsertError = e;
+    console.error("Lead generation exception:", e);
+    leadInsertError = `System error: ${e?.message || 'Unknown exception'}`;
   }
   return {
     generated: inserted.length,
@@ -39,6 +41,7 @@ export async function RealLeadGeneration(context: any, supabase: any) {
 
 export async function SupervisorAgentRunner(context: any, supabase: any) {
   try {
+    console.log("🎯 SupervisorAgent starting lead generation...");
     const realLeadResult = await RealLeadGeneration(context, supabase);
 
     await supabase.from("supervisor_queue").insert([{
@@ -49,7 +52,7 @@ export async function SupervisorAgentRunner(context: any, supabase: any) {
       status: realLeadResult.error ? "failed" : "completed",
       output: JSON.stringify({
         leadsGenerated: realLeadResult.generated,
-        error: realLeadResult.error ? String(realLeadResult.error) : null
+        error: realLeadResult.error || null
       })
     }]);
 
@@ -57,21 +60,26 @@ export async function SupervisorAgentRunner(context: any, supabase: any) {
     try {
       const { data: leads } = await supabase.from("leads").select("id");
       totalLeads = leads?.length || 0;
-    } catch {}
+    } catch (e) {
+      console.warn("Could not count leads:", e);
+    }
     try {
       const { data: queue } = await supabase.from("supervisor_queue").select("id");
       totalSupervisorActions = queue?.length || 0;
-    } catch {}
+    } catch (e) {
+      console.warn("Could not count supervisor actions:", e);
+    }
 
     let msg;
     if (realLeadResult.error) {
-      msg = `❌ Failed to generate leads: ${realLeadResult.error}`;
+      msg = `❌ Lead generation failed: ${realLeadResult.error}`;
     } else {
-      msg = `🎯 Generated and saved ${realLeadResult.generated} leads for "${context.input?.goal || "medical tourism"}".`;
+      msg = `✅ Successfully generated ${realLeadResult.generated} leads for "${context.input?.goal || "medical tourism"}".`;
     }
+    
     return {
       success: !realLeadResult.error,
-      message: msg + ` [Leads in DB: ${totalLeads}, Supervisor actions: ${totalSupervisorActions}]`,
+      message: msg + ` [Database: ${totalLeads} leads, ${totalSupervisorActions} supervisor actions]`,
       data: {
         leads_generated: realLeadResult.generated,
         total_leads_db: totalLeads,
@@ -85,9 +93,11 @@ export async function SupervisorAgentRunner(context: any, supabase: any) {
       nextAgent: null
     };
   } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.error("SupervisorAgent critical error:", errorMsg);
     return {
       success: false,
-      message: "SupervisorAgent (Edge) Internal Error: " + (err && err.message ? err.message : String(err)),
+      message: `❌ SupervisorAgent system error: ${errorMsg}`,
       data: null,
       timestamp: new Date().toISOString(),
       nextAgent: null

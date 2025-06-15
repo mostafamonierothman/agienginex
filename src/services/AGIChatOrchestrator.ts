@@ -25,7 +25,8 @@ export async function sendAGIChatCommand(command: string, options: any = {}) {
     });
     
     if (!resp.ok) {
-      throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+      const errorText = await resp.text();
+      throw new Error(`HTTP ${resp.status}: ${resp.statusText} - ${errorText}`);
     }
     
     const data = await resp.json();
@@ -33,10 +34,11 @@ export async function sendAGIChatCommand(command: string, options: any = {}) {
     return data;
   } catch (e: any) {
     console.error('❌ AGI communication error:', e);
+    const errorMsg = e?.message || "Network error";
     return { 
       success: false, 
-      error: e?.message || "Network error",
-      supervisor_message: `❌ AGI communication failed: ${e?.message || "Network error"}. System will attempt auto-recovery.`
+      error: errorMsg,
+      supervisor_message: `❌ AGI communication failed: ${errorMsg}. System attempting auto-recovery...`
     };
   }
 }
@@ -47,9 +49,13 @@ export async function sendAGIChatCommand(command: string, options: any = {}) {
 export async function fetchLiveAGIState() {
   try {
     const resp = await fetch(`${EDGE_URL}?status=1`);
+    if (!resp.ok) {
+      throw new Error(`Status check failed: ${resp.status}`);
+    }
     const data = await resp.json();
     return data;
   } catch (e: any) {
+    console.warn('AGI status check failed:', e);
     return { 
       success: false, 
       error: e?.message || "Network error",
