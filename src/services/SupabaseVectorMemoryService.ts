@@ -14,7 +14,7 @@ export interface SupabaseVectorMemory {
 
 export class SupabaseVectorMemoryService {
   static async storeMemory(agentId: string, content: string, source: string, importance: number = 0.5, tags: string[] = [], embedding: number[] = []) {
-    const { error } = await supabase.from("api.vector_memories").insert({
+    const { error } = await supabase.from("api.vector_memories" as any).insert({
       agent_id: agentId,
       content,
       embedding,
@@ -39,7 +39,7 @@ export class SupabaseVectorMemoryService {
 
   static async retrieveMemories(agentId: string, query: string, limit: number = 10): Promise<SupabaseVectorMemory[]> {
     const { data, error } = await supabase
-      .from("api.vector_memories")
+      .from("api.vector_memories" as any)
       .select("*")
       .eq("agent_id", agentId)
       .order("created_at", { ascending: false })
@@ -103,7 +103,7 @@ export class SupabaseVectorMemoryService {
 
   static async getMemoryStats(agentId: string): Promise<{ total: number }> {
     const { count } = await supabase
-      .from("api.vector_memories")
+      .from("api.vector_memories" as any)
       .select("id", { count: "exact", head: true })
       .eq("agent_id", agentId);
     return { total: count || 0 };

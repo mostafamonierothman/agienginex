@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import type { AgentMemory } from '@/types/DatabaseTypes';
 
@@ -8,7 +9,7 @@ export class PersistentMemory {
     try {
       this.memoryCache.set(key, value);
       await supabase
-        .from('api.agent_memory')
+        .from('api.agent_memory' as any)
         .upsert({
           user_id: 'persistent_memory',
           agent_name: 'system_memory',
@@ -30,7 +31,7 @@ export class PersistentMemory {
         return this.memoryCache.get(key);
       }
       const { data, error } = await supabase
-        .from('api.agent_memory')
+        .from('api.agent_memory' as any)
         .select('memory_value')
         .eq('user_id', 'persistent_memory')
         .eq('agent_name', 'system_memory')
@@ -60,7 +61,7 @@ export class PersistentMemory {
     try {
       this.memoryCache.clear();
       await supabase
-        .from('api.agent_memory')
+        .from('api.agent_memory' as any)
         .delete()
         .eq('user_id', 'persistent_memory')
         .eq('agent_name', 'system_memory');
@@ -73,7 +74,7 @@ export class PersistentMemory {
   async keys(): Promise<string[]> {
     try {
       const { data, error } = await supabase
-        .from('api.agent_memory')
+        .from('api.agent_memory' as any)
         .select('memory_key')
         .eq('user_id', 'persistent_memory')
         .eq('agent_name', 'system_memory');
