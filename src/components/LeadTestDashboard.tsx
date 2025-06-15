@@ -1,3 +1,5 @@
+
+// REMOVE the duplicate Lead interface (conflicts with import)
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

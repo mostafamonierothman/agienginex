@@ -6,7 +6,7 @@ export class SupabaseMemoryService {
   static async saveMemory(sessionId: string, content: any) {
     try {
       await supabase
-        .from('api.agent_memory' as any)
+        .from('agent_memory')
         .insert([{ 
           user_id: sessionId, 
           agent_name: 'memory_service',
@@ -22,13 +22,17 @@ export class SupabaseMemoryService {
   static async loadMemory(sessionId: string) {
     try {
       const { data, error } = await supabase
-        .from('api.agent_memory' as any)
+        .from('agent_memory')
         .select('*')
         .eq('memory_key', sessionId)
         .order('timestamp', { ascending: false })
         .limit(1);
       if (error) throw error;
-      const memoryValue = data?.[0]?.memory_value;
+      if (!data || data.length === 0) {
+        return null;
+      }
+      const record = data[0];
+      const memoryValue = record && typeof record === "object" && "memory_value" in record ? record.memory_value : null;
       if (memoryValue) {
         try {
           return JSON.parse(memoryValue);
@@ -47,7 +51,7 @@ export class SupabaseMemoryService {
   static async saveExecutionLog(agentName: string, action: string, result: any) {
     try {
       await supabase
-        .from('api.agent_memory' as any)
+        .from('agent_memory')
         .insert([{
           user_id: 'system',
           agent_name: agentName,
@@ -60,3 +64,4 @@ export class SupabaseMemoryService {
     }
   }
 }
+

@@ -14,7 +14,7 @@ export interface SupabaseVectorMemory {
 
 export class SupabaseVectorMemoryService {
   static async storeMemory(agentId: string, content: string, source: string, importance: number = 0.5, tags: string[] = [], embedding: number[] = []) {
-    const { error } = await supabase.from("api.vector_memories" as any).insert({
+    const { error } = await supabase.from("vector_memories").insert({
       agent_id: agentId,
       content,
       embedding,
@@ -39,15 +39,17 @@ export class SupabaseVectorMemoryService {
 
   static async retrieveMemories(agentId: string, query: string, limit: number = 10): Promise<SupabaseVectorMemory[]> {
     const { data, error } = await supabase
-      .from("api.vector_memories" as any)
+      .from("vector_memories")
       .select("*")
       .eq("agent_id", agentId)
       .order("created_at", { ascending: false })
       .limit(200);
-    if (error) return [];
+    if (error || !Array.isArray(data)) return [];
     const queryEmbedding = this.generateEmbedding(query);
+
     const withScores: SupabaseVectorMemory[] = [];
-    (data || []).forEach(raw => {
+    (data as any[]).forEach(raw => {
+      if (!raw || typeof raw !== "object" || !("embedding" in raw)) return;
       let embedding: number[] = [];
       if (Array.isArray(raw.embedding)) {
         embedding = raw.embedding as number[];
@@ -58,11 +60,14 @@ export class SupabaseVectorMemoryService {
           embedding = [];
         }
       }
-      (raw as any).score = this.cosineSimilarity(queryEmbedding, embedding);
-      withScores.push({
-        ...raw,
-        embedding,
-      });
+      const score = this.cosineSimilarity(queryEmbedding, embedding);
+      if (typeof raw.id === "string" && typeof raw.content === "string") {
+        withScores.push({
+          ...raw,
+          embedding,
+          score,
+        });
+      }
     });
     withScores.sort((a, b) => (b as any).score - (a as any).score);
     return withScores.slice(0, limit);
@@ -103,9 +108,10 @@ export class SupabaseVectorMemoryService {
 
   static async getMemoryStats(agentId: string): Promise<{ total: number }> {
     const { count } = await supabase
-      .from("api.vector_memories" as any)
+      .from("vector_memories")
       .select("id", { count: "exact", head: true })
       .eq("agent_id", agentId);
     return { total: count || 0 };
   }
 }
+
