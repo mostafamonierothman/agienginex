@@ -18,6 +18,8 @@ import { AGISystemAssessmentPanel } from "@/components/agi/AGISystemAssessmentPa
 import { VectorMemoryPanel } from "@/components/agi/VectorMemoryPanel";
 import { AGIAssessmentSummary } from "@/components/agi/AGIAssessmentSummary";
 import { useVectorMemoryStats } from "@/hooks/useVectorMemoryStats";
+import { WorldAwarenessList } from "@/components/agi/WorldAwarenessList";
+import { SelfReflectionHistory } from "@/components/agi/SelfReflectionHistory";
 
 const selfReflection = new AGISelfReflectionManager();
 
@@ -143,21 +145,7 @@ const FunctionalAGIPage: React.FC = () => {
             <div className="mb-2 text-blue-200">🌎 Syncing up with the current world state...</div>
           )}
 
-          {state.lastRecalledWorldState && state.lastRecalledWorldState.length > 0 && (
-            <div className="mb-4">
-              <div className="font-bold text-cyan-400 mb-1">🌐 World Awareness:</div>
-              <ul className="list-disc ml-6 text-cyan-200 text-xs">
-                {state.lastRecalledWorldState.map(
-                  (mem: any, i: number) => (
-                    <li key={mem.id || i}>
-                      <span className="font-semibold">{mem.content}</span>
-                      <span className="ml-2 text-gray-500">{mem.metadata?.timestamp ? new Date(mem.metadata.timestamp).toLocaleString() : ""}</span>
-                    </li>
-                  )
-                )}
-              </ul>
-            </div>
-          )}
+          <WorldAwarenessList worldState={state.lastRecalledWorldState} />
 
           {state.advancedCapabilities && (
             <div className="mb-4 p-3 bg-purple-900/30 rounded border border-purple-700">
@@ -200,17 +188,9 @@ const FunctionalAGIPage: React.FC = () => {
           />
           <AGIStatusPanel state={state} vectorStats={vectorStats} />
           <AGILessonsPanel state={state} />
-          <div className="mb-4">
-            <span className="font-bold text-lime-300">Recent Self-Reflection:</span>
-            <ul className="list-decimal ml-6 text-lime-200 text-xs">
-              {selfReflections.map((r, i) => (
-                <li key={i}>{r}</li>
-              ))}
-            </ul>
-          </div>
+          <SelfReflectionHistory reflections={selfReflections} />
         </CardContent>
       </Card>
-      {/* VECTOR MEMORY PANEL */}
       <VectorMemoryPanel
         stats={{
           shortTerm: vectorStats.shortTerm,
@@ -219,7 +199,6 @@ const FunctionalAGIPage: React.FC = () => {
         }}
         total={vectorStats.total}
       />
-      {/* AGI SYSTEM ASSESSMENT SUMMARY */}
       <AGIAssessmentSummary assessment={systemAssessment} />
     </div>
   );
