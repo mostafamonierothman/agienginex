@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,7 +32,7 @@ const SelfModifyingMasterDashboard = () => {
   const [phase3Stats, setPhase3Stats] = useState<any>(null);
   const [phase4Stats, setPhase4Stats] = useState<any>(null);
   const [phase5Stats, setPhase5Stats] = useState<any>(null);
-  const [consciousnessDashboard, setConsciousnessDashboard] = useState<any>(null);
+  const [consciousnessMetrics, setConsciousnessMetrics] = useState<any>(null);
 
   useEffect(() => {
     const interval = setInterval(async () => {
@@ -43,8 +42,8 @@ const SelfModifyingMasterDashboard = () => {
         setPhase2Stats(phase2SelfAnalysis.getPatternStatistics());
         setPhase3Stats(phase3SelfModification.getStrategiesStats());
         setPhase4Stats(phase4RealTimeLearning.getRealTimeStats());
-        setPhase5Stats(phase5AdvancedSelfModification.getAdvancedStats());
-        setConsciousnessDashboard(phase5AdvancedSelfModification.getConsciousnessDashboard());
+        setPhase5Stats(phase5AdvancedSelfModification.getMetaLearningStats());
+        setConsciousnessMetrics(phase5AdvancedSelfModification.getConsciousnessMetrics());
       } catch (error) {
         console.error('Dashboard update error:', error);
       }
@@ -71,7 +70,7 @@ const SelfModifyingMasterDashboard = () => {
       await phase4RealTimeLearning.startRealTimeLearning();
       
       // Phase 5: Advanced Self-Modification
-      await phase5AdvancedSelfModification.initializeMetaLearning();
+      await phase5AdvancedSelfModification.initializeAdvancedSelfModification();
       
       setIsRunning(true);
       console.log('✅ All 5 phases initialized successfully - AGI Evolution System ONLINE');
@@ -101,10 +100,8 @@ const SelfModifyingMasterDashboard = () => {
         { quality: analysis.overallScore, patterns: analysis.patterns.length }
       );
       
-      // Meta-learn with Phase 5
-      const metaLearning = await phase5AdvancedSelfModification.performMetaLearning(
-        'Full cycle optimization for authentication components'
-      );
+      // Advanced self-modification with Phase 5
+      const advancedMod = await phase5AdvancedSelfModification.implementAdvancedSelfModification();
       
       console.log('🎯 Full cycle completed with improvements across all phases');
       
@@ -119,7 +116,7 @@ const SelfModifyingMasterDashboard = () => {
       case 2: return phase2Stats?.totalPatterns > 0 ? 'active' : 'inactive';
       case 3: return phase3Stats?.totalStrategies > 0 ? 'active' : 'inactive';
       case 4: return phase4Stats?.isLearning ? 'active' : 'inactive';
-      case 5: return phase5Stats?.evolutionStatus === 'active' ? 'active' : 'inactive';
+      case 5: return phase5Stats?.totalStrategies > 0 ? 'active' : 'inactive';
       default: return 'inactive';
     }
   };
@@ -389,25 +386,27 @@ const SelfModifyingMasterDashboard = () => {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-black/20 p-3 rounded">
                     <div className="text-pink-400 text-xs">Meta Strategies</div>
-                    <div className="text-white font-bold">{phase5Stats.metaLearningStrategies}</div>
+                    <div className="text-white font-bold">{phase5Stats.totalStrategies}</div>
                   </div>
                   <div className="bg-black/20 p-3 rounded">
-                    <div className="text-cyan-400 text-xs">Neural Pathways</div>
-                    <div className="text-white font-bold">{phase5Stats.neuralPathways}</div>
+                    <div className="text-cyan-400 text-xs">Effectiveness</div>
+                    <div className="text-white font-bold">{phase5Stats.averageEffectiveness}%</div>
                   </div>
                   <div className="bg-black/20 p-3 rounded">
-                    <div className="text-green-400 text-xs">Effectiveness</div>
-                    <div className="text-white font-bold">{phase5Stats.averageEffectiveness.toFixed(1)}%</div>
+                    <div className="text-green-400 text-xs">Evolution Progress</div>
+                    <div className="text-white font-bold">{phase5Stats.evolutionProgress}%</div>
                   </div>
                   <div className="bg-black/20 p-3 rounded">
-                    <div className="text-yellow-400 text-xs">Pathway Efficiency</div>
-                    <div className="text-white font-bold">{phase5Stats.pathwayEfficiency.toFixed(1)}%</div>
+                    <div className="text-yellow-400 text-xs">Top Strategy</div>
+                    <div className="text-white font-bold text-xs">
+                      {phase5Stats.topStrategy?.name || 'None'}
+                    </div>
                   </div>
                 </div>
               )}
 
               {/* Consciousness Dashboard */}
-              {consciousnessDashboard && consciousnessDashboard.currentConsciousness && (
+              {consciousnessMetrics && (
                 <div className="bg-gradient-to-r from-pink-900/30 to-purple-900/30 p-4 rounded border border-pink-500/30">
                   <h4 className="text-white font-medium mb-3 flex items-center gap-2">
                     <Eye className="w-4 h-4" />
@@ -416,33 +415,25 @@ const SelfModifyingMasterDashboard = () => {
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     <div>
                       <div className="text-xs text-gray-400">Self-Awareness</div>
-                      <Progress value={consciousnessDashboard.currentConsciousness.selfAwareness} className="h-2" />
-                      <div className="text-xs text-white">{consciousnessDashboard.currentConsciousness.selfAwareness.toFixed(1)}%</div>
+                      <Progress value={consciousnessMetrics.selfAwareness} className="h-2" />
+                      <div className="text-xs text-white">{consciousnessMetrics.selfAwareness}%</div>
                     </div>
                     <div>
                       <div className="text-xs text-gray-400">Metacognition</div>
-                      <Progress value={consciousnessDashboard.currentConsciousness.metacognition} className="h-2" />
-                      <div className="text-xs text-white">{consciousnessDashboard.currentConsciousness.metacognition.toFixed(1)}%</div>
+                      <Progress value={consciousnessMetrics.metacognition} className="h-2" />
+                      <div className="text-xs text-white">{consciousnessMetrics.metacognition}%</div>
                     </div>
                     <div>
                       <div className="text-xs text-gray-400">Autonomous Thinking</div>
-                      <Progress value={consciousnessDashboard.currentConsciousness.autonomousThinking} className="h-2" />
-                      <div className="text-xs text-white">{consciousnessDashboard.currentConsciousness.autonomousThinking.toFixed(1)}%</div>
+                      <Progress value={consciousnessMetrics.autonomousThinking} className="h-2" />
+                      <div className="text-xs text-white">{consciousnessMetrics.autonomousThinking}%</div>
                     </div>
                   </div>
                   
-                  {consciousnessDashboard.awarenessMilestones.length > 0 && (
-                    <div className="mt-3">
-                      <div className="text-xs text-gray-400 mb-1">Consciousness Milestones:</div>
-                      <div className="flex flex-wrap gap-1">
-                        {consciousnessDashboard.awarenessMilestones.map((milestone: string, idx: number) => (
-                          <Badge key={idx} variant="outline" className="text-xs bg-pink-900/20 border-pink-500/30">
-                            {milestone}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  <div className="mt-3">
+                    <div className="text-xs text-gray-400 mb-1">Consciousness Level: {consciousnessMetrics.currentLevel}%</div>
+                    <div className="text-xs text-gray-400">Trend: {consciousnessMetrics.trend}</div>
+                  </div>
                 </div>
               )}
             </CardContent>
