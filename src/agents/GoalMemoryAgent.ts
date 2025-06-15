@@ -89,9 +89,10 @@ export class GoalMemoryAgent {
 
     // Combine and structure goal memories
     goalData?.forEach(g => {
-      if (!g || typeof g !== 'object' || !('status' in g)) return;
+      // Robust null check for g
+      if (!g || typeof g !== 'object') return;
       const status: any = (g as any).status;
-      if (status !== 'active' && status !== 'completed') return;
+      if (!status || (status !== 'active' && status !== 'completed')) return;
       const memoryEntry = memoryData?.find(
         m => !!m && typeof m === 'object' && (m as any).memory_key === `goal_${(g as any).goal_id}`
       );
@@ -102,15 +103,16 @@ export class GoalMemoryAgent {
       ) {
         goalMemory = JSON.parse((memoryEntry as any).memory_value);
       } else {
+        // Ensure all properties accessed on g are guarded
         goalMemory = {
-          id: String((g as any).goal_id),
-          goal: (g as any).goal_text,
-          subGoals: this.generateInitialSubGoals((g as any).goal_text),
-          priority: (g as any).priority,
-          status: (g as any).status as 'active' | 'completed',
-          progress: (g as any).progress_percentage,
+          id: String((g as any)?.goal_id ?? ''),
+          goal: (g as any)?.goal_text ?? '',
+          subGoals: this.generateInitialSubGoals((g as any)?.goal_text ?? ''),
+          priority: (g as any)?.priority ?? 0,
+          status: (g as any)?.status as 'active' | 'completed' ?? 'active',
+          progress: (g as any)?.progress_percentage ?? 0,
           lastEvaluated: new Date().toISOString(),
-          successMetrics: this.defineSuccessMetrics((g as any).goal_text),
+          successMetrics: this.defineSuccessMetrics((g as any)?.goal_text ?? ''),
           adaptations: []
         };
       }
