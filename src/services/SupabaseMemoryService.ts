@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import type { AgentMemory } from '@/types/DatabaseTypes';
 
@@ -6,7 +5,7 @@ export class SupabaseMemoryService {
   static async saveMemory(sessionId: string, content: any) {
     try {
       await supabase
-        .from('api.agent_memory')
+        .from('agent_memory')
         .insert([{ 
           user_id: sessionId, 
           agent_name: 'memory_service',
@@ -22,7 +21,7 @@ export class SupabaseMemoryService {
   static async loadMemory(sessionId: string) {
     try {
       const { data, error } = await supabase
-        .from('api.agent_memory')
+        .from('agent_memory')
         .select('*')
         .eq('memory_key', sessionId)
         .order('timestamp', { ascending: false })
@@ -55,7 +54,7 @@ export class SupabaseMemoryService {
   static async saveExecutionLog(agentName: string, action: string, result: any) {
     try {
       await supabase
-        .from('api.agent_memory')
+        .from('agent_memory')
         .insert([{
           user_id: 'system',
           agent_name: agentName,

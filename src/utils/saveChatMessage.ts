@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export async function saveChatMessage(sessionId: string, role: string, message: string): Promise<void>;
@@ -22,7 +21,7 @@ export async function saveChatMessage(param1: string, param2: string, param3?: s
     
     // Try to save to Supabase
     const { error } = await supabase
-      .from('api.agent_memory')
+      .from('agent_memory')
       .insert({
         user_id: sessionId || 'chat_system',
         agent_name: agentName,

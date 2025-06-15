@@ -3,14 +3,13 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
+// Set the default schema to 'api' so .from('leads') means 'api.leads'
 const SUPABASE_URL = "https://hnudinfejowoxlybifqq.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhudWRpbmZlam93b3hseWJpZnFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg3OTgzNTYsImV4cCI6MjA1NDM3NDM1Nn0.QP0Qt8WrTmnwEdn2-OaXiIo56PtdGTczBzUTPCS1DxU";
 
-// Import the supabase client like this:
-// import { supabase } from "@/integrations/supabase/client";
-
+// NOTE: Important! Set schema: 'api'
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   db: {
-    schema: 'public',
+    schema: 'api',
   },
 });

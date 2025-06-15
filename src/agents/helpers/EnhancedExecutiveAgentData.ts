@@ -1,10 +1,9 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export class EnhancedExecutiveAgentData {
   static async getLeadsCount() {
     try {
-      const { count } = await supabase.from('api.leads' as any).select('*', { count: 'exact', head: true });
+      const { count } = await supabase.from('leads' as any).select('*', { count: 'exact', head: true });
       return count || 0;
     } catch {
       return 0;
@@ -13,7 +12,7 @@ export class EnhancedExecutiveAgentData {
 
   static async getCampaignsCount() {
     try {
-      const { count } = await supabase.from('api.email_campaigns' as any).select('*', { count: 'exact', head: true });
+      const { count } = await supabase.from('email_campaigns' as any).select('*', { count: 'exact', head: true });
       return count || 0;
     } catch {
       return 0;
@@ -23,7 +22,7 @@ export class EnhancedExecutiveAgentData {
   static async getTotalRevenue() {
     try {
       const { data } = await supabase
-        .from('api.supervisor_queue' as any)
+        .from('supervisor_queue' as any)
         .select('output')
         .eq('agent_name', 'RealBusinessExecutor');
       let totalRevenue = 0;
@@ -64,13 +63,12 @@ export class EnhancedExecutiveAgentData {
 
   static async gatherCurrentData() {
     try {
-      const { data: leads } = await supabase.from('api.leads' as any).select('*').limit(5);
-      const { data: campaigns } = await supabase.from('api.email_campaigns' as any).select('*').limit(3);
-      const { data: executions } = await supabase.from('api.supervisor_queue' as any)
+      const { data: leads } = await supabase.from('leads' as any).select('*').limit(5);
+      const { data: campaigns } = await supabase.from('email_campaigns' as any).select('*').limit(3);
+      const { data: executions } = await supabase.from('supervisor_queue' as any)
         .select('*')
         .eq('agent_name', 'RealBusinessExecutor')
         .limit(5);
-
       return {
         totalLeads: leads?.length || 0,
         activeCampaigns: campaigns?.length || 0,

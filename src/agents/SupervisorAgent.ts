@@ -1,4 +1,3 @@
-
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,7 +26,7 @@ export class SupervisorAgent {
       });
 
       const { data: supervisedQueue, error: supervisorQueueError } = await supabase
-        .from('api.supervisor_queue')
+        .from('supervisor_queue')
         .insert([{
           user_id: context.user_id || 'supervisor_functional_test',
           agent_name: 'LeadGenerationMasterAgent',
@@ -42,11 +41,11 @@ export class SupervisorAgent {
       }
 
       const { data: leads, error: leadsError } = await supabase
-        .from('api.leads')
+        .from('leads')
         .select('id');
 
       const { data: queueItems, error: queueError } = await supabase
-        .from('api.supervisor_queue')
+        .from('supervisor_queue')
         .select('id');
 
       const totalLeads = leads?.length ?? 0;
