@@ -1,4 +1,3 @@
-
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { llmService } from '@/utils/llm';
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
@@ -27,7 +26,7 @@ export async function OpenAISupervisorAgentRunner(context: AgentContext): Promis
     const dbErrors = [];
     // Check table existence and schema
     const { error: agiTableErr } = await supabase.from('agi_state' as any).select('id').limit(1);
-    if (agiTableErr && agiTableErr.message.includes('does not exist')) {
+    if (agiTableErr && agiTableErr.message && agiTableErr.message.includes('does not exist')) {
       dbErrors.push('agi_state table missing');
       // Attempt to auto-fix (simulate)
       await sendChatUpdate('🩺 Auto-creating agi_state table...');

@@ -228,7 +228,7 @@ Focus on IMMEDIATE actions that can generate leads and revenue TODAY using the a
                   totalRevenue += output.actual_revenue || 0;
                 }
               }
-            } catch {}
+            } catch { }
           }
         });
       }

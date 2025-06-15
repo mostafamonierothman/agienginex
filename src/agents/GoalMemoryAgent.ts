@@ -93,7 +93,7 @@ export class GoalMemoryAgent {
       const status: any = (g as any).status;
       if (status !== 'active' && status !== 'completed') return;
       const memoryEntry = memoryData?.find(
-        m => m && typeof m === 'object' && (m as any).memory_key === `goal_${(g as any).goal_id}`
+        m => !!m && typeof m === 'object' && (m as any).memory_key === `goal_${(g as any).goal_id}`
       );
       let goalMemory: GoalMemory;
       if (memoryEntry && typeof (memoryEntry as any).memory_value === "string") {
