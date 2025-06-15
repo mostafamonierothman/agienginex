@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
 import { AGOCoreLoopAgentRunner } from '@/agents/AGOCoreLoopAgent';
@@ -216,7 +215,7 @@ export class AGIEvolutionEngine {
       this.goals.push('strategic_planning');
     }
 
-    // Save evolved goals
+    // Save evolved goals - use correct table and column names
     await supabase
       .from('agi_state')
       .upsert({
@@ -227,7 +226,8 @@ export class AGIEvolutionEngine {
           evolutionLevel: evolutionResult.evolutionLevel,
           intelligenceLevel: this.intelligenceLevel,
           lastUpdate: new Date().toISOString()
-        }
+        },
+        updated_at: new Date().toISOString()
       });
   }
 

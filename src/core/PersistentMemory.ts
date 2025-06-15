@@ -9,7 +9,7 @@ export class PersistentMemory {
     try {
       this.memoryCache.set(key, value);
       await supabase
-        .from('api.agent_memory' as any)
+        .from('agent_memory')
         .upsert({
           user_id: 'persistent_memory',
           agent_name: 'system_memory',
@@ -31,7 +31,7 @@ export class PersistentMemory {
         return this.memoryCache.get(key);
       }
       const { data, error } = await supabase
-        .from('api.agent_memory' as any)
+        .from('agent_memory')
         .select('memory_value')
         .eq('user_id', 'persistent_memory')
         .eq('agent_name', 'system_memory')
@@ -42,7 +42,7 @@ export class PersistentMemory {
         if (error) console.error('Failed to get persistent memory from DB:', error);
         return defaultValue;
       }
-      const memValue = data[0].memory_value;
+      const memValue = data[0]?.memory_value;
       try {
         const parsed = memValue ? JSON.parse(memValue) : defaultValue;
         this.memoryCache.set(key, parsed);
@@ -61,7 +61,7 @@ export class PersistentMemory {
     try {
       this.memoryCache.clear();
       await supabase
-        .from('api.agent_memory' as any)
+        .from('agent_memory')
         .delete()
         .eq('user_id', 'persistent_memory')
         .eq('agent_name', 'system_memory');
@@ -74,7 +74,7 @@ export class PersistentMemory {
   async keys(): Promise<string[]> {
     try {
       const { data, error } = await supabase
-        .from('api.agent_memory' as any)
+        .from('agent_memory')
         .select('memory_key')
         .eq('user_id', 'persistent_memory')
         .eq('agent_name', 'system_memory');
@@ -82,7 +82,7 @@ export class PersistentMemory {
         console.error('Failed to get memory keys from DB:', error);
         return Array.from(this.memoryCache.keys());
       }
-      return data?.map(item => item.memory_key).filter(k => k !== null) as string[] || [];
+      return (data?.map(item => item.memory_key).filter(k => k !== null) as string[]) || [];
     } catch (error) {
       console.error('Failed to get memory keys:', error);
       return Array.from(this.memoryCache.keys());

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -46,6 +45,7 @@ export function useAGIBusinessMetrics(key: string = "agi_metrics") {
   // Load real metrics
   const loadMetrics = useCallback(async () => {
     setLoading(true);
+    // Use "agi_state"
     const { data, error } = await supabase
       .from("agi_state")
       .select("state")
@@ -53,7 +53,7 @@ export function useAGIBusinessMetrics(key: string = "agi_metrics") {
       .order("updated_at", { ascending: false })
       .limit(1);
 
-    if (!error && data && data.length > 0) {
+    if (!error && data && data.length > 0 && data[0]?.state) {
       setMetrics(toMetrics(data[0].state));
     } else {
       setMetrics(DEFAULT);
@@ -72,8 +72,7 @@ export function useAGIBusinessMetrics(key: string = "agi_metrics") {
             state: newMetrics,
             updated_at: new Date().toISOString(),
           },
-        ],
-        { onConflict: "key" }
+        ]
       );
     },
     [key]
@@ -81,7 +80,6 @@ export function useAGIBusinessMetrics(key: string = "agi_metrics") {
 
   useEffect(() => {
     loadMetrics();
-    // Optionally, set up polling or Supabase subscriptions for real updates
   }, [loadMetrics]);
 
   return {

@@ -217,7 +217,6 @@ Focus on IMMEDIATE actions that can generate leads and revenue TODAY using the a
           if (
             item &&
             typeof item === 'object' &&
-            item !== null &&
             'output' in item &&
             typeof (item as any).output === 'string'
           ) {
@@ -228,7 +227,6 @@ Focus on IMMEDIATE actions that can generate leads and revenue TODAY using the a
                 try {
                   output = JSON.parse(outputStr);
                 } catch {
-                  // ignore malformed JSON
                   return;
                 }
                 if (
@@ -241,8 +239,7 @@ Focus on IMMEDIATE actions that can generate leads and revenue TODAY using the a
                 }
               }
             } catch {
-              // ignore errors
-              return;
+              // error in revenue parsing logic (ignore, continue)
             }
           }
         });

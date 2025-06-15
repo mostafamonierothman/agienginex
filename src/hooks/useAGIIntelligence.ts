@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { AGOCoreLoopAgentRunner } from '@/agents/AGOCoreLoopAgent';
@@ -136,11 +135,13 @@ export const useAGIIntelligence = () => {
           learningRate: agiState.learningRate
         };
         
+        // Use "agi_state" not "api.agi_state"
         const { error } = await supabase
           .from('agi_state')
           .upsert({
             key: 'agi_intelligence',
-            state: stateToSave
+            state: stateToSave,
+            updated_at: new Date().toISOString()
           });
 
         if (error) {
@@ -171,8 +172,6 @@ export const useAGIIntelligence = () => {
 
         if (data?.state && typeof data.state === 'object' && !Array.isArray(data.state)) {
           const loadedState = data.state as any;
-          
-          // Validate that the loaded state has all required AGI properties
           const isValidState = (
             typeof loadedState.intelligenceLevel === 'number' &&
             typeof loadedState.isLearning === 'boolean' &&
@@ -199,7 +198,6 @@ export const useAGIIntelligence = () => {
         console.log('No previous AGI state found, starting fresh');
       }
     };
-
     loadAGIState();
   }, []);
 

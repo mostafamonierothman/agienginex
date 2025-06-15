@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { Database, Users, Activity, Zap, AlertTriangle } from 'lucide-react';
 import LeadCard from "./lead-dashboard/LeadCard";
-import type { LeadStatus } from '@/types/DatabaseTypes';
+import type { Lead, LeadStatus } from '@/types/DatabaseTypes';
 
 // Emergency deployer agent
 import { EmergencyAgentDeployerRunner } from '@/agents/EmergencyAgentDeployer';
@@ -58,7 +57,7 @@ export default function LeadTestDashboard() {
           variant: "destructive",
         });
       } else {
-        setLeads(data || []);
+        setLeads(data as Lead[]);
       }
 
       // Get total count
