@@ -23,12 +23,12 @@ export class MetaAgent {
     const agentStats: Record<string, { total: number; successful: number }> = {};
     (Array.isArray(recentActivity) ? recentActivity : []).forEach(activity => {
       if (!activity || typeof activity !== "object" || !('agent_name' in activity)) return;
-      const agentName = (activity as any).agent_name;
+      const agentName = (activity as any)?.agent_name;
       if (!agentStats[agentName]) {
         agentStats[agentName] = { total: 0, successful: 0 };
       }
       agentStats[agentName].total++;
-      if ((activity as any).status === 'completed') {
+      if ((activity as any)?.status === 'completed') {
         agentStats[agentName].successful++;
       }
     });
