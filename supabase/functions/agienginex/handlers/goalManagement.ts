@@ -1,20 +1,15 @@
 
-export async function createGoal(goalData: any, supabase: any) {
-  const { goal_text, priority, status } = goalData;
-  const result = await supabase.from("agi_goals").insert({
-    goal_text: goal_text,
-    priority: typeof priority === "number" ? priority : 5,
-    status: status || "active",
-    progress_percentage: 0,
-    created_at: new Date().toISOString(),
-  }).select();
-  
-  if (result.error) throw result.error;
-  return result.data;
+export function insertAGIGoal(goal: string, priority: number) {
+  return {
+    id: Date.now().toString(),
+    goal_text: goal,
+    priority: priority ?? 5,
+  };
 }
 
-export async function getGoals(supabase: any) {
-  const { data, error } = await supabase.from("agi_goals").select("*").order("created_at", { ascending: false });
-  if (error) throw error;
-  return data;
+export function getAGIGoals() {
+  return [
+    { id: "1", goal_text: "Increase lead generation by 20%", priority: 5, status: "active", progress_percentage: 35 },
+    { id: "2", goal_text: "Optimize conversion rates", priority: 4, status: "active", progress_percentage: 50 }
+  ];
 }
