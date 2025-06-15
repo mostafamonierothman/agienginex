@@ -17,14 +17,7 @@ export interface MemoryVector {
 class VectorMemoryService {
   // Store using Supabase only
   async storeMemory(agentId: string, content: string, source: string, importance: number = 0.5): Promise<void> {
-    await SupabaseVectorMemoryService.storeMemory(
-      agentId,
-      content,
-      source,
-      importance,
-      [], // skip tags for now
-      SupabaseVectorMemoryService.generateEmbedding(content)
-    );
+    await SupabaseVectorMemoryService.storeMemory(agentId, source, content, { importance });
   }
 
   async retrieveMemories(agentId: string, query: string, limit: number = 10): Promise<any[]> {
@@ -34,8 +27,6 @@ class VectorMemoryService {
   async getMemoryStats(agentId: string) {
     return await SupabaseVectorMemoryService.getMemoryStats(agentId);
   }
-
-  // No longer using localStorage; migration handled elsewhere.
 }
 
 export const vectorMemoryService = new VectorMemoryService();

@@ -7,13 +7,14 @@ import LiveBackendData from './multi-agent/LiveBackendData';
 import LovableAGIStatus from './LovableAGIStatus';
 import AGIPhase1Dashboard from './AGIPhase1Dashboard';
 import OptimizationDashboard from './OptimizationDashboard';
+import SelfModifyingDashboard from './SelfModifyingDashboard';
 import { useBackendPolling } from '@/hooks/useBackendPolling';
 import { pollBackendAGIState } from '@/services/AGIengineXService';
 import { SystemExecutionPanel } from './SystemExecutionPanel';
 
 const AGIDashboard = () => {
   const { backendData, isConnected, isPolling, refreshData } = useBackendPolling(true, 2000);
-  const [activeTab, setActiveTab] = useState<'main' | 'optimization'>('main');
+  const [activeTab, setActiveTab] = useState<'main' | 'optimization' | 'self-modify'>('main');
 
   // Real-Time AGI polling (backend)
   const [backendAGIState, setBackendAGIState] = useState<any>(null);
@@ -32,8 +33,8 @@ const AGIDashboard = () => {
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
-        <h2 className="text-3xl font-bold text-white mb-2">🚀 AGIengineX Full System</h2>
-        <p className="text-gray-400">Complete AI Agent System with Phase 1 AGI Achievement</p>
+        <h2 className="text-3xl font-bold text-white mb-2">🧬 AGIengineX - Self-Evolving System</h2>
+        <p className="text-gray-400">Advanced AI Agent System with Self-Modifying Code Generation Capabilities</p>
         
         {/* Tab Navigation */}
         <div className="flex justify-center gap-4 mt-4">
@@ -45,6 +46,15 @@ const AGIDashboard = () => {
             }`}
           >
             Main Dashboard
+          </button>
+          <button
+            onClick={() => setActiveTab('self-modify')}
+            className={`px-4 py-2 rounded ${activeTab === 'self-modify' 
+              ? 'bg-purple-600 text-white' 
+              : 'bg-slate-800 text-gray-300 hover:bg-slate-700'
+            }`}
+          >
+            🧬 Self-Modifying AGI
           </button>
           <button
             onClick={() => setActiveTab('optimization')}
@@ -96,6 +106,8 @@ const AGIDashboard = () => {
         </>
       )}
 
+      {activeTab === 'self-modify' && <SelfModifyingDashboard />}
+      
       {activeTab === 'optimization' && <OptimizationDashboard />}
     </div>
   );

@@ -8,9 +8,11 @@ export class SupabaseVectorMemoryService {
         .from('vector_memories')
         .insert({
           agent_id: agentId,
-          memory_key: key,
           content: typeof content === 'string' ? content : JSON.stringify(content),
-          metadata: metadata,
+          source: key,
+          importance: 0.5,
+          tags: [],
+          embedding: this.generateEmbedding(content),
           created_at: new Date().toISOString()
         });
 
@@ -19,7 +21,7 @@ export class SupabaseVectorMemoryService {
         return null;
       }
       return data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Supabase vector memory insert error:', error.message);
       return null;
     }
@@ -40,10 +42,37 @@ export class SupabaseVectorMemoryService {
         return [];
       }
       return data || [];
-    } catch (error) {
+    } catch (error: any) {
       console.error('Supabase vector memory retrieval error:', error);
       return [];
     }
+  }
+
+  static async getMemoryStats(agentId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('vector_memories')
+        .select('id')
+        .eq('agent_id', agentId);
+
+      if (error) return { total: 0, recent: 0 };
+      
+      return {
+        total: data?.length || 0,
+        recent: data?.length || 0
+      };
+    } catch (error) {
+      return { total: 0, recent: 0 };
+    }
+  }
+
+  static generateEmbedding(content: string) {
+    // Simple hash-based embedding for demo
+    const hash = content.split('').reduce((a, b) => {
+      a = ((a << 5) - a) + b.charCodeAt(0);
+      return a & a;
+    }, 0);
+    return Array.from({ length: 10 }, (_, i) => (hash + i) % 100 / 100);
   }
 
   static async migrateLocalStorageToSupabase(agentId: string): Promise<boolean> {

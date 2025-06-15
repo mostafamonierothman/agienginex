@@ -17,13 +17,13 @@ export class SupabaseAGIStateService {
         throw new Error(`Supabase AGI state save failed: ${error.message}`);
       }
       return data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Supabase AGI state save failed:', error.message);
       throw new Error(`Supabase AGI state save failed: ${error.message}`);
     }
   }
 
-  static async loadState(key: string) {
+  static async loadState(key: string = 'unified_agi_state') {
     try {
       const { data, error } = await supabase
         .from('agi_state')
@@ -40,7 +40,7 @@ export class SupabaseAGIStateService {
         return null;
       }
       return data?.state || null;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Supabase AGI state load failed:', error.message);
       return null;
     }
@@ -57,7 +57,7 @@ export class SupabaseAGIStateService {
         console.error('Supabase AGI state delete failed:', error.message);
         throw new Error(`Supabase AGI state delete failed: ${error.message}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Supabase AGI state delete failed:', error.message);
       throw new Error(`Supabase AGI state delete failed: ${error.message}`);
     }
