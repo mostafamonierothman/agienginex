@@ -1,3 +1,4 @@
+
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
 import { supabase } from '@/integrations/supabase/client';
@@ -60,7 +61,7 @@ export class DatabaseErrorAgent {
     
     // Check if agi_state table exists with correct schema
     try {
-      const { error } = await supabase.from('api.agi_state' as any).select('count', { count: 'exact' });
+      const { error } = await supabase.from('agi_state').select('count', { count: 'exact' });
       if (error && error.message.includes('does not exist')) {
         errors.push({
           type: 'missing_table',
@@ -84,7 +85,7 @@ export class DatabaseErrorAgent {
     const errors = [];
     
     try {
-      const { data, error } = await supabase.from('api.supervisor_queue' as any).select('count', { count: 'exact' });
+      const { data, error } = await supabase.from('supervisor_queue').select('count', { count: 'exact' });
       if (error) {
         errors.push({
           type: 'connection_error',

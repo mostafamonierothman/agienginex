@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
 
@@ -53,7 +54,7 @@ export class DatabaseRecoveryService {
     try {
       // Test one core table only
       const { error } = await supabase
-        .from('api.supervisor_queue' as any)
+        .from('supervisor_queue')
         .select('count')
         .limit(1);
 
@@ -85,7 +86,7 @@ export class DatabaseRecoveryService {
     // Simplified AGI state check without notifications
     try {
       const { data } = await supabase
-        .from('api.agi_state' as any)
+        .from('agi_state')
         .select('state')
         .eq('key', 'phase2_agi_system')
         .maybeSingle();
@@ -102,7 +103,7 @@ export class DatabaseRecoveryService {
   static async initializePhase2AGIState(): Promise<void> {
     try {
       await supabase
-        .from('api.agi_state' as any)
+        .from('agi_state')
         .upsert([{
           key: 'phase2_agi_system',
           state: {
