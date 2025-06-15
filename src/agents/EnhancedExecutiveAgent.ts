@@ -1,3 +1,4 @@
+
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
 import { supabase } from '@/integrations/supabase/client';
@@ -215,7 +216,12 @@ Focus on IMMEDIATE actions that can generate leads and revenue TODAY using the a
       if (Array.isArray(data)) {
         data.forEach(item => {
           try {
-            if (item && typeof item === 'object' && 'output' in item && typeof item.output === 'string') {
+            if (
+              item &&
+              typeof item === 'object' &&
+              'output' in item &&
+              typeof item.output === 'string'
+            ) {
               const output = item.output ? JSON.parse(item.output) : {};
               totalRevenue += output.actual_revenue || 0;
             }

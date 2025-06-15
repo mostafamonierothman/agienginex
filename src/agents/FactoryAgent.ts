@@ -12,7 +12,7 @@ export async function FactoryAgent(context: AgentContext): Promise<AgentResponse
 
     // Create agent in supervisor queue as a registry entry
     const { data, error } = await supabase
-      .from('supervisor_queue')
+      .from('api.supervisor_queue' as any)
       .insert({
         user_id: context.user_id || 'demo_user',
         agent_name: 'factory_agent',

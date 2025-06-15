@@ -5,13 +5,13 @@ export class GoalEvaluator {
   async evaluate(goalMemory: any) {
     // Get data to simulate evaluation
     const { data: leads } = await supabase
-      .from('leads')
+      .from('api.leads' as any)
       .select('*')
       .order('created_at', { ascending: false })
       .limit(100);
 
     const { data: activity } = await supabase
-      .from('supervisor_queue')
+      .from('api.supervisor_queue' as any)
       .select('*')
       .eq('status', 'completed')
       .order('timestamp', { ascending: false })

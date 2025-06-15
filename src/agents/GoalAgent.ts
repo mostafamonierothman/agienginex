@@ -1,3 +1,4 @@
+
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { supabase } from '@/integrations/supabase/client';
 import type { AGIGoalEnhanced, GoalStatus } from '@/types/DatabaseTypes';
@@ -10,7 +11,7 @@ export class GoalAgent {
     // Store in Supabase
     try {
       await supabase
-        .from('agi_goals_enhanced')
+        .from('api.agi_goals_enhanced' as any)
         .insert({
           goal_text: goal,
           status: 'active' as 'active',
@@ -26,7 +27,7 @@ export class GoalAgent {
   async listGoals(): Promise<string[]> {
     try {
       const { data, error } = await supabase
-        .from('agi_goals_enhanced')
+        .from('api.agi_goals_enhanced' as any)
         .select('goal_text')
         .eq('status', 'active')
         .order('priority', { ascending: false });
@@ -41,7 +42,7 @@ export class GoalAgent {
   async completeGoal(goal: string): Promise<string> {
     try {
       const { error } = await supabase
-        .from('agi_goals_enhanced')
+        .from('api.agi_goals_enhanced' as any)
         .update({ 
           status: 'completed' as GoalStatus,
           progress_percentage: 100
@@ -79,7 +80,7 @@ export async function GoalAgentRunner(context: AgentContext): Promise<AgentRespo
 
     // Log to supervisor queue
     await supabase
-      .from('supervisor_queue')
+      .from('api.supervisor_queue' as any)
       .insert({
         user_id: context.user_id || 'goal_agent',
         agent_name: 'goal_agent',

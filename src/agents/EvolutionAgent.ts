@@ -1,4 +1,3 @@
-
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -11,11 +10,13 @@ export async function EvolutionAgent(context: AgentContext): Promise<AgentRespon
       .order('timestamp', { ascending: false })
       .limit(20);
 
-    const { data: agentActivity, error: activityError } = await supabase
+    const { data: agentActivityRaw, error: activityError } = await supabase
       .from('api.supervisor_queue' as any)
       .select('*')
       .order('timestamp', { ascending: false })
       .limit(100);
+
+    const agentActivity = (agentActivityRaw ?? []) as any[];
 
     if (memoryError || activityError) {
       console.error('EvolutionAgent fetch errors:', { memoryError, activityError });
@@ -23,8 +24,8 @@ export async function EvolutionAgent(context: AgentContext): Promise<AgentRespon
 
     // Calculate evolution metrics
     const memoryGrowth = recentMemory?.length || 0;
-    const activityVolume = agentActivity?.length || 0;
-    const uniqueAgents = new Set(agentActivity?.map(a => a.agent_name) || []).size;
+    const activityVolume = agentActivity.length || 0;
+    const uniqueAgents = new Set(agentActivity.map(a => a && typeof a === 'object' && 'agent_name' in a ? (a as any).agent_name : '')).size;
     
     // Generate evolution insights
     const evolutionPhases = [
