@@ -1,4 +1,3 @@
-
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { supabase } from '@/integrations/supabase/client';
 import { UpgradedSupervisor } from '@/core/UpgradedSupervisor';
@@ -15,7 +14,7 @@ export class MetaAgent {
     
     // Get recent activity data
     const { data: recentActivity } = await supabase
-      .from('api.supervisor_queue' as any)
+      .from('supervisor_queue')
       .select('agent_name, status')
       .gte('timestamp', new Date(Date.now() - 3600000).toISOString())
       .order('timestamp', { ascending: false });

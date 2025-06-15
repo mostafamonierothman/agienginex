@@ -9,6 +9,33 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      agent_memory: {
+        Row: {
+          agent_name: string | null
+          id: string
+          memory_key: string | null
+          memory_value: string | null
+          timestamp: string
+          user_id: string | null
+        }
+        Insert: {
+          agent_name?: string | null
+          id?: string
+          memory_key?: string | null
+          memory_value?: string | null
+          timestamp?: string
+          user_id?: string | null
+        }
+        Update: {
+          agent_name?: string | null
+          id?: string
+          memory_key?: string | null
+          memory_value?: string | null
+          timestamp?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       agent_registry: {
         Row: {
           agent_name: string
@@ -113,6 +140,33 @@ export type Database = {
         }
         Relationships: []
       }
+      agi_goals_enhanced: {
+        Row: {
+          goal_id: number
+          goal_text: string | null
+          priority: number
+          progress_percentage: number
+          status: string
+          timestamp: string
+        }
+        Insert: {
+          goal_id?: number
+          goal_text?: string | null
+          priority?: number
+          progress_percentage?: number
+          status?: string
+          timestamp?: string
+        }
+        Update: {
+          goal_id?: number
+          goal_text?: string | null
+          priority?: number
+          progress_percentage?: number
+          status?: string
+          timestamp?: string
+        }
+        Relationships: []
+      }
       cv_files: {
         Row: {
           content_type: string | null
@@ -188,6 +242,57 @@ export type Database = {
         }
         Relationships: []
       }
+      leads: {
+        Row: {
+          company: string | null
+          created_at: string
+          email: string
+          first_name: string | null
+          id: string
+          industry: string | null
+          job_title: string | null
+          last_name: string | null
+          linkedin_url: string | null
+          location: string | null
+          phone: string | null
+          source: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          email: string
+          first_name?: string | null
+          id?: string
+          industry?: string | null
+          job_title?: string | null
+          last_name?: string | null
+          linkedin_url?: string | null
+          location?: string | null
+          phone?: string | null
+          source?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          email?: string
+          first_name?: string | null
+          id?: string
+          industry?: string | null
+          job_title?: string | null
+          last_name?: string | null
+          linkedin_url?: string | null
+          location?: string | null
+          phone?: string | null
+          source?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       secrets: {
         Row: {
           created_at: string
@@ -206,6 +311,39 @@ export type Database = {
           id?: string
           name?: string
           value?: string
+        }
+        Relationships: []
+      }
+      supervisor_queue: {
+        Row: {
+          action: string | null
+          agent_name: string | null
+          id: string
+          input: string | null
+          output: string | null
+          status: string | null
+          timestamp: string
+          user_id: string | null
+        }
+        Insert: {
+          action?: string | null
+          agent_name?: string | null
+          id?: string
+          input?: string | null
+          output?: string | null
+          status?: string | null
+          timestamp?: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string | null
+          agent_name?: string | null
+          id?: string
+          input?: string | null
+          output?: string | null
+          status?: string | null
+          timestamp?: string
+          user_id?: string | null
         }
         Relationships: []
       }

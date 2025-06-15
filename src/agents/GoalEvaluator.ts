@@ -1,16 +1,17 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export class GoalEvaluator {
   async evaluate(goalMemory: any) {
     // Get data to simulate evaluation
     const { data: leads } = await supabase
-      .from('api.leads' as any)
+      .from('leads')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(100);
 
     const { data: activityRaw } = await supabase
-      .from('api.supervisor_queue' as any)
+      .from('supervisor_queue')
       .select('*')
       .eq('status', 'completed')
       .order('timestamp', { ascending: false })
@@ -20,7 +21,7 @@ export class GoalEvaluator {
     const activity = Array.isArray(activityRaw)
       ? activityRaw.filter(
         (a) =>
-          a !== null &&
+          !!a &&
           typeof a === 'object' &&
           'status' in a
       )
@@ -38,7 +39,7 @@ export class GoalEvaluator {
     // Simulate goal evaluation
     if (goalMemory.goal.includes('trillion') || goalMemory.goal.includes('revenue')) {
       const leadsCount = Array.isArray(leads)
-        ? leads.filter(l => l !== null).length
+        ? leads.filter(l => !!l).length
         : 0;
       const estimatedRevenue = leadsCount * 2500;
       evaluation.updatedMetrics = {
@@ -57,7 +58,7 @@ export class GoalEvaluator {
       const totalActivities = Array.isArray(activity)
         ? activity.filter(
           (a) =>
-            a !== null &&
+            !!a &&
             typeof a === 'object' &&
             'status' in a
         ).length
@@ -65,7 +66,7 @@ export class GoalEvaluator {
       const successfulActivities = Array.isArray(activity)
         ? activity.filter(
           (a) =>
-            a !== null &&
+            !!a &&
             typeof a === 'object' &&
             'status' in a &&
             (a as any)?.status === 'completed'
