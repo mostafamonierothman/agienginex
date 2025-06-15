@@ -5,6 +5,7 @@ import { SupervisorAgentRunner } from '@/agents/SupervisorAgent';
 import { SystemHealthAgentRunner } from '@/services/SystemHealthAgent';
 import { DatabaseErrorAgentRunner } from '@/services/DatabaseErrorAgent';
 import { DatabaseRecoveryService } from '@/services/DatabaseRecoveryService';
+import { EmergencyAgentDeployerRunner } from './EmergencyAgentDeployer';
 
 export class OrchestratorAgent {
   async runOrchestration(context: AgentContext): Promise<AgentResponse> {
@@ -37,15 +38,25 @@ export class OrchestratorAgent {
       }
       await sendChatUpdate('✅ SupervisorAgent is active and monitoring.');
 
+      // Step 4: Deploy Maximum Capacity Agents
+      await sendChatUpdate('4️⃣ Deploying full agent squad for maximum capacity operations...');
+      const emergencyDeploymentResponse = await EmergencyAgentDeployerRunner(context);
+      if (!emergencyDeploymentResponse.success) {
+        // Log this but don't fail the whole orchestration
+        await sendChatUpdate(`⚠️ Maximum capacity deployment issue: ${emergencyDeploymentResponse.message}`);
+      }
+      await sendChatUpdate('✅ Maximum capacity agent deployment complete.');
+
       // === ORCHESTRATION COMPLETE ===
       await sendChatUpdate('🏁 Full system initialization orchestrated successfully.');
 
       return {
         success: true,
-        message: 'System initialization plan executed successfully. Supervisor is now active.',
+        message: 'System initialization plan executed successfully. Supervisor is now active and maximum capacity agents are deployed.',
         data: {
           health: healthResponse.data,
           supervisor: supervisorResponse.data,
+          deployment: emergencyDeploymentResponse.data,
         },
         timestamp: new Date().toISOString()
       };
