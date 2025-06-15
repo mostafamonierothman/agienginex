@@ -63,6 +63,7 @@ export class GoalMemoryAgent {
       ? goalDataRaw.filter(
         (g): g is any =>
           !!g &&
+          g !== null &&
           typeof g === 'object' &&
           'status' in g &&
           'goal_id' in g &&
@@ -81,20 +82,21 @@ export class GoalMemoryAgent {
       .eq('agent_name', 'goal_memory_agent');
     const memoryData = Array.isArray(memoryDataRaw)
       ? memoryDataRaw.filter(
-        (m): m is any => !!m && typeof m === 'object' && 'memory_key' in m && 'memory_value' in m
+        (m): m is any => !!m && m !== null && typeof m === 'object' && 'memory_key' in m && 'memory_value' in m
       )
       : [];
 
     // Combine and structure goal memories, with ultra-strict null checks
     if (Array.isArray(goalData)) {
       goalData.forEach(g => {
-        if (!g || typeof g !== 'object') return;
+        if (!g || typeof g !== 'object' || g === null) return;
         const status: any = (g as any)?.status;
         if (!status || (status !== 'active' && status !== 'completed')) return;
         const memoryEntry = Array.isArray(memoryData)
           ? memoryData.find(
               m =>
                 !!m &&
+                m !== null &&
                 typeof m === 'object' &&
                 (m as any)?.memory_key === `goal_${(g as any)?.goal_id}`
             )
