@@ -162,27 +162,6 @@ export const AGIChatLayout: React.FC = () => {
           </Button>
         </form>
       </div>
-      <div className="text-xs text-gray-400 mt-5 text-center mx-auto px-2 pb-1 max-w-xs md:max-w-md">
-        <span className={`font-semibold ${breakthroughReached ? "text-green-500" : nearBreakthrough ? "text-orange-400" : "text-purple-500"}`}>
-          Autonomy Progress: {autonomyPercent}%
-        </span>
-        <br />
-        {breakthroughReached ? (
-          <span className="font-bold text-green-500">🎉 BREAKTHROUGH: Full AGI Autonomy Achieved! All business systems are live and self-optimizing.</span>
-        ) : nearBreakthrough ? (
-          <span className="font-bold text-orange-400">⚡ Near-breakthrough: Advanced AGI at {autonomyPercent}%. Activate more business actions to cross the autonomy frontier.</span>
-        ) : (
-          <>
-            {agiInfo?.liveFeedback ?
-              <>{agiInfo.liveFeedback}<br /></>
-              : null}
-            Your AGI now uses 100% real backend business data for metrics.<br />
-            No fake data, no fake buttons—real chat control only.<br />
-            Next: automate actual business transactions (lead creation, deal closing, payments) via chat.<br />
-            <span className="text-purple-400 font-semibold">Deploy further business actions in chat to boost autonomy!</span>
-          </>
-        )}
-      </div>
     </div>
   );
 };
