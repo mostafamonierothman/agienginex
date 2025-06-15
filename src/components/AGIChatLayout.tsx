@@ -77,11 +77,13 @@ export const AGIChatLayout: React.FC = () => {
     try {
       // Route ALL chat via backend AGI orchestrator (edge function) for real execution
       const rawResult = await sendAGIChatCommand(input, { type: "chat" });
-      const responseText = rawResult?.response
-        || rawResult?.output
-        || rawResult?.message
-        || rawResult?.agent_used
-        || "⚠️ No AGI response";
+      const responseText =
+        rawResult?.supervisor_message ||
+        rawResult?.response ||
+        rawResult?.output ||
+        rawResult?.message ||
+        rawResult?.agent_used ||
+        "⚠️ No AGI response";
 
       setMessages((prev) => [...prev, { role: "agi", content: responseText }]);
       // Optimistically update autonomy if we got a result
