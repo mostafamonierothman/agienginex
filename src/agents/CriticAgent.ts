@@ -20,12 +20,12 @@ export async function CriticAgent(context: AgentContext): Promise<AgentResponse>
     }
 
     const performanceItems = (recentActivity || []).filter(activity =>
-      activity && typeof activity === 'object' && 'status' in activity
+      activity && typeof activity === 'object' && 'status' in (activity || {})
     );
     const activityCount = performanceItems.length;
     const successRate = activityCount === 0
       ? 0
-      : performanceItems.filter(item => (item as any).status === 'completed').length / activityCount;
+      : performanceItems.filter(item => item && (item as any)?.status === 'completed').length / activityCount;
     const performanceScore = (successRate * 100).toFixed(1);
     
     // Generate performance critique

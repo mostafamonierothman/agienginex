@@ -1,3 +1,4 @@
+
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { supabase } from '@/integrations/supabase/client';
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
@@ -61,7 +62,7 @@ export class CrossAgentFeedbackAgent {
     (recentActivity || []).forEach((activity, index) => {
       if (!activity || typeof activity !== 'object' || !('agent_name' in activity)) return;
 
-      const agentName = (activity as any).agent_name;
+      const agentName = activity.agent_name;
       if (!agentPerformance[agentName]) {
         agentPerformance[agentName] = {
           total: 0,
@@ -75,9 +76,9 @@ export class CrossAgentFeedbackAgent {
       agentPerformance[agentName].total++;
       agentPerformance[agentName].recentActions.push(activity);
       
-      if ('status' in activity && (activity as any).status === 'completed') {
+      if ('status' in activity && activity.status === 'completed') {
         agentPerformance[agentName].successful++;
-      } else if ('status' in activity && (activity as any).status === 'failed') {
+      } else if ('status' in activity && activity.status === 'failed') {
         agentPerformance[agentName].failed++;
       }
 
@@ -93,8 +94,8 @@ export class CrossAgentFeedbackAgent {
           agentSequences.push({
             from: previousActivity.agent_name,
             to: agentName,
-            context: activity.action,
-            success: 'status' in activity && activity.status === 'completed'
+            context: activity && 'action' in activity ? activity.action : "",
+            success: activity && 'status' in activity && activity.status === 'completed'
           });
         }
       }
@@ -217,7 +218,7 @@ export class CrossAgentFeedbackAgent {
 
     // Store optimization in agent memory for future reference
     await supabase
-      .from('agent_memory')
+      .from('api.agent_memory' as any)
       .insert({
         user_id: 'cross_agent_feedback',
         agent_name: feedback.targetAgent,
@@ -254,7 +255,7 @@ export class CrossAgentFeedbackAgent {
 
   private async logCrossAgentFeedback(feedbackResults: AgentFeedback[], optimizations: any[]) {
     await supabase
-      .from('supervisor_queue')
+      .from('api.supervisor_queue' as any)
       .insert({
         user_id: 'cross_agent_feedback',
         agent_name: 'cross_agent_feedback_agent',
