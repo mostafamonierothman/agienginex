@@ -26,7 +26,7 @@ export async function OpenAISupervisorAgentRunner(context: AgentContext): Promis
     await sendChatUpdate('🛠️ OpenAI Supervisor is scanning for database errors...');
     const dbErrors = [];
     // Check table existence and schema
-    const { error: agiTableErr } = await supabase.from('agi_state').select('id').limit(1);
+    const { error: agiTableErr } = await supabase.from('agi_state' as any).select('id').limit(1);
     if (agiTableErr && agiTableErr.message.includes('does not exist')) {
       dbErrors.push('agi_state table missing');
       // Attempt to auto-fix (simulate)
