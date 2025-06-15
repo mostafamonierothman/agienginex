@@ -35,7 +35,7 @@ export class LeadGenerationMasterAgent {
 
       // Log to supervisor queue
       await supabase
-        .from('supervisor_queue')
+        .from('api.supervisor_queue' as any)
         .insert({
           user_id: context.user_id || 'lead_agent',
           agent_name: agentId,

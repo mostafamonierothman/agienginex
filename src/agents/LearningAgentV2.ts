@@ -6,7 +6,7 @@ export async function LearningAgentV2(context: AgentContext): Promise<AgentRespo
   try {
     // Get recent agent activity to learn from
     const { data: recentActivity, error: activityError } = await supabase
-      .from('supervisor_queue')
+      .from('api.supervisor_queue' as any)
       .select('*')
       .order('timestamp', { ascending: false })
       .limit(5);
@@ -31,7 +31,7 @@ export async function LearningAgentV2(context: AgentContext): Promise<AgentRespo
 
     // Store new goal
     const { data: goalData, error: goalError } = await supabase
-      .from('agi_goals_enhanced')
+      .from('api.agi_goals_enhanced' as any)
       .insert({
         goal_text: `[LEARNING] ${selectedGoal}`,
         priority: priority,
@@ -48,7 +48,7 @@ export async function LearningAgentV2(context: AgentContext): Promise<AgentRespo
     const learningInsight = `Learning pattern detected: ${selectedGoal} (Priority: ${priority})`;
     
     await supabase
-      .from('agent_memory')
+      .from('api.agent_memory' as any)
       .insert({
         user_id: context.user_id || 'demo_user',
         agent_name: 'learning_agent_v2',
@@ -59,7 +59,7 @@ export async function LearningAgentV2(context: AgentContext): Promise<AgentRespo
 
     // Log to supervisor queue
     await supabase
-      .from('supervisor_queue')
+      .from('api.supervisor_queue' as any)
       .insert({
         user_id: context.user_id || 'demo_user',
         agent_name: 'learning_agent_v2',

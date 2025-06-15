@@ -59,15 +59,15 @@ export class GoalMemoryAgent {
       .select('*');
 
     // Only keep properly shaped goal rows
-    const goalData = (goalDataRaw || []).filter(
-      g =>
-        g &&
-        typeof g === 'object' &&
-        'status' in g &&
-        'goal_id' in g &&
-        'goal_text' in g &&
-        'priority' in g &&
-        'progress_percentage' in g
+    const goalData = (goalDataRaw || []).filter(g =>
+      g &&
+      typeof g === 'object' &&
+      'status' in g &&
+      'goal_id' in g &&
+      'goal_text' in g &&
+      'priority' in g &&
+      'progress_percentage' in g &&
+      (g.status === 'active' || g.status === 'completed')
     );
 
     // Load agent memory for detailed goal tracking
@@ -84,25 +84,26 @@ export class GoalMemoryAgent {
     );
 
     // Combine and structure goal memories
-    // Only allow valid statuses
-    goalData?.forEach(goal => {
-      if (!('status' in goal) || !VALID_GOAL_STATUSES.includes(goal.status)) return;
+    goalData?.forEach(g => {
+      if (!g || typeof g !== 'object' || !('status' in g)) return;
+      const status: any = g.status;
+      if (status !== 'active' && status !== 'completed') return;
       const memoryEntry = memoryData?.find(
-        m => typeof m === 'object' && m.memory_key === `goal_${goal.goal_id}`
+        m => m && typeof m === 'object' && m.memory_key === `goal_${g.goal_id}`
       );
       let goalMemory: GoalMemory;
       if (memoryEntry && typeof memoryEntry.memory_value === "string") {
         goalMemory = JSON.parse(memoryEntry.memory_value);
       } else {
         goalMemory = {
-          id: String(goal.goal_id),
-          goal: goal.goal_text,
-          subGoals: this.generateInitialSubGoals(goal.goal_text),
-          priority: goal.priority,
-          status: goal.status as any,
-          progress: goal.progress_percentage,
+          id: String(g.goal_id),
+          goal: g.goal_text,
+          subGoals: this.generateInitialSubGoals(g.goal_text),
+          priority: g.priority,
+          status: g.status as 'active' | 'completed',
+          progress: g.progress_percentage,
           lastEvaluated: new Date().toISOString(),
-          successMetrics: this.defineSuccessMetrics(goal.goal_text),
+          successMetrics: this.defineSuccessMetrics(g.goal_text),
           adaptations: []
         };
       }

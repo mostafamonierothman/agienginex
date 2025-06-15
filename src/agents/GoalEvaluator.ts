@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export class GoalEvaluator {
@@ -48,7 +49,9 @@ export class GoalEvaluator {
       }
     } else if (goalMemory.goal.includes('system')) {
       const totalActivities = activity?.length || 0;
-      const successfulActivities = activity?.filter(a => a && typeof a === 'object' && 'status' in a && a.status === 'completed').length || 0;
+      const successfulActivities = activity?.filter(
+        a => a && typeof a === 'object' && 'status' in a && a.status === 'completed'
+      ).length || 0;
       const successRate = totalActivities > 0 ? (successfulActivities / totalActivities) * 100 : 0;
       evaluation.updatedMetrics = {
         tasksCompleted: totalActivities,

@@ -210,7 +210,7 @@ Focus on IMMEDIATE actions that can generate leads and revenue TODAY using the a
       const { data } = await supabase.from('api.supervisor_queue' as any)
         .select('output')
         .eq('agent_name', 'RealBusinessExecutor');
-      
+
       let totalRevenue = 0;
       if (Array.isArray(data)) {
         data.forEach(item => {
