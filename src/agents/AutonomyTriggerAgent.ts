@@ -1,4 +1,3 @@
-
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { supabase } from '@/integrations/supabase/client';
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
@@ -146,7 +145,7 @@ export class AutonomyTriggerAgent {
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
     const { data: recentLeads } = await supabase
-      .from('api.leads' as any)
+      .from('leads')
       .select('id')
       .gte('created_at', oneHourAgo.toISOString());
 
@@ -157,7 +156,7 @@ export class AutonomyTriggerAgent {
     const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
 
     const { data: recentActivity } = await supabase
-      .from('api.supervisor_queue' as any)
+      .from('supervisor_queue')
       .select('id')
       .gte('timestamp', thirtyMinutesAgo.toISOString());
 
@@ -166,7 +165,7 @@ export class AutonomyTriggerAgent {
 
   private async checkPerformanceDrop(): Promise<boolean> {
     const { data: recentActivity } = await supabase
-      .from('api.supervisor_queue' as any)
+      .from('supervisor_queue')
       .select('status')
       .order('timestamp', { ascending: false })
       .limit(20);
@@ -183,7 +182,7 @@ export class AutonomyTriggerAgent {
     const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000);
 
     const { data: recentLeads } = await supabase
-      .from('api.leads' as any)
+      .from('leads')
       .select('id')
       .gte('created_at', fourHoursAgo.toISOString());
 
@@ -244,7 +243,7 @@ export class AutonomyTriggerAgent {
   private async logAutonomousActions(actions: AutonomyCondition[], results: any[]) {
     for (let i = 0; i < actions.length; i++) {
       await supabase
-        .from('api.supervisor_queue' as any)
+        .from('supervisor_queue')
         .insert({
           user_id: 'autonomy_trigger_agent',
           agent_name: 'autonomy_trigger_agent',

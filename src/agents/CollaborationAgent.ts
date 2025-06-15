@@ -6,7 +6,7 @@ export async function CollaborationAgent(context: AgentContext): Promise<AgentRe
   try {
     // Analyze inter-agent collaboration patterns
     const { data: recentActivity, error } = await supabase
-      .from('api.supervisor_queue' as any)
+      .from('supervisor_queue')
       .select('*')
       .order('timestamp', { ascending: false })
       .limit(50);
@@ -46,7 +46,7 @@ export async function CollaborationAgent(context: AgentContext): Promise<AgentRe
 
     // Store collaboration insight
     await supabase
-      .from('api.agent_memory' as any)
+      .from('agent_memory')
       .insert({
         user_id: context.user_id || 'demo_user',
         agent_name: 'collaboration_agent',
@@ -57,15 +57,14 @@ export async function CollaborationAgent(context: AgentContext): Promise<AgentRe
 
     // Log collaboration activity
     await supabase
-      .from('api.supervisor_queue' as any)
+      .from('supervisor_queue')
       .insert({
         user_id: context.user_id || 'demo_user',
         agent_name: 'collaboration_agent',
         action: 'collaboration_optimization',
         input: JSON.stringify({ collaboration_score: collaborationScore }),
         status: 'completed',
-        output: collaborationInsight,
-        timestamp: new Date().toISOString()
+        output: collaborationInsight
       });
 
     console.log(`🤝 CollaborationAgent: ${collaborationInsight}`);

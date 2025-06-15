@@ -45,4 +45,22 @@ export class SupabaseVectorMemoryService {
       return [];
     }
   }
+
+  static async getMemoryStats(agentId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('vector_memories')
+        .select('id')
+        .eq('agent_id', agentId);
+
+      if (error) return { total: 0, recent: 0 };
+      
+      return {
+        total: data?.length || 0,
+        recent: data?.length || 0
+      };
+    } catch (error) {
+      return { total: 0, recent: 0 };
+    }
+  }
 }

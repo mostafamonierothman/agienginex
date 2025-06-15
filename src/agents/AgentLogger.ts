@@ -28,7 +28,7 @@ export class AgentLogger {
     // Store in Supabase
     try {
       await supabase
-        .from('api.supervisor_queue' as any)
+        .from('supervisor_queue')
         .insert({
           user_id: 'system_logger',
           agent_name,
@@ -36,7 +36,7 @@ export class AgentLogger {
           input: JSON.stringify({ action }),
           status: level === 'error' ? 'error' : 'completed',
           output: result
-        } as any);
+        });
     } catch (error) {
       console.error('Failed to store log:', error);
     }
@@ -49,7 +49,7 @@ export class AgentLogger {
   async getStoredLogs(limit: number = 100): Promise<any[]> {
     try {
       const { data, error } = await supabase
-        .from('api.supervisor_queue' as any)
+        .from('supervisor_queue')
         .select('*')
         .eq('user_id', 'system_logger')
         .order('timestamp', { ascending: false })

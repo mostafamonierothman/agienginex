@@ -1,3 +1,4 @@
+
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -5,7 +6,7 @@ export async function CoordinationAgent(context: AgentContext): Promise<AgentRes
   try {
     // Get recent agent activities to coordinate
     const { data: recentActivity, error } = await supabase
-      .from('api.supervisor_queue' as any)
+      .from('supervisor_queue')
       .select('*')
       .order('timestamp', { ascending: false })
       .limit(20);
@@ -35,7 +36,7 @@ export async function CoordinationAgent(context: AgentContext): Promise<AgentRes
 
     // Store coordination insights
     await supabase
-      .from('api.agent_memory' as any)
+      .from('agent_memory')
       .insert({
         user_id: context.user_id || 'demo_user',
         agent_name: 'coordination_agent',
@@ -46,15 +47,14 @@ export async function CoordinationAgent(context: AgentContext): Promise<AgentRes
 
     // Log coordination activity
     await supabase
-      .from('api.supervisor_queue' as any)
+      .from('supervisor_queue')
       .insert({
         user_id: context.user_id || 'demo_user',
         agent_name: 'coordination_agent',
         action: 'agent_coordination',
         input: JSON.stringify({ active_agents: activeAgentCount }),
         status: 'completed',
-        output: coordination,
-        timestamp: new Date().toISOString()
+        output: coordination
       });
 
     console.log(`🤝 CoordinationAgent: ${coordination}`);
