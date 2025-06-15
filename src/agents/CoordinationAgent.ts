@@ -1,4 +1,3 @@
-
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -28,7 +27,7 @@ export async function CoordinationAgent(context: AgentContext): Promise<AgentRes
       return acc;
     }, {} as Record<string, number>);
 
-    const totalActivities = Object.values(agentActivities).reduce((sum, count) => sum + (count as number), 0 as number);
+    const totalActivities = Object.values(agentActivities).reduce((sum: number, count: unknown) => sum + (typeof count === 'number' ? count : 0), 0 as number);
     const activeAgentCount = Object.keys(agentActivities).length;
     
     // Generate coordination strategy

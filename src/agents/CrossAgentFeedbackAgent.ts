@@ -94,8 +94,8 @@ export class CrossAgentFeedbackAgent {
           agentSequences.push({
             from: (previousActivity as any).agent_name,
             to: agentName,
-            context: activity && 'action' in activity ? activity.action : "",
-            success: activity && 'status' in activity && activity.status === 'completed'
+            context: activity && typeof activity === 'object' && 'action' in activity ? (activity as any).action : "",
+            success: activity && typeof activity === 'object' && 'status' in activity && (activity as any).status === 'completed'
           });
         }
       }

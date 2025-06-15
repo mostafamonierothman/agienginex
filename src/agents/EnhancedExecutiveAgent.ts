@@ -1,4 +1,3 @@
-
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
 import { supabase } from '@/integrations/supabase/client';
@@ -79,9 +78,9 @@ export class EnhancedExecutiveAgent {
 
   private async gatherCurrentData() {
     try {
-      const { data: leads } = await supabase.from('leads').select('*').limit(5);
-      const { data: campaigns } = await supabase.from('email_campaigns').select('*').limit(3);
-      const { data: executions } = await supabase.from('supervisor_queue')
+      const { data: leads } = await supabase.from('api.leads' as any).select('*').limit(5);
+      const { data: campaigns } = await supabase.from('api.email_campaigns' as any).select('*').limit(3);
+      const { data: executions } = await supabase.from('api.supervisor_queue' as any)
         .select('*')
         .eq('agent_name', 'RealBusinessExecutor')
         .limit(5);
@@ -90,7 +89,7 @@ export class EnhancedExecutiveAgent {
         totalLeads: leads?.length || 0,
         activeCampaigns: campaigns?.length || 0,
         recentExecutions: executions?.length || 0,
-        lastExecution: executions?.[0]?.timestamp || null
+        lastExecution: executions && executions[0] && 'timestamp' in executions[0] ? (executions[0] as any).timestamp : null
       };
     } catch (error) {
       console.error('Error gathering current data:', error);
@@ -190,7 +189,7 @@ Focus on IMMEDIATE actions that can generate leads and revenue TODAY using the a
 
   private async getLeadsCount() {
     try {
-      const { count } = await supabase.from('leads').select('*', { count: 'exact', head: true });
+      const { count } = await supabase.from('api.leads' as any).select('*', { count: 'exact', head: true });
       return count || 0;
     } catch {
       return 0;
@@ -199,7 +198,7 @@ Focus on IMMEDIATE actions that can generate leads and revenue TODAY using the a
 
   private async getCampaignsCount() {
     try {
-      const { count } = await supabase.from('email_campaigns').select('*', { count: 'exact', head: true });
+      const { count } = await supabase.from('api.email_campaigns' as any).select('*', { count: 'exact', head: true });
       return count || 0;
     } catch {
       return 0;
@@ -208,14 +207,14 @@ Focus on IMMEDIATE actions that can generate leads and revenue TODAY using the a
 
   private async getTotalRevenue() {
     try {
-      const { data } = await supabase.from('supervisor_queue')
+      const { data } = await supabase.from('api.supervisor_queue' as any)
         .select('output')
         .eq('agent_name', 'RealBusinessExecutor');
       
       let totalRevenue = 0;
       data?.forEach(item => {
         try {
-          const output = JSON.parse(item.output || '{}');
+          const output = item.output ? JSON.parse(item.output) : {};
           totalRevenue += output.actual_revenue || 0;
         } catch {}
       });
