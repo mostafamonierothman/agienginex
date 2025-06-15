@@ -104,7 +104,7 @@ export class AGISelfHealingAgent {
         });
       }
       const failedAgents = (recentAgentsData || []).filter(
-        a => a && typeof a === 'object' && 'status' in a && (a as any)?.status === 'failed'
+        (a: any) => !!a && typeof a === 'object' && 'status' in a && (a as any)?.status === 'failed'
       );
       if (failedAgents.length > 3) {
         issues.push({

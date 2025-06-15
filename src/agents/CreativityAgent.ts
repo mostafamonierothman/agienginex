@@ -1,4 +1,3 @@
-
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -96,7 +95,7 @@ export async function CreativityAgentRunner(context: AgentContext): Promise<Agen
 
     // Log to supervisor queue
     await supabase
-      .from('supervisor_queue')
+      .from('api.supervisor_queue' as any)
       .insert({
         user_id: context.user_id || 'creativity_agent',
         agent_name: 'creativity_agent',
@@ -115,7 +114,7 @@ export async function CreativityAgentRunner(context: AgentContext): Promise<Agen
   } catch (error) {
     return {
       success: false,
-      message: `❌ CreativityAgent error: ${error.message}`
+      message: `❌ CreativityAgent error: ${error instanceof Error ? error.message : String(error)}`
     };
   }
 }

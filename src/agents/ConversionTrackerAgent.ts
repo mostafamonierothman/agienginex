@@ -8,8 +8,8 @@ export const ConversionTrackerAgent = async (leadEmail: string, conversionAmount
     .eq('email', leadEmail)
     .maybeSingle();
 
-  if (lead && typeof lead === 'object' && 'id' in lead && !error) {
-    // Update only the status field since 'converted' and 'conversion_value' don't exist in the schema
+  if (!!lead && typeof lead === 'object' && 'id' in lead && !error) {
+    // Update only the status field
     await supabase
       .from('api.leads' as any)
       .update({ status: 'converted' })

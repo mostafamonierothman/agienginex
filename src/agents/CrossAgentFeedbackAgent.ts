@@ -1,4 +1,3 @@
-
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { supabase } from '@/integrations/supabase/client';
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
@@ -50,18 +49,19 @@ export class CrossAgentFeedbackAgent {
   private async getAgentInteractions() {
     // Get recent agent activity from supervisor queue
     const { data: recentActivity } = await supabase
-      .from('supervisor_queue')
+      .from('api.supervisor_queue' as any)
       .select('*')
       .order('timestamp', { ascending: false })
       .limit(100);
 
     // Group by agent and analyze patterns
-    const agentPerformance = {};
+    const agentPerformance = {} as Record<string, any>;
     const agentSequences = [];
 
-    recentActivity?.forEach((activity, index) => {
-      const agentName = activity.agent_name;
-      
+    (recentActivity || []).forEach((activity, index) => {
+      if (!activity || typeof activity !== 'object' || !('agent_name' in activity)) return;
+
+      const agentName = (activity as any).agent_name;
       if (!agentPerformance[agentName]) {
         agentPerformance[agentName] = {
           total: 0,
@@ -75,21 +75,26 @@ export class CrossAgentFeedbackAgent {
       agentPerformance[agentName].total++;
       agentPerformance[agentName].recentActions.push(activity);
       
-      if (activity.status === 'completed') {
+      if ('status' in activity && (activity as any).status === 'completed') {
         agentPerformance[agentName].successful++;
-      } else if (activity.status === 'failed') {
+      } else if ('status' in activity && (activity as any).status === 'failed') {
         agentPerformance[agentName].failed++;
       }
 
       // Track agent sequences (handoffs)
       if (index > 0) {
         const previousActivity = recentActivity[index - 1];
-        if (previousActivity.agent_name !== agentName) {
+        if (
+          previousActivity &&
+          typeof previousActivity === 'object' &&
+          'agent_name' in previousActivity &&
+          previousActivity.agent_name !== agentName
+        ) {
           agentSequences.push({
             from: previousActivity.agent_name,
             to: agentName,
             context: activity.action,
-            success: activity.status === 'completed'
+            success: 'status' in activity && activity.status === 'completed'
           });
         }
       }

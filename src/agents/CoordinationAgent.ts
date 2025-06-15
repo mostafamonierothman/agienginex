@@ -28,7 +28,7 @@ export async function CoordinationAgent(context: AgentContext): Promise<AgentRes
       return acc;
     }, {} as Record<string, number>);
 
-    const totalActivities = Object.values(agentActivities).reduce((sum, count) => sum + count, 0);
+    const totalActivities = Object.values(agentActivities).reduce((sum, count) => sum + (count as number), 0 as number);
     const activeAgentCount = Object.keys(agentActivities).length;
     
     // Generate coordination strategy

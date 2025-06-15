@@ -1,3 +1,4 @@
+
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -5,7 +6,7 @@ export async function CriticAgent(context: AgentContext): Promise<AgentResponse>
   try {
     // Get recent system activity for evaluation
     const { data: recentActivity, error } = await supabase
-      .from('supervisor_queue')
+      .from('api.supervisor_queue' as any)
       .select('*')
       .order('timestamp', { ascending: false })
       .limit(10);
@@ -18,8 +19,13 @@ export async function CriticAgent(context: AgentContext): Promise<AgentResponse>
       };
     }
 
-    const activityCount = recentActivity?.length || 0;
-    const successRate = recentActivity?.filter(item => item.status === 'completed').length / activityCount || 0;
+    const performanceItems = (recentActivity || []).filter(activity =>
+      activity && typeof activity === 'object' && 'status' in activity
+    );
+    const activityCount = performanceItems.length;
+    const successRate = activityCount === 0
+      ? 0
+      : performanceItems.filter(item => (item as any).status === 'completed').length / activityCount;
     const performanceScore = (successRate * 100).toFixed(1);
     
     // Generate performance critique
@@ -36,7 +42,7 @@ export async function CriticAgent(context: AgentContext): Promise<AgentResponse>
 
     // Store critique in memory
     await supabase
-      .from('agent_memory')
+      .from('api.agent_memory' as any)
       .insert({
         user_id: context.user_id || 'demo_user',
         agent_name: 'critic_agent',
@@ -47,7 +53,7 @@ export async function CriticAgent(context: AgentContext): Promise<AgentResponse>
 
     // Log critique to supervisor queue
     await supabase
-      .from('supervisor_queue')
+      .from('api.supervisor_queue' as any)
       .insert({
         user_id: context.user_id || 'demo_user',
         agent_name: 'critic_agent',
