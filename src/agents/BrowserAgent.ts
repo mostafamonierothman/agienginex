@@ -1,80 +1,116 @@
-
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
+import { Page } from 'puppeteer';
+import { chromium } from 'playwright';
 import { supabase } from '@/integrations/supabase/client';
 
 export class BrowserAgent {
-  async browse(url: string): Promise<string> {
+  private browser: any;
+  private page: Page | null = null;
+
+  constructor() {
+    this.initialize();
+  }
+
+  async initialize() {
+    this.browser = await chromium.launch({ headless: true });
+    this.page = await this.browser.newPage();
+  }
+
+  async goTo(url: string): Promise<void> {
+    if (!this.page) {
+      throw new Error('Browser page is not initialized.');
+    }
+    await this.page.goto(url);
+    await this.recordEvent({ action: 'go_to_url', url });
+  }
+
+  async click(selector: string): Promise<void> {
+    if (!this.page) {
+      throw new Error('Browser page is not initialized.');
+    }
+    await this.page.click(selector);
+    await this.recordEvent({ action: 'click_element', selector });
+  }
+
+  async type(selector: string, text: string): Promise<void> {
+    if (!this.page) {
+      throw new Error('Browser page is not initialized.');
+    }
+    await this.page.type(selector, text);
+    await this.recordEvent({ action: 'type_text', selector, text });
+  }
+
+  async getContent(): Promise<string> {
+    if (!this.page) {
+      throw new Error('Browser page is not initialized.');
+    }
+    const content = await this.page.content();
+    await this.recordEvent({ action: 'get_page_content' });
+    return content;
+  }
+
+  async getTitle(): Promise<string> {
+    if (!this.page) {
+      throw new Error('Browser page is not initialized.');
+    }
+    const title = await this.page.title();
+    await this.recordEvent({ action: 'get_page_title' });
+    return title;
+  }
+
+  async evaluate(jsExpression: string): Promise<any> {
+    if (!this.page) {
+      throw new Error('Browser page is not initialized.');
+    }
+    const result = await this.page.evaluate(jsExpression);
+    await this.recordEvent({ action: 'evaluate_js', jsExpression });
+    return result;
+  }
+
+  async recordEvent(event: any): Promise<void> {
     try {
-      // Use a CORS proxy for web scraping (browser limitation workaround)
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-      
-      const response = await fetch(proxyUrl);
-      const data = await response.json();
-      
-      if (!data.contents) {
-        throw new Error('No content retrieved');
-      }
-
-      // Extract text content (basic parsing)
-      const textContent = data.contents
-        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-        .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
-        .replace(/<[^>]*>/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-
-      return textContent.substring(0, 2000); // Limit to 2000 characters
-    } catch (error) {
-      return `Error browsing ${url}: ${error.message}`;
+      await supabase
+        .from('api.supervisor_queue' as any)
+        .insert([{ ...event, timestamp: new Date().toISOString() }]);
+    } catch (e) {
+      console.error('Failed to record event:', e);
     }
   }
 
-  async searchWeb(query: string): Promise<string> {
-    try {
-      // Simple DuckDuckGo search (no API key required)
-      const searchUrl = `https://duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
-      const content = await this.browse(searchUrl);
-      return `Search results for "${query}": ${content.substring(0, 1000)}`;
-    } catch (error) {
-      return `Search failed: ${error.message}`;
+  async close(): Promise<void> {
+    if (this.browser) {
+      await this.browser.close();
     }
   }
 }
 
 export async function BrowserAgentRunner(context: AgentContext): Promise<AgentResponse> {
+  const browserAgent = new BrowserAgent();
   try {
-    const browserAgent = new BrowserAgent();
-    const queries = [
-      'latest AI developments 2024',
-      'AGI research breakthroughs',
-      'autonomous systems trends'
-    ];
-    
-    const randomQuery = queries[Math.floor(Math.random() * queries.length)];
-    const result = await browserAgent.searchWeb(randomQuery);
+    if (context.input?.url) {
+      await browserAgent.goTo(context.input.url);
+    }
 
-    // Log to supervisor queue
-    await supabase
-      .from('supervisor_queue')
-      .insert({
-        user_id: context.user_id || 'browser_agent',
-        agent_name: 'browser_agent',
-        action: 'web_search',
-        input: JSON.stringify({ query: randomQuery }),
-        status: 'completed',
-        output: result
-      });
+    // Example actions (can be extended based on context)
+    if (context.input?.clickSelector) {
+      await browserAgent.click(context.input.clickSelector);
+    }
+
+    const content = await browserAgent.getContent();
+    const title = await browserAgent.getTitle();
 
     return {
       success: true,
-      message: `🌐 BrowserAgent searched: "${randomQuery}" → ${result.substring(0, 200)}...`,
-      data: { query: randomQuery, result },
+      message: `BrowserAgent: Title - ${title}, Content length - ${content.length}`,
+      data: { title, contentLength: content.length },
       timestamp: new Date().toISOString()
     };
-  } catch (error) {
+  } catch (error: any) {
     return {
       success: false,
-      message: `❌ BrowserAgent error: ${error.message}`
+      message: `BrowserAgent error: ${error.message}`
     };
+  } finally {
+    await browserAgent.close();
   }
 }

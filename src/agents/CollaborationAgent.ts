@@ -6,7 +6,7 @@ export async function CollaborationAgent(context: AgentContext): Promise<AgentRe
   try {
     // Analyze inter-agent collaboration patterns
     const { data: recentActivity, error } = await supabase
-      .from('supervisor_queue')
+      .from('api.supervisor_queue' as any)
       .select('*')
       .order('timestamp', { ascending: false })
       .limit(50);
@@ -20,16 +20,16 @@ export async function CollaborationAgent(context: AgentContext): Promise<AgentRe
     }
 
     // Analyze collaboration patterns
-    const agentInteractions = recentActivity?.reduce((acc, activity) => {
-      const agentName = activity.agent_name || 'unknown';
-      const action = activity.action || 'unknown';
+    const agentInteractions = (recentActivity || []).reduce((acc, activity) => {
+      const agentName = activity && (activity as any).agent_name || 'unknown';
+      const action = activity && (activity as any).action || 'unknown';
       const key = `${agentName}-${action}`;
       acc[key] = (acc[key] || 0) + 1;
       return acc;
-    }, {} as Record<string, number>) || {};
+    }, {} as Record<string, number>);
 
     const totalInteractions = Object.values(agentInteractions).reduce((sum, count) => sum + count, 0);
-    const uniqueAgents = new Set(recentActivity?.map(a => a.agent_name) || []).size;
+    const uniqueAgents = new Set((recentActivity || []).map(a => a && (a as any).agent_name)).size;
     const collaborationScore = Math.min(100, (uniqueAgents * totalInteractions) / 10);
 
     // Generate collaboration insights
@@ -46,7 +46,7 @@ export async function CollaborationAgent(context: AgentContext): Promise<AgentRe
 
     // Store collaboration insight
     await supabase
-      .from('agent_memory')
+      .from('api.agent_memory' as any)
       .insert({
         user_id: context.user_id || 'demo_user',
         agent_name: 'collaboration_agent',
@@ -57,7 +57,7 @@ export async function CollaborationAgent(context: AgentContext): Promise<AgentRe
 
     // Log collaboration activity
     await supabase
-      .from('supervisor_queue')
+      .from('api.supervisor_queue' as any)
       .insert({
         user_id: context.user_id || 'demo_user',
         agent_name: 'collaboration_agent',
