@@ -59,31 +59,35 @@ export class GoalMemoryAgent {
       .select('*');
 
     // Only keep properly shaped goal rows
-    const goalData = (goalDataRaw || []).filter(
-      g =>
-        !!g &&
-        typeof g === 'object' &&
-        'status' in g &&
-        'goal_id' in g &&
-        'goal_text' in g &&
-        'priority' in g &&
-        'progress_percentage' in g &&
-        (g as any).status &&
-        ((g as any).status === 'active' || (g as any).status === 'completed')
-    );
+    const goalData = Array.isArray(goalDataRaw)
+      ? goalDataRaw.filter(
+          (g): g is any =>
+            !!g &&
+            typeof g === 'object' &&
+            'status' in g &&
+            'goal_id' in g &&
+            'goal_text' in g &&
+            'priority' in g &&
+            'progress_percentage' in g &&
+            (g as any).status &&
+            ((g as any).status === 'active' || (g as any).status === 'completed')
+        )
+      : [];
 
     // Load agent memory for detailed goal tracking
     const { data: memoryDataRaw } = await supabase
       .from('api.agent_memory' as any)
       .select('*')
       .eq('agent_name', 'goal_memory_agent');
-    const memoryData = (memoryDataRaw || []).filter(
-      m =>
-        !!m &&
-        typeof m === 'object' &&
-        'memory_key' in m &&
-        'memory_value' in m
-    );
+    const memoryData = Array.isArray(memoryDataRaw)
+      ? memoryDataRaw.filter(
+          (m): m is any =>
+            !!m &&
+            typeof m === 'object' &&
+            'memory_key' in m &&
+            'memory_value' in m
+        )
+      : [];
 
     // Combine and structure goal memories
     goalData?.forEach(g => {

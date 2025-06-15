@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export class GoalEvaluator {
@@ -18,9 +17,9 @@ export class GoalEvaluator {
       .limit(50);
 
     // Only keep rows with a status property (skip nulls/errors)
-    const activity = (activityRaw || []).filter(
-      a => !!a && typeof a === 'object' && 'status' in a
-    );
+    const activity = Array.isArray(activityRaw)
+      ? activityRaw.filter(a => !!a && typeof a === 'object' && 'status' in a)
+      : [];
 
     const evaluation = {
       goalId: goalMemory.id,
@@ -48,8 +47,8 @@ export class GoalEvaluator {
         evaluation.adaptationReason = 'Revenue generation declining - need strategy adjustment';
       }
     } else if (goalMemory.goal.includes('system')) {
-      const totalActivities = activity?.length || 0;
-      const successfulActivities = activity?.filter(
+      const totalActivities = activity.length;
+      const successfulActivities = activity.filter(
         a => !!a && typeof a === 'object' && 'status' in a && (a as any).status === 'completed'
       ).length || 0;
       const successRate = totalActivities > 0 ? (successfulActivities / totalActivities) * 100 : 0;

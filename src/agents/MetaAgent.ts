@@ -21,15 +21,16 @@ export class MetaAgent {
       .order('timestamp', { ascending: false });
 
     // Analyze agent performance
-    const agentStats = {};
-    (recentActivity || []).forEach(activity => {
+    const agentStats: Record<string, { total: number; successful: number }> = {};
+    (Array.isArray(recentActivity) ? recentActivity : []).forEach(activity => {
       if (!activity || typeof activity !== "object" || !('agent_name' in activity)) return;
-      if (!agentStats[(activity as any).agent_name]) {
-        agentStats[(activity as any).agent_name] = { total: 0, successful: 0 };
+      const agentName = (activity as any).agent_name;
+      if (!agentStats[agentName]) {
+        agentStats[agentName] = { total: 0, successful: 0 };
       }
-      agentStats[(activity as any).agent_name].total++;
+      agentStats[agentName].total++;
       if ((activity as any).status === 'completed') {
-        agentStats[(activity as any).agent_name].successful++;
+        agentStats[agentName].successful++;
       }
     });
 
