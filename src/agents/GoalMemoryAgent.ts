@@ -62,7 +62,8 @@ export class GoalMemoryAgent {
     const goalData = Array.isArray(goalDataRaw)
       ? goalDataRaw.filter(
           (g): g is any =>
-            !!g && typeof g === 'object' &&
+            !!g &&
+            typeof g === 'object' &&
             'status' in g &&
             'goal_id' in g &&
             'goal_text' in g &&
@@ -81,9 +82,7 @@ export class GoalMemoryAgent {
     const memoryData = Array.isArray(memoryDataRaw)
       ? memoryDataRaw.filter(
           (m): m is any =>
-            !!m && typeof m === 'object' &&
-            'memory_key' in m &&
-            'memory_value' in m
+            !!m && typeof m === 'object' && 'memory_key' in m && 'memory_value' in m
         )
       : [];
 
