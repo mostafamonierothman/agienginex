@@ -5,7 +5,7 @@ export class SupabaseAGIStateService {
   static async saveState(key: string, state: any) {
     try {
       const { data, error } = await supabase
-        .from('agi_state')
+        .from('api.agi_state')
         .upsert({
           key: key,
           state: state,
@@ -26,7 +26,7 @@ export class SupabaseAGIStateService {
   static async loadState(key: string = 'unified_agi_state') {
     try {
       const { data, error } = await supabase
-        .from('agi_state')
+        .from('api.agi_state')
         .select('state')
         .eq('key', key)
         .single();
@@ -49,7 +49,7 @@ export class SupabaseAGIStateService {
   static async deleteState(key: string) {
     try {
       const { error } = await supabase
-        .from('agi_state')
+        .from('api.agi_state')
         .delete()
         .eq('key', key);
 

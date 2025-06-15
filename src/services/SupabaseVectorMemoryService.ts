@@ -5,7 +5,7 @@ export class SupabaseVectorMemoryService {
   static async storeMemory(agentId: string, source: string, content: string, importance: number = 0.5, metadata: any = {}) {
     try {
       const { data, error } = await supabase
-        .from('vector_memories')
+        .from('api.vector_memories')
         .insert({
           agent_id: agentId,
           source: source,
@@ -30,7 +30,7 @@ export class SupabaseVectorMemoryService {
   static async retrieveMemories(agentId: string, query: string, limit: number = 10) {
     try {
       const { data, error } = await supabase
-        .from('vector_memories')
+        .from('api.vector_memories')
         .select('*')
         .eq('agent_id', agentId)
         .ilike('content', `%${query}%`)
@@ -51,7 +51,7 @@ export class SupabaseVectorMemoryService {
   static async getMemoryStats(agentId: string) {
     try {
       const { data, error } = await supabase
-        .from('vector_memories')
+        .from('api.vector_memories')
         .select('id')
         .eq('agent_id', agentId);
 

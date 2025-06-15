@@ -3,7 +3,6 @@ import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
 import { supabase } from '@/integrations/supabase/client';
 
-// Import the real lead generation agent
 import { LeadGenerationMasterAgentRunner } from './LeadGenerationMasterAgent';
 
 export class SupervisorAgent {
@@ -14,15 +13,11 @@ export class SupervisorAgent {
     severity: 'low' | 'medium' | 'high' | 'critical';
   }> = [];
 
-  // A real, simple runner function
   async runner(context: AgentContext): Promise<AgentResponse> {
     try {
       await sendChatUpdate('🕹️ SupervisorAgent: Activating functional workflow...');
-
-      // 1. Create a simple agent task (lead generation)
       await sendChatUpdate('🚀 SupervisorAgent: Triggering real LeadGenerationMasterAgent...');
 
-      // Run the agent
       const agentResult = await LeadGenerationMasterAgentRunner({
         input: {
           keyword: 'medical tourism lead (supervisor demo)',
@@ -31,9 +26,8 @@ export class SupervisorAgent {
         user_id: context.user_id || 'supervisor_functional_test'
       });
 
-      // Log the action in supervisor_queue
       const { data: supervisedQueue, error: supervisorQueueError } = await supabase
-        .from('supervisor_queue')
+        .from('api.supervisor_queue')
         .insert([{
           user_id: context.user_id || 'supervisor_functional_test',
           agent_name: 'LeadGenerationMasterAgent',
@@ -47,15 +41,12 @@ export class SupervisorAgent {
         await sendChatUpdate(`❌ Failed logging supervisor action: ${supervisorQueueError.message}`);
       }
 
-      // 2. Report functional system status using live DB
-      // Count total leads in database
       const { data: leads, error: leadsError } = await supabase
-        .from('leads')
+        .from('api.leads')
         .select('id');
 
-      // Count actions in supervisor_queue
       const { data: queueItems, error: queueError } = await supabase
-        .from('supervisor_queue')
+        .from('api.supervisor_queue')
         .select('id');
 
       const totalLeads = leads?.length ?? 0;
@@ -93,13 +84,11 @@ export class SupervisorAgent {
     }
   }
 
-  // Not strictly needed with the new plan, but kept for type compatibility
   getErrorHistory() {
     return this.errorHistory;
   }
 }
 
-// The single runner: this will run the functional supervisor
 export async function SupervisorAgentRunner(context: AgentContext): Promise<AgentResponse> {
   const agent = new SupervisorAgent();
   return await agent.runner(context);
