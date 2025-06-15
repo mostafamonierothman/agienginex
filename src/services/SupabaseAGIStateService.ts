@@ -7,7 +7,7 @@ export class SupabaseAGIStateService {
   
   static async saveState(state: AGIState) {
     const { error } = await supabase
-      .from("agi_state")
+      .from("api.agi_state")
       .upsert([
         {
           key: SupabaseAGIStateService.AGI_STATE_KEY,
@@ -22,7 +22,7 @@ export class SupabaseAGIStateService {
 
   static async loadState(): Promise<AGIState | null> {
     const { data, error } = await supabase
-      .from("agi_state")
+      .from("api.agi_state")
       .select("state")
       .eq("key", SupabaseAGIStateService.AGI_STATE_KEY)
       .order("updated_at", { ascending: false })
@@ -37,4 +37,3 @@ export class SupabaseAGIStateService {
     return data[0].state as AGIState;
   }
 }
-

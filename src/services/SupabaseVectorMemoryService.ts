@@ -14,7 +14,7 @@ export interface SupabaseVectorMemory {
 
 export class SupabaseVectorMemoryService {
   static async storeMemory(agentId: string, content: string, source: string, importance: number = 0.5, tags: string[] = [], embedding: number[] = []) {
-    const { error } = await supabase.from("vector_memories").insert({
+    const { error } = await supabase.from("api.vector_memories").insert({
       agent_id: agentId,
       content,
       embedding,
@@ -39,14 +39,13 @@ export class SupabaseVectorMemoryService {
 
   static async retrieveMemories(agentId: string, query: string, limit: number = 10): Promise<SupabaseVectorMemory[]> {
     const { data, error } = await supabase
-      .from("vector_memories")
+      .from("api.vector_memories")
       .select("*")
       .eq("agent_id", agentId)
       .order("created_at", { ascending: false })
       .limit(200);
     if (error) return [];
     const queryEmbedding = this.generateEmbedding(query);
-    // Embedding in db is JSON, so ensure it's parsed as number[]
     const withScores: SupabaseVectorMemory[] = [];
     (data || []).forEach(raw => {
       let embedding: number[] = [];
@@ -59,7 +58,6 @@ export class SupabaseVectorMemoryService {
           embedding = [];
         }
       }
-      // Compute similarity for in-memory sort, but do not add score to returned object
       (raw as any).score = this.cosineSimilarity(queryEmbedding, embedding);
       withScores.push({
         ...raw,
@@ -105,7 +103,7 @@ export class SupabaseVectorMemoryService {
 
   static async getMemoryStats(agentId: string): Promise<{ total: number }> {
     const { count } = await supabase
-      .from("vector_memories")
+      .from("api.vector_memories")
       .select("id", { count: "exact", head: true })
       .eq("agent_id", agentId);
     return { total: count || 0 };

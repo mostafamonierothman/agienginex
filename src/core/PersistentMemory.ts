@@ -8,14 +8,14 @@ export class PersistentMemory {
     try {
       this.memoryCache.set(key, value);
       await supabase
-        .from('agent_memory')
+        .from('api.agent_memory')
         .upsert({
           user_id: 'persistent_memory',
           agent_name: 'system_memory',
           memory_key: key,
           memory_value: typeof value === 'string' ? value : JSON.stringify(value),
           timestamp: new Date().toISOString()
-        } as Partial<AgentMemory>, {
+        }, {
           onConflict: 'user_id,agent_name,memory_key'
         });
       console.log(`🧠 Persistent memory set: ${key}`);
@@ -30,7 +30,7 @@ export class PersistentMemory {
         return this.memoryCache.get(key);
       }
       const { data, error } = await supabase
-        .from('agent_memory')
+        .from('api.agent_memory')
         .select('memory_value')
         .eq('user_id', 'persistent_memory')
         .eq('agent_name', 'system_memory')
@@ -38,13 +38,11 @@ export class PersistentMemory {
         .order('timestamp', { ascending: false })
         .limit(1);
       if (error || !data || data.length === 0) {
-        // If error, log it but still return defaultValue
         if (error) console.error('Failed to get persistent memory from DB:', error);
         return defaultValue;
       }
-      const memValue = data[0].memory_value; // Renamed to avoid conflict
+      const memValue = data[0].memory_value;
       try {
-        // Ensure memValue is not null or undefined before parsing
         const parsed = memValue ? JSON.parse(memValue) : defaultValue;
         this.memoryCache.set(key, parsed);
         return parsed;
@@ -62,7 +60,7 @@ export class PersistentMemory {
     try {
       this.memoryCache.clear();
       await supabase
-        .from('agent_memory')
+        .from('api.agent_memory')
         .delete()
         .eq('user_id', 'persistent_memory')
         .eq('agent_name', 'system_memory');
@@ -75,19 +73,18 @@ export class PersistentMemory {
   async keys(): Promise<string[]> {
     try {
       const { data, error } = await supabase
-        .from('agent_memory')
+        .from('api.agent_memory')
         .select('memory_key')
         .eq('user_id', 'persistent_memory')
         .eq('agent_name', 'system_memory');
-      
       if (error) {
         console.error('Failed to get memory keys from DB:', error);
-        return Array.from(this.memoryCache.keys()); // Fallback to cache keys
+        return Array.from(this.memoryCache.keys());
       }
       return data?.map(item => item.memory_key).filter(k => k !== null) as string[] || [];
     } catch (error) {
       console.error('Failed to get memory keys:', error);
-      return Array.from(this.memoryCache.keys()); // Fallback to cache keys
+      return Array.from(this.memoryCache.keys());
     }
   }
 }
