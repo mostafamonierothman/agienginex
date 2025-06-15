@@ -1,3 +1,4 @@
+
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
 import { MedicalTourismLeadFactoryRunner } from './MedicalTourismLeadFactory';
@@ -157,7 +158,7 @@ export class EmergencyAgentDeployer {
       ];
 
       const { data, error } = await supabase
-        .from('api.leads' as any)
+        .from('leads')
         .insert(testLeads)
         .select();
 

@@ -1,3 +1,4 @@
+
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { LeadDataEnricher } from './LeadDataEnricher';
 import { LeadDatabaseService } from './LeadDatabaseService';
@@ -35,7 +36,7 @@ export class LeadGenerationMasterAgent {
 
       // Log to supervisor queue
       await supabase
-        .from('api.supervisor_queue' as any)
+        .from('supervisor_queue')
         .insert({
           user_id: context.user_id || 'lead_agent',
           agent_name: agentId,
