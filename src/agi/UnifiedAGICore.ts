@@ -13,7 +13,7 @@ import { vectorMemoryService } from "@/services/VectorMemoryService";
 import { SupabaseVectorMemoryService } from "@/services/SupabaseVectorMemoryService";
 import { autonomousLoop } from "@/loops/AutonomousLoop";
 
-// --- NEW: Import advanced AGI capabilities
+// Advanced AGI capabilities
 import { AutonomousResearchEngine } from "./AutonomousResearchEngine";
 import { CrossSystemIntegrationManager } from "./CrossSystemIntegrationManager";
 import { MultiAGIOrchestrator } from "./MultiAGIOrchestrator";
@@ -33,7 +33,7 @@ class UnifiedAGICore {
   private teamManager = new AgentTeamManager();
   private memoryOps = new AGIMemoryOps(this.lessons, "core-agi-agent");
 
-  // --- NEW: Advanced AGI capabilities
+  // Advanced AGI capabilities
   private researchEngine = new AutonomousResearchEngine();
   private systemIntegration = new CrossSystemIntegrationManager();
   private multiAGIOrchestrator = new MultiAGIOrchestrator();
@@ -41,7 +41,6 @@ class UnifiedAGICore {
   private selfModification = new SelfModificationProtocol();
   private advancedCapabilities: AGIAdvancedCapabilities;
 
-  // Mention callback used for adaptive prioritization
   private agentLoop = new AGIAgentLoop(
     this.pluginHandler,
     this.goalScheduler,
@@ -53,6 +52,8 @@ class UnifiedAGICore {
   );
   private loopTimer: NodeJS.Timeout | null = null;
   private isInitialized = false;
+  private errorCount = 0;
+  private maxErrors = 10;
 
   subscribe = this.notification.subscribe.bind(this.notification);
   unsubscribe = this.notification.unsubscribe.bind(this.notification);
@@ -72,7 +73,6 @@ class UnifiedAGICore {
   static getInstance() {
     if (!UnifiedAGICore.instance) {
       UnifiedAGICore.instance = new UnifiedAGICore();
-      // Migrate vector memory on first boot
       SupabaseVectorMemoryService.migrateLocalStorageToSupabase("core-agi-agent").then(migrated => {
         if (migrated) {
           UnifiedAGICore.instance.log("🗃️ Migrated legacy vector memory from localStorage to Supabase!");
@@ -91,8 +91,13 @@ class UnifiedAGICore {
         return;
       }
 
-      // On start, restore persisted state (uses Supabase, see AGIStateManagement)
-      await this.stateManager.restoreState();
+      // Restore persisted state with error handling
+      try {
+        await this.stateManager.restoreState();
+      } catch (error) {
+        this.log("⚠️ State restoration failed, starting with fresh state");
+        this.stateManager.setState({ running: false, generation: 0, logs: [], memoryKeys: [], completedGoals: [] });
+      }
       
       if (this.stateManager.getState().running) {
         this.log("🔄 AGI was already running, continuing operations.");
@@ -104,24 +109,42 @@ class UnifiedAGICore {
       this.stateManager.setState({ running: true });
       this.log("🚀 CRITICAL: AGI FULLY OPERATIONAL - 100% Capability Mode ACTIVATED.");
       
-      // --- AUTONOMOUS AGI LOOP ACTIVATION ---
+      // Autonomous AGI loop activation
       if (typeof autonomousLoop !== "undefined") {
-        autonomousLoop.start();
-        this.log("🔁 AutonomousLoop ACTIVATED - Real-time operations online.");
+        try {
+          autonomousLoop.start();
+          this.log("🔁 AutonomousLoop ACTIVATED - Real-time operations online.");
+        } catch (error) {
+          this.log("⚠️ AutonomousLoop start failed, continuing with core loop");
+        }
       } else {
         this.log("⚠️ AutonomousLoop module not found - initializing fallback.");
       }
       
-      // Enhanced startup sequence
-      await this.absorbWorldState();
-      await this.advancedCapabilities.initialize();
-      await this.stateManager.persistState();
+      // Enhanced startup sequence with error handling
+      try {
+        await this.absorbWorldState();
+      } catch (error) {
+        this.log("⚠️ World state absorption failed, continuing startup");
+      }
+      
+      try {
+        await this.advancedCapabilities.initialize();
+      } catch (error) {
+        this.log("⚠️ Advanced capabilities init failed, using core features");
+      }
+      
+      try {
+        await this.stateManager.persistState();
+      } catch (error) {
+        this.log("⚠️ State persistence failed, using memory-only mode");
+      }
       
       this.isInitialized = true;
       this.loop();
       this.notify();
       
-      // --- PHASE 2 TRIGGER (AUTOMATIC) ---
+      // Phase 2 trigger
       setTimeout(() => {
         this.goPhase2();
       }, 2000);
@@ -130,39 +153,10 @@ class UnifiedAGICore {
       
     } catch (error) {
       this.log(`❌ AGI initialization error: ${error instanceof Error ? error.message : 'Unknown error'} - Attempting recovery...`);
-      // Continue with minimal functionality
       this.stateManager.setState({ running: true });
       this.isInitialized = true;
       this.loop();
     }
-  }
-
-  // --- NEW: Initialize advanced capabilities
-  private async initializeAdvancedCapabilities() {
-    this.log("🧠 Initializing advanced AGI capabilities...");
-    
-    // Test system connections
-    const connectionResults = await this.systemIntegration.testConnections();
-    const activeConnections = Object.values(connectionResults).filter(Boolean).length;
-    this.log(`🔗 System Integration: ${activeConnections}/${Object.keys(connectionResults).length} connections active`);
-    
-    // Start autonomous research
-    const researchInsights = await this.researchEngine.conductAutonomousResearch("core-agi-agent");
-    this.log(`🔬 Autonomous Research: Generated ${researchInsights.length} research insights`);
-    
-    // Initialize memory consolidation
-    const memoryResults = await this.memoryConsolidator.consolidateMemories("core-agi-agent");
-    this.log(`🧠 Memory Consolidation: ${memoryResults.join(', ')}`);
-    
-    // Spawn specialized AGI instances
-    await this.multiAGIOrchestrator.spawnAGIInstance('research');
-    await this.multiAGIOrchestrator.spawnAGIInstance('creative');
-    await this.multiAGIOrchestrator.spawnAGIInstance('technical');
-    this.log("🤖 Multi-AGI: Spawned 3 specialized AGI instances");
-    
-    // Self-modification readiness check
-    const safetyStatus = this.selfModification.getSafetyStatus();
-    this.log(`🔧 Self-Modification: ${safetyStatus.locksActive} safety locks active, system ready for safe evolution`);
   }
 
   stop() {
@@ -173,7 +167,9 @@ class UnifiedAGICore {
       this.loopTimer = null;
     }
     this.log("⏹️ AGI stopped - Standby mode activated.");
-    this.stateManager.persistState();
+    this.stateManager.persistState().catch(() => {
+      this.log("⚠️ Failed to persist final state");
+    });
     this.notify();
   }
 
@@ -181,31 +177,45 @@ class UnifiedAGICore {
     if (!this.stateManager.getState().running || !this.isInitialized) return;
     
     try {
-      // Enhanced loop with advanced capabilities
       await this.enhancedAgentLoop();
+      this.errorCount = 0; // Reset error count on success
     } catch (error) {
-      this.log(`⚠️ AGI loop error: ${error instanceof Error ? error.message : 'Unknown error'} - Continuing operations...`);
+      this.errorCount++;
+      this.log(`⚠️ AGI loop error ${this.errorCount}/${this.maxErrors}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      
+      if (this.errorCount >= this.maxErrors) {
+        this.log("🛑 Too many errors, entering safe mode");
+        this.stateManager.setState({ running: false });
+        this.isInitialized = false;
+        return;
+      }
     }
     
-    this.loopTimer = setTimeout(() => this.loop(), 2000);
+    this.loopTimer = setTimeout(() => this.loop(), 3000); // Slightly longer interval for stability
   }
 
-  // --- NEW: Enhanced agent loop with advanced capabilities
   private async enhancedAgentLoop() {
     const state = this.stateManager.getState();
     state.generation++;
     this.log(`🔁 Enhanced AGI Generation ${state.generation}...`);
     
-    // Execute original agent loop
-    await this.agentLoop.runLoop(
-      state,
-      (msg) => this.log(msg),
-      () => this.stateManager.persistState()
-    );
+    try {
+      await this.agentLoop.runLoop(
+        state,
+        (msg) => this.log(msg),
+        () => this.stateManager.persistState().catch(() => {})
+      );
+    } catch (error) {
+      this.log(`⚠️ Agent loop error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
     
     // Enhanced capabilities (every 5th generation)
     if (state.generation % 5 === 0) {
-      await this.executeAdvancedCapabilities();
+      try {
+        await this.executeAdvancedCapabilities();
+      } catch (error) {
+        this.log(`⚠️ Advanced capabilities error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
     }
   }
 
@@ -360,7 +370,6 @@ class UnifiedAGICore {
   }
 
   public getRealAutonomy(): number {
-    // Try to compute a real autonomy score based on agent result stats or backend metrics
     const successRows = this.stateManager.getState().logs.filter(
       x => x.toLowerCase().includes("completed") || 
            x.toLowerCase().includes("success") ||
@@ -370,9 +379,13 @@ class UnifiedAGICore {
     
     let basePercent = totalRows === 0 ? 85 : Math.min(100, Math.floor((successRows / totalRows) * 100));
     
-    // Boost if systems are initialized
     if (this.isInitialized) {
       basePercent = Math.max(basePercent, 85);
+    }
+    
+    // Reduce autonomy if too many errors
+    if (this.errorCount > 5) {
+      basePercent = Math.max(basePercent - (this.errorCount * 5), 50);
     }
     
     return basePercent;

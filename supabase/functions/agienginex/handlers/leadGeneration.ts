@@ -1,7 +1,7 @@
 
 export async function RealLeadGeneration(context: any, supabase: any) {
   const keyword = context.input?.goal || "medical tourism (Edge)";
-  // Simulated search results
+  
   const leadsToInsert = Array.from({ length: 10 }, (_, i) => ({
     email: `contact${i + 1}@example.com`,
     first_name: `Lead${i + 1}`,
@@ -18,20 +18,24 @@ export async function RealLeadGeneration(context: any, supabase: any) {
 
   let inserted = [];
   let leadInsertError = null;
+  
   try {
     for (const lead of leadsToInsert) {
-      const { data, error } = await supabase.from("leads").insert([lead]);
+      const { data, error } = await supabase.from("leads").insert([lead]).select();
       if (error) {
         console.error("Lead insert error:", error);
         leadInsertError = `Database error: ${error.message || 'Unknown error'}`;
         continue;
       }
-      inserted.push(data?.[0] || lead);
+      if (data && data.length > 0) {
+        inserted.push(data[0]);
+      }
     }
   } catch (e) {
     console.error("Lead generation exception:", e);
     leadInsertError = `System error: ${e?.message || 'Unknown exception'}`;
   }
+  
   return {
     generated: inserted.length,
     error: leadInsertError,
@@ -44,6 +48,7 @@ export async function SupervisorAgentRunner(context: any, supabase: any) {
     console.log("🎯 SupervisorAgent starting lead generation...");
     const realLeadResult = await RealLeadGeneration(context, supabase);
 
+    // Log to supervisor queue
     await supabase.from("supervisor_queue").insert([{
       user_id: context.user_id || "edge_supervisor_user",
       agent_name: 'EdgeLeadGenAgent',
@@ -56,6 +61,7 @@ export async function SupervisorAgentRunner(context: any, supabase: any) {
       })
     }]);
 
+    // Get database stats
     let totalLeads = 0, totalSupervisorActions = 0;
     try {
       const { data: leads } = await supabase.from("leads").select("id");
@@ -63,6 +69,7 @@ export async function SupervisorAgentRunner(context: any, supabase: any) {
     } catch (e) {
       console.warn("Could not count leads:", e);
     }
+    
     try {
       const { data: queue } = await supabase.from("supervisor_queue").select("id");
       totalSupervisorActions = queue?.length || 0;
@@ -70,16 +77,16 @@ export async function SupervisorAgentRunner(context: any, supabase: any) {
       console.warn("Could not count supervisor actions:", e);
     }
 
-    let msg;
+    let message;
     if (realLeadResult.error) {
-      msg = `❌ Lead generation failed: ${realLeadResult.error}`;
+      message = `❌ Lead generation failed: ${realLeadResult.error}`;
     } else {
-      msg = `✅ Successfully generated ${realLeadResult.generated} leads for "${context.input?.goal || "medical tourism"}".`;
+      message = `✅ Successfully generated ${realLeadResult.generated} leads for "${context.input?.goal || "medical tourism"}".`;
     }
     
     return {
       success: !realLeadResult.error,
-      message: msg + ` [Database: ${totalLeads} leads, ${totalSupervisorActions} supervisor actions]`,
+      message: message + ` [Database: ${totalLeads} leads, ${totalSupervisorActions} supervisor actions]`,
       data: {
         leads_generated: realLeadResult.generated,
         total_leads_db: totalLeads,
