@@ -23,7 +23,7 @@ export class LeadDatabaseService {
       for (let i = 0; i < patchLeads.length; i += batchSize) {
         const batch = patchLeads.slice(i, i + batchSize);
         const { data, error } = await supabase
-          .from('api.leads' as any)
+          .from('leads')
           .insert(batch)
           .select();
         if (error) {
@@ -44,4 +44,3 @@ export class LeadDatabaseService {
     }
   }
 }
-
