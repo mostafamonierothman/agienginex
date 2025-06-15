@@ -16,7 +16,7 @@ export class MetaAgent {
     const { data: recentActivity } = await supabase
       .from('api.supervisor_queue' as any)
       .select('agent_name, status')
-      .gte('timestamp', new Date(Date.now() - 3600000).toISOString()) // Last hour
+      .gte('timestamp', new Date(Date.now() - 3600000).toISOString())
       .order('timestamp', { ascending: false });
 
     // Analyze agent performance
