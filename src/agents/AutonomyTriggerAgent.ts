@@ -244,14 +244,14 @@ export class AutonomyTriggerAgent {
     for (let i = 0; i < actions.length; i++) {
       await supabase
         .from('supervisor_queue')
-        .insert({
+        .insert([{
           user_id: 'autonomy_trigger_agent',
           agent_name: 'autonomy_trigger_agent',
           action: 'autonomous_trigger',
           input: JSON.stringify({ condition: actions[i] }),
           status: results[i]?.success ? 'completed' : 'failed',
           output: JSON.stringify(results[i])
-        });
+        } as any]);
     }
   }
 }

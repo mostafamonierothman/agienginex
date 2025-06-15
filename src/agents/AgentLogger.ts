@@ -27,16 +27,17 @@ export class AgentLogger {
 
     // Store in Supabase
     try {
+      // Fix: pass insert payload as an array
       await supabase
         .from('supervisor_queue')
-        .insert({
+        .insert([{
           user_id: 'system_logger',
           agent_name,
           action,
           input: JSON.stringify({ action }),
           status: level === 'error' ? 'error' : 'completed',
           output: result
-        });
+        } as any]); // 'as any' workaround for types that may be missing user_id
     } catch (error) {
       console.error('Failed to store log:', error);
     }

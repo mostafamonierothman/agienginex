@@ -1,4 +1,3 @@
-
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -47,25 +46,25 @@ export async function CollaborationAgent(context: AgentContext): Promise<AgentRe
     // Store collaboration insight
     await supabase
       .from('agent_memory')
-      .insert({
+      .insert([{
         user_id: context.user_id || 'demo_user',
         agent_name: 'collaboration_agent',
         memory_key: 'collaboration_analysis',
         memory_value: collaborationInsight,
         timestamp: new Date().toISOString()
-      });
+      } as any]);
 
     // Log collaboration activity
     await supabase
       .from('supervisor_queue')
-      .insert({
+      .insert([{
         user_id: context.user_id || 'demo_user',
         agent_name: 'collaboration_agent',
         action: 'collaboration_optimization',
         input: JSON.stringify({ collaboration_score: collaborationScore }),
         status: 'completed',
         output: collaborationInsight
-      });
+      } as any]);
 
     console.log(`🤝 CollaborationAgent: ${collaborationInsight}`);
 
