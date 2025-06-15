@@ -213,11 +213,9 @@ Focus on IMMEDIATE actions that can generate leads and revenue TODAY using the a
 
       let totalRevenue = 0;
       if (Array.isArray(data)) {
-        data.forEach(item => {
+        data.forEach((item) => {
           if (!item || typeof item !== 'object' || item === null || !('output' in item)) return;
-          if (
-            typeof (item as any).output === 'string'
-          ) {
+          if (typeof (item as any).output === 'string') {
             try {
               const outputStr = (item as any).output ?? '';
               if (outputStr) {
@@ -225,7 +223,6 @@ Focus on IMMEDIATE actions that can generate leads and revenue TODAY using the a
                 try {
                   output = JSON.parse(outputStr);
                 } catch {
-                  // not valid JSON
                   return;
                 }
                 if (output && typeof output === 'object' && 'actual_revenue' in output) {
