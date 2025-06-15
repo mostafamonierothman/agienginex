@@ -2,6 +2,8 @@ import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { sendChatUpdate } from '@/utils/sendChatUpdate';
 import { supabase } from '@/integrations/supabase/client';
 import { llmService } from '@/utils/llm';
+import { EnhancedExecutiveAgentData } from './helpers/EnhancedExecutiveAgentData';
+import { getFallbackActionPlan } from './helpers/EnhancedExecutiveAgentFallback';
 
 export class EnhancedExecutiveAgent {
   async runner(context: AgentContext): Promise<AgentResponse> {
@@ -48,9 +50,9 @@ export class EnhancedExecutiveAgent {
         status: 'connected',
         capabilities: ['Database', 'Authentication', 'Edge Functions', 'Email integration'],
         currentData: {
-          leads: await this.getLeadsCount(),
-          campaigns: await this.getCampaignsCount(),
-          revenue: await this.getTotalRevenue()
+          leads: await EnhancedExecutiveAgentData.getLeadsCount(),
+          campaigns: await EnhancedExecutiveAgentData.getCampaignsCount(),
+          revenue: await EnhancedExecutiveAgentData.getTotalRevenue()
         }
       },
       openai: {
@@ -77,24 +79,7 @@ export class EnhancedExecutiveAgent {
   }
 
   private async gatherCurrentData() {
-    try {
-      const { data: leads } = await supabase.from('api.leads' as any).select('*').limit(5);
-      const { data: campaigns } = await supabase.from('api.email_campaigns' as any).select('*').limit(3);
-      const { data: executions } = await supabase.from('api.supervisor_queue' as any)
-        .select('*')
-        .eq('agent_name', 'RealBusinessExecutor')
-        .limit(5);
-
-      return {
-        totalLeads: leads?.length || 0,
-        activeCampaigns: campaigns?.length || 0,
-        recentExecutions: executions?.length || 0,
-        lastExecution: executions && executions[0] && 'timestamp' in executions[0] ? (executions[0] as any).timestamp : null
-      };
-    } catch (error) {
-      console.error('Error gathering current data:', error);
-      return { totalLeads: 0, activeCampaigns: 0, recentExecutions: 0, lastExecution: null };
-    }
+    return EnhancedExecutiveAgentData.gatherCurrentData();
   }
 
   private async generatePrioritizedActionPlan(task: string, systems: any, data: any) {
@@ -145,105 +130,7 @@ Focus on IMMEDIATE actions that can generate leads and revenue TODAY using the a
       return JSON.parse(response.content);
     } catch (error) {
       console.error('Error generating action plan:', error);
-      return this.getFallbackActionPlan(data);
-    }
-  }
-
-  private getFallbackActionPlan(data: any) {
-    return {
-      summary: "Immediate lead generation and revenue plan using connected systems",
-      immediateActions: [
-        {
-          priority: 1,
-          action: "Deploy 25 lead generation agents targeting medical tourism prospects",
-          system: "Hunter API + Supabase",
-          timeframe: "30 minutes",
-          revenueImpact: "$2,500 potential",
-          implementation: "Execute emergency lead generation with Hunter API integration"
-        },
-        {
-          priority: 2,
-          action: "Launch personalized email campaign to existing leads",
-          system: "Resend + OpenAI + Supabase",
-          timeframe: "45 minutes",
-          revenueImpact: "$1,000 potential",
-          implementation: "Use OpenAI to personalize emails for current database leads"
-        },
-        {
-          priority: 3,
-          action: "Create high-converting landing page with PayPal integration",
-          system: "Cloudflare + PayPal",
-          timeframe: "2 hours",
-          revenueImpact: "$5,000 potential",
-          implementation: "Deploy optimized conversion page on edge network"
-        }
-      ],
-      revenueProjections: {
-        today: "$500-1,500",
-        week: "$5,000-10,000",
-        month: "$25,000-50,000"
-      },
-      keyMetrics: ["Lead conversion rate", "Email open rate", "Payment completion rate"]
-    };
-  }
-
-  private async getLeadsCount() {
-    try {
-      const { count } = await supabase.from('api.leads' as any).select('*', { count: 'exact', head: true });
-      return count || 0;
-    } catch {
-      return 0;
-    }
-  }
-
-  private async getCampaignsCount() {
-    try {
-      const { count } = await supabase.from('api.email_campaigns' as any).select('*', { count: 'exact', head: true });
-      return count || 0;
-    } catch {
-      return 0;
-    }
-  }
-
-  private async getTotalRevenue() {
-    try {
-      const { data } = await supabase
-        .from('api.supervisor_queue' as any)
-        .select('output')
-        .eq('agent_name', 'RealBusinessExecutor');
-      let totalRevenue = 0;
-      if (Array.isArray(data)) {
-        (data as any[])
-          .filter(
-            (item) =>
-              item &&
-              typeof item === "object" &&
-              "output" in item &&
-              typeof (item as any).output === "string"
-          )
-          .forEach((item) => {
-            const outputStr = (item as any).output ?? '';
-            if (outputStr) {
-              let output;
-              try {
-                output = JSON.parse(outputStr);
-              } catch {
-                return; // skip invalid JSON
-              }
-              if (
-                output &&
-                typeof output === 'object' &&
-                'actual_revenue' in output &&
-                output.actual_revenue != null
-              ) {
-                totalRevenue += output.actual_revenue || 0;
-              }
-            }
-          });
-      }
-      return totalRevenue;
-    } catch {
-      return 0;
+      return getFallbackActionPlan(data);
     }
   }
 }
