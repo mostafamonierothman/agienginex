@@ -1,4 +1,3 @@
-
 import { llmService } from '@/utils/llm';
 import { SupabaseVectorMemoryService } from '@/services/SupabaseVectorMemoryService';
 
@@ -146,11 +145,7 @@ Provide complete, functional code that can be directly used.
           generationTime: result.metrics.generationSpeed,
           complexity: result.metrics.complexity
         }),
-        { 
-          type: 'generation_result',
-          quality: result.metrics.codeQualityScore,
-          timestamp: result.metrics.timestamp.getTime()
-        }
+        0.5
       );
     } catch (error) {
       console.warn('Failed to store generation result:', error);
@@ -220,7 +215,7 @@ Provide complete, functional code that can be directly used.
       this.agentId,
       'framework_init',
       'Phase 1 Foundation Architecture initialized with self-analysis capabilities',
-      { type: 'system_init', phase: 1 }
+      0.5
     );
     
     console.log('✅ Phase 1: Self-analysis framework initialized successfully');

@@ -1,4 +1,3 @@
-
 import { AGIState } from "./AGIState";
 import { AGIStateManagement } from "./AGIStateManagement";
 import { LessonManager } from "./LessonManager";
@@ -75,13 +74,6 @@ class UnifiedAGICore {
   static getInstance() {
     if (!UnifiedAGICore.instance) {
       UnifiedAGICore.instance = new UnifiedAGICore();
-      SupabaseVectorMemoryService.migrateLocalStorageToSupabase("core-agi-agent").then(migrated => {
-        if (migrated) {
-          UnifiedAGICore.instance.log("🗃️ Migrated legacy vector memory from localStorage to Supabase!");
-        }
-      }).catch(error => {
-        console.warn("Vector memory migration warning:", error);
-      });
     }
     return UnifiedAGICore.instance;
   }

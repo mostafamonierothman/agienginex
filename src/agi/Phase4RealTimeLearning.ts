@@ -103,10 +103,7 @@ export class Phase4RealTimeLearning {
       this.agentId,
       'baseline_metrics',
       JSON.stringify(baselineMetric),
-      { 
-        type: 'baseline',
-        timestamp: Date.now()
-      }
+      0.5
     );
   }
 
@@ -165,11 +162,7 @@ export class Phase4RealTimeLearning {
         this.agentId,
         'evolution_step',
         JSON.stringify(evolutionStep),
-        { 
-          type: 'evolution',
-          impact: evolutionStep.impact,
-          timestamp: Date.now()
-        }
+        0.5
       );
 
       console.log(`📈 Phase 4: Tracked evolution step with impact ${evolutionStep.impact.toFixed(2)}`);
@@ -258,11 +251,7 @@ export class Phase4RealTimeLearning {
         avgImpact: this.evolutionSteps.reduce((sum, s) => sum + s.impact, 0) / this.evolutionSteps.length,
         timestamp: Date.now()
       }),
-      { 
-        type: 'evolution_tree',
-        totalSteps: this.evolutionSteps.length,
-        timestamp: Date.now()
-      }
+      0.5
     );
   }
 
@@ -279,10 +268,7 @@ export class Phase4RealTimeLearning {
       this.agentId,
       'visualization_data',
       JSON.stringify(visualizationData),
-      { 
-        type: 'visualization',
-        timestamp: Date.now()
-      }
+      0.5
     );
   }
 

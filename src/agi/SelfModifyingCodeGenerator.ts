@@ -1,4 +1,3 @@
-
 import { llmService } from '@/utils/llm';
 import { SupabaseVectorMemoryService } from '@/services/SupabaseVectorMemoryService';
 
@@ -204,7 +203,7 @@ The improved code should be production-ready and maintain all existing functiona
         this.agentId,
         'self_modification_cycle',
         `Self-modification cycle completed. Analyzed ${analyses.length} files, applied ${modificationsApplied} improvements.`,
-        { cycle: Date.now(), modifications: modificationsApplied }
+        0.5
       );
 
       return { success: true, modifications: modificationsApplied };
@@ -246,7 +245,7 @@ The improved code should be production-ready and maintain all existing functiona
         this.agentId,
         'code_analysis',
         JSON.stringify(analysis),
-        { type: 'analysis', fileName: analysis.fileName }
+        0.5
       );
     } catch (error) {
       console.warn('Failed to store analysis:', error);
@@ -259,7 +258,7 @@ The improved code should be production-ready and maintain all existing functiona
         this.agentId,
         'code_improvement',
         JSON.stringify(improvement),
-        { type: 'improvement', confidence: improvement.confidence }
+        0.5
       );
     } catch (error) {
       console.warn('Failed to store improvement:', error);

@@ -17,7 +17,7 @@ export interface MemoryVector {
 class VectorMemoryService {
   // Store using Supabase only
   async storeMemory(agentId: string, content: string, source: string, importance: number = 0.5): Promise<void> {
-    await SupabaseVectorMemoryService.storeMemory(agentId, source, content, { importance });
+    await SupabaseVectorMemoryService.storeMemory(agentId, source, content, importance);
   }
 
   async retrieveMemories(agentId: string, query: string, limit: number = 10): Promise<any[]> {

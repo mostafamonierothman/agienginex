@@ -2,14 +2,14 @@
 import { supabase } from '@/integrations/supabase/client';
 
 export class SupabaseVectorMemoryService {
-  static async storeMemory(agentId: string, content: string, source: string, importance: number = 0.5, metadata: any = {}) {
+  static async storeMemory(agentId: string, source: string, content: string, importance: number = 0.5, metadata: any = {}) {
     try {
       const { data, error } = await supabase
         .from('vector_memories')
         .insert({
           agent_id: agentId,
-          content: content,
           source: source,
+          content: content,
           importance: importance,
           embedding: metadata // Store metadata as embedding for now
         });

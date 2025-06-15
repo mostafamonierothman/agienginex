@@ -1,4 +1,3 @@
-
 import { llmService } from '@/utils/llm';
 import { SupabaseVectorMemoryService } from '@/services/SupabaseVectorMemoryService';
 import { phase1Foundation, CodeGenerationResult } from './Phase1FoundationArchitecture';
@@ -134,11 +133,7 @@ Focus on:
       this.agentId,
       'code_pattern',
       JSON.stringify(pattern),
-      { 
-        type: 'pattern',
-        quality: pattern.quality,
-        impact: pattern.impact
-      }
+      0.5
     );
   }
 
@@ -173,11 +168,7 @@ Focus on:
         learnings,
         updatedThresholds: this.qualityThresholds
       }),
-      { 
-        type: 'feedback',
-        outcome: userInteraction.outcome,
-        timestamp: Date.now()
-      }
+      0.5
     );
 
     console.log(`📈 Phase 2: Feedback loop updated. Positive ratio: ${(positiveRatio * 100).toFixed(1)}%`);
@@ -255,10 +246,7 @@ Return as JSON array of strings.
         badPatterns: badPatterns.length,
         recommendations
       }),
-      { 
-        type: 'pattern_analysis',
-        timestamp: Date.now()
-      }
+      0.5
     );
 
     console.log(`🔍 Phase 2: Identified ${goodPatterns.length} good patterns and ${badPatterns.length} bad patterns`);
@@ -282,11 +270,7 @@ Return as JSON array of strings.
           weaknessesCount: analysis.weaknesses.length,
           patternsFound: analysis.patterns.length
         }),
-        { 
-          type: 'analysis_result',
-          score: analysis.overallScore,
-          timestamp: Date.now()
-        }
+        0.5
       );
     } catch (error) {
       console.warn('Failed to store analysis result:', error);
@@ -350,7 +334,7 @@ Return as JSON array of strings.
       this.agentId,
       'engine_init',
       'Phase 2 Self-Analysis Engine initialized with pattern recognition and feedback loops',
-      { type: 'system_init', phase: 2 }
+      0.5
     );
     
     console.log('✅ Phase 2: Self-analysis engine initialized successfully');

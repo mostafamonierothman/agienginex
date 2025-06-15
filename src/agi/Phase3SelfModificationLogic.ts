@@ -147,11 +147,7 @@ Return in JSON format:
           basedOn: bestStrategy.name,
           context
         }),
-        { 
-          type: 'strategy_modification',
-          version: newStrategy.version,
-          timestamp: Date.now()
-        }
+        0.5
       );
 
       await this.saveBrainState(`Modified strategy: ${newStrategy.name}`);
@@ -253,12 +249,7 @@ Return in JSON format:
         aAvgScore: aAvgScore.toFixed(2),
         bAvgScore: bAvgScore.toFixed(2)
       }),
-      { 
-        type: 'ab_test',
-        winner: testResult.winner,
-        confidence: testResult.confidence,
-        timestamp: Date.now()
-      }
+      0.5
     );
 
     console.log(`🏆 Phase 3: A/B test completed. Winner: ${testResult.winner} (${(testResult.confidence * 100).toFixed(1)}% confidence)`);
@@ -293,12 +284,7 @@ Return in JSON format:
         performance: brainState.performance,
         changes
       }),
-      { 
-        type: 'brain_state',
-        version: brainState.version,
-        performance: brainState.performance,
-        timestamp: Date.now()
-      }
+      0.5
     );
 
     // Increment version
