@@ -61,17 +61,17 @@ export class GoalMemoryAgent {
     // Only keep properly shaped goal rows
     const goalData = Array.isArray(goalDataRaw)
       ? goalDataRaw.filter(
-          (g): g is any =>
-            !!g &&
-            typeof g === 'object' &&
-            'status' in g &&
-            'goal_id' in g &&
-            'goal_text' in g &&
-            'priority' in g &&
-            'progress_percentage' in g &&
-            (g as any).status &&
-            ((g as any).status === 'active' || (g as any).status === 'completed')
-        )
+        (g): g is any =>
+          !!g &&
+          typeof g === 'object' &&
+          'status' in g &&
+          'goal_id' in g &&
+          'goal_text' in g &&
+          'priority' in g &&
+          'progress_percentage' in g &&
+          (g as any)?.status &&
+          ((g as any)?.status === 'active' || (g as any)?.status === 'completed')
+      )
       : [];
 
     // Load agent memory for detailed goal tracking
@@ -81,41 +81,43 @@ export class GoalMemoryAgent {
       .eq('agent_name', 'goal_memory_agent');
     const memoryData = Array.isArray(memoryDataRaw)
       ? memoryDataRaw.filter(
-          (m): m is any =>
-            !!m && typeof m === 'object' && 'memory_key' in m && 'memory_value' in m
-        )
+        (m): m is any => !!m && typeof m === 'object' && 'memory_key' in m && 'memory_value' in m
+      )
       : [];
 
-    // Combine and structure goal memories
-    goalData?.forEach(g => {
-      if (!g || typeof g !== 'object') return;
-      const status: any = (g as any)?.status;
-      if (!status || (status !== 'active' && status !== 'completed')) return;
-      const memoryEntry = memoryData?.find(
-        m => !!m && typeof m === 'object' && (m as any)?.memory_key === `goal_${(g as any)?.goal_id}`
-      );
-      let goalMemory: GoalMemory;
-      if (
-        memoryEntry &&
-        typeof (memoryEntry as any)?.memory_value === "string"
-      ) {
-        goalMemory = JSON.parse((memoryEntry as any)?.memory_value);
-      } else {
-        // Ensure all properties accessed on g are guarded
-        goalMemory = {
-          id: String((g as any)?.goal_id ?? ''),
-          goal: (g as any)?.goal_text ?? '',
-          subGoals: this.generateInitialSubGoals((g as any)?.goal_text ?? ''),
-          priority: (g as any)?.priority ?? 0,
-          status: (g as any)?.status as 'active' | 'completed' ?? 'active',
-          progress: (g as any)?.progress_percentage ?? 0,
-          lastEvaluated: new Date().toISOString(),
-          successMetrics: this.defineSuccessMetrics((g as any)?.goal_text ?? ''),
-          adaptations: []
-        };
-      }
-      this.goalMemories.set(goalMemory.id, goalMemory);
-    });
+    // Combine and structure goal memories, with ultra-strict null checks
+    if (Array.isArray(goalData)) {
+      goalData.forEach(g => {
+        if (!g || typeof g !== 'object') return;
+        const status: any = (g as any)?.status;
+        if (!status || (status !== 'active' && status !== 'completed')) return;
+        const memoryEntry = Array.isArray(memoryData)
+          ? memoryData.find(
+              m =>
+                !!m &&
+                typeof m === 'object' &&
+                (m as any)?.memory_key === `goal_${(g as any)?.goal_id}`
+            )
+          : undefined;
+        let goalMemory: GoalMemory;
+        if (memoryEntry && typeof (memoryEntry as any)?.memory_value === "string") {
+          goalMemory = JSON.parse((memoryEntry as any).memory_value);
+        } else {
+          goalMemory = {
+            id: String((g as any)?.goal_id ?? ''),
+            goal: (g as any)?.goal_text ?? '',
+            subGoals: this.generateInitialSubGoals((g as any)?.goal_text ?? ''),
+            priority: (g as any)?.priority ?? 0,
+            status: (g as any)?.status as 'active' | 'completed' ?? 'active',
+            progress: (g as any)?.progress_percentage ?? 0,
+            lastEvaluated: new Date().toISOString(),
+            successMetrics: this.defineSuccessMetrics((g as any)?.goal_text ?? ''),
+            adaptations: []
+          };
+        }
+        this.goalMemories.set(goalMemory.id, goalMemory);
+      });
+    }
   }
 
   private generateInitialSubGoals(mainGoal: string): string[] {
