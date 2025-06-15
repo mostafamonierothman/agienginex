@@ -36,6 +36,80 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_registry: {
+        Row: {
+          agent_name: string
+          agent_type: string
+          created_at: string | null
+          id: string
+          last_started_at: string | null
+          last_stopped_at: string | null
+          performance_score: number | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          agent_name: string
+          agent_type: string
+          created_at?: string | null
+          id?: string
+          last_started_at?: string | null
+          last_stopped_at?: string | null
+          performance_score?: number | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          agent_name?: string
+          agent_type?: string
+          created_at?: string | null
+          id?: string
+          last_started_at?: string | null
+          last_stopped_at?: string | null
+          performance_score?: number | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      agent_versions: {
+        Row: {
+          agent_id: string | null
+          code: string
+          commit_message: string | null
+          created_at: string | null
+          file_path: string
+          id: string
+          version_number: number
+        }
+        Insert: {
+          agent_id?: string | null
+          code: string
+          commit_message?: string | null
+          created_at?: string | null
+          file_path: string
+          id?: string
+          version_number: number
+        }
+        Update: {
+          agent_id?: string | null
+          code?: string
+          commit_message?: string | null
+          created_at?: string | null
+          file_path?: string
+          id?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_versions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agent_registry"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agi_goals: {
         Row: {
           created_at: string | null
