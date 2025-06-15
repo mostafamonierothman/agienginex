@@ -214,7 +214,7 @@ Focus on IMMEDIATE actions that can generate leads and revenue TODAY using the a
       let totalRevenue = 0;
       if (Array.isArray(data)) {
         data.forEach(item => {
-          if (!item || typeof item !== 'object' || !('output' in item) || item === null) return;
+          if (!item || typeof item !== 'object' || item === null || !('output' in item)) return;
           if (
             typeof (item as any).output === 'string'
           ) {
@@ -232,7 +232,7 @@ Focus on IMMEDIATE actions that can generate leads and revenue TODAY using the a
                   totalRevenue += (output as any).actual_revenue || 0;
                 }
               }
-            } catch { }
+            } catch {}
           }
         });
       }

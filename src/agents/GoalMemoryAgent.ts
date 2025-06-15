@@ -57,7 +57,6 @@ export class GoalMemoryAgent {
     const { data: goalDataRaw } = await supabase
       .from('api.agi_goals_enhanced' as any)
       .select('*');
-
     // Only keep properly shaped goal rows
     const goalData = Array.isArray(goalDataRaw)
       ? goalDataRaw.filter(
@@ -74,7 +73,6 @@ export class GoalMemoryAgent {
           ((g as any)?.status === 'active' || (g as any)?.status === 'completed')
       )
       : [];
-
     // Load agent memory for detailed goal tracking
     const { data: memoryDataRaw } = await supabase
       .from('api.agent_memory' as any)
@@ -85,7 +83,6 @@ export class GoalMemoryAgent {
         (m): m is any => !!m && m !== null && typeof m === 'object' && 'memory_key' in m && 'memory_value' in m
       )
       : [];
-
     // Combine and structure goal memories, with ultra-strict null checks
     if (Array.isArray(goalData)) {
       goalData.forEach(g => {

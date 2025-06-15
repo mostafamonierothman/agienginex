@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export class GoalEvaluator {
@@ -34,7 +33,7 @@ export class GoalEvaluator {
     // Simulate goal evaluation
     if (goalMemory.goal.includes('trillion') || goalMemory.goal.includes('revenue')) {
       const leadsCount = Array.isArray(leads)
-        ? leads.filter(l => !!l).length
+        ? leads.filter(l => !!l && l !== null).length
         : 0;
       const estimatedRevenue = leadsCount * 2500;
       evaluation.updatedMetrics = {
