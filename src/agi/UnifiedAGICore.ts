@@ -338,6 +338,21 @@ class UnifiedAGICore {
       autonomy_percent: this.getRealAutonomy()
     };
   }
+
+  /**
+   * PHASE 2 ACTIVATION ENTRYPOINT
+   * Unlocks advanced AGI capabilities ("Phase 2") and persists the new state.
+   */
+  public async goPhase2() {
+    this.log("🚦 Initiating PHASE 2 AGI ADVANCED CAPABILITIES...");
+    // Initialize advanced capabilities (system integration, research, memory consolidation, etc)
+    await this.advancedCapabilities.initialize();
+    this.log("🟢 PHASE 2: Advanced AGI capabilities are LIVE (Optimized & Self-Modifying).");
+    // Set a Phase 2 flag in the agent state for UI/features
+    this.stateManager.setState({ phase2: true });
+    await this.stateManager.persistState();
+    this.notify();
+  }
 }
 
 export const unifiedAGI = UnifiedAGICore.getInstance();
