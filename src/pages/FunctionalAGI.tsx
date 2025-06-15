@@ -20,6 +20,7 @@ import { AGIAssessmentSummary } from "@/components/agi/AGIAssessmentSummary";
 import { useVectorMemoryStats } from "@/hooks/useVectorMemoryStats";
 import { WorldAwarenessList } from "@/components/agi/WorldAwarenessList";
 import { SelfReflectionHistory } from "@/components/agi/SelfReflectionHistory";
+import { NextBestDecisionPanel } from "@/components/agi/NextBestDecisionPanel";
 
 const selfReflection = new AGISelfReflectionManager();
 
@@ -127,8 +128,17 @@ const FunctionalAGIPage: React.FC = () => {
         ((vectorStats.total ?? 0) > 0 ? Math.floor(vectorStats.total / 5) : 0)
     );
 
+  // Strategic best next decision for trillion-dollar trajectory
+  const nextBestDecision = `
+Build and launch a highly targeted, automated “Global Health Navigation” platform leveraging the AGI's real-world data and opportunity detection engine. 
+Monetize instantly by connecting international patients directly with elite medical providers using streamlined, AI-powered qualification and payment. 
+Automate sales and conversions via outbound campaigns, and expand rapidly to high-value verticals (governments, insurance, enterprises).
+`;
+
   return (
     <div className="max-w-2xl mx-auto mt-10 space-y-6">
+      {/* Next Best Decision Panel - trillion $ strategy */}
+      <NextBestDecisionPanel decision={nextBestDecision.trim()} />
       {/* Enhanced Assessment Panel */}
       <AGISystemAssessmentPanel assessment={systemAssessment} />
 
