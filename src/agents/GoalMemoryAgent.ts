@@ -59,20 +59,37 @@ export class GoalMemoryAgent {
       .select('*');
 
     // Only keep properly shaped goal rows
-    const goalData = (goalDataRaw || []).filter(g => g && typeof g === 'object' && 'status' in g && 'goal_id' in g);
+    const goalData = (goalDataRaw || []).filter(
+      g =>
+        g &&
+        typeof g === 'object' &&
+        'status' in g &&
+        'goal_id' in g &&
+        'goal_text' in g &&
+        'priority' in g &&
+        'progress_percentage' in g
+    );
 
     // Load agent memory for detailed goal tracking
     const { data: memoryDataRaw } = await supabase
       .from('api.agent_memory' as any)
       .select('*')
       .eq('agent_name', 'goal_memory_agent');
-    const memoryData = (memoryDataRaw || []).filter(m => m && typeof m === 'object' && 'memory_key' in m);
+    const memoryData = (memoryDataRaw || []).filter(
+      m =>
+        m &&
+        typeof m === 'object' &&
+        'memory_key' in m &&
+        'memory_value' in m
+    );
 
     // Combine and structure goal memories
     // Only allow valid statuses
     goalData?.forEach(goal => {
-      if (!VALID_GOAL_STATUSES.includes(goal.status)) return;
-      const memoryEntry = memoryData?.find(m => m.memory_key === `goal_${goal.goal_id}`);
+      if (!('status' in goal) || !VALID_GOAL_STATUSES.includes(goal.status)) return;
+      const memoryEntry = memoryData?.find(
+        m => typeof m === 'object' && m.memory_key === `goal_${goal.goal_id}`
+      );
       let goalMemory: GoalMemory;
       if (memoryEntry && typeof memoryEntry.memory_value === "string") {
         goalMemory = JSON.parse(memoryEntry.memory_value);
@@ -218,7 +235,7 @@ export class GoalMemoryAgent {
     for (const [goalId, goalMemory] of this.goalMemories) {
       // Update the main goals table
       await supabase
-        .from('agi_goals_enhanced')
+        .from('api.agi_goals_enhanced' as any)
         .update({
           progress_percentage: Math.round(goalMemory.progress),
           status: goalMemory.status
@@ -227,7 +244,7 @@ export class GoalMemoryAgent {
 
       // Save detailed goal memory
       await supabase
-        .from('agent_memory')
+        .from('api.agent_memory' as any)
         .upsert({
           user_id: 'goal_memory_agent',
           agent_name: 'goal_memory_agent',

@@ -16,8 +16,10 @@ export class GoalEvaluator {
       .order('timestamp', { ascending: false })
       .limit(50);
 
-    // Only keep rows with a status property
-    const activity = (activityRaw || []).filter(a => a && typeof a === 'object' && 'status' in a);
+    // Only keep rows with a status property (skip nulls/errors)
+    const activity = (activityRaw || []).filter(
+      a => a && typeof a === 'object' && 'status' in a
+    );
 
     const evaluation = {
       goalId: goalMemory.id,
@@ -46,7 +48,7 @@ export class GoalEvaluator {
       }
     } else if (goalMemory.goal.includes('system')) {
       const totalActivities = activity?.length || 0;
-      const successfulActivities = activity?.filter(a => a.status === 'completed').length || 0;
+      const successfulActivities = activity?.filter(a => a && typeof a === 'object' && 'status' in a && a.status === 'completed').length || 0;
       const successRate = totalActivities > 0 ? (successfulActivities / totalActivities) * 100 : 0;
       evaluation.updatedMetrics = {
         tasksCompleted: totalActivities,
