@@ -162,20 +162,6 @@ class UnifiedAGICore {
     }
   }
 
-  stop() {
-    this.stateManager.setState({ running: false });
-    this.isInitialized = false;
-    if (this.loopTimer) {
-      clearTimeout(this.loopTimer);
-      this.loopTimer = null;
-    }
-    this.log("⏹️ AGI stopped - Standby mode activated.");
-    this.stateManager.persistState().catch(() => {
-      this.log("⚠️ Failed to persist final state");
-    });
-    this.notify();
-  }
-
   async loop() {
     if (!this.stateManager.getState().running || !this.isInitialized) return;
     
@@ -294,90 +280,6 @@ class UnifiedAGICore {
       this.log("⚠️ Failed to persist final state");
     });
     this.notify();
-  }
-
-  async loop() {
-    if (!this.stateManager.getState().running || !this.isInitialized) return;
-    
-    try {
-      await this.enhancedAgentLoop();
-      this.errorCount = 0; // Reset error count on success
-    } catch (error) {
-      this.errorCount++;
-      this.log(`⚠️ AGI loop error ${this.errorCount}/${this.maxErrors}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      
-      if (this.errorCount >= this.maxErrors) {
-        this.log("🛑 Too many errors, entering safe mode");
-        this.stateManager.setState({ running: false });
-        this.isInitialized = false;
-        return;
-      }
-    }
-    
-    this.loopTimer = setTimeout(() => this.loop(), 3000); // Slightly longer interval for stability
-  }
-
-  private async enhancedAgentLoop() {
-    const state = this.stateManager.getState();
-    state.generation++;
-    this.log(`🔁 Enhanced AGI Generation ${state.generation}...`);
-    
-    try {
-      await this.agentLoop.runLoop(
-        state,
-        (msg) => this.log(msg),
-        () => this.stateManager.persistState().catch(() => {})
-      );
-    } catch (error) {
-      this.log(`⚠️ Agent loop error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-    
-    // Enhanced capabilities (every 5th generation)
-    if (state.generation % 5 === 0) {
-      try {
-        await this.executeAdvancedCapabilities();
-      } catch (error) {
-        this.log(`⚠️ Advanced capabilities error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      }
-    }
-  }
-
-  private async executeAdvancedCapabilities() {
-    try {
-      // Autonomous research cycle
-      if (Math.random() < 0.7) {
-        const insights = await this.researchEngine.conductAutonomousResearch("core-agi-agent");
-        this.log(`🔬 Autonomous research completed: ${insights.length} new insights`);
-      }
-      
-      // Memory consolidation
-      if (Math.random() < 0.4) {
-        const consolidation = await this.memoryConsolidator.consolidateMemories("core-agi-agent");
-        this.log(`🧠 Memory consolidated: ${consolidation.join(', ')}`);
-      }
-      
-      // Multi-AGI collaboration
-      if (Math.random() < 0.3) {
-        const collaboration = await this.multiAGIOrchestrator.orchestrateCollaboration(
-          "Advanced problem solving", 
-          ["research", "creative", "technical"]
-        );
-        this.log(`🤖 Multi-AGI collaboration: ${collaboration.length} instances coordinated`);
-      }
-      
-      // Self-improvement proposal
-      if (Math.random() < 0.2) {
-        const proposal = await this.selfModification.proposeModification(
-          'capability',
-          'Enhance autonomous learning speed by 15%',
-          'Faster adaptation to new problem domains'
-        );
-        this.log(`🔧 Self-modification proposed: ${proposal.description} (${proposal.riskLevel} risk)`);
-      }
-      
-    } catch (error) {
-      this.log(`⚠️ Advanced capabilities error: ${error.message}`);
-    }
   }
 
   log(msg: string) {

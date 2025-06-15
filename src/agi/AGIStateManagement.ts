@@ -30,12 +30,14 @@ export class AGIStateManagement {
   async persistState(extra: Record<string, any> = {}) {
     // Persist state to Supabase as primary source
     try {
-      await SupabaseAGIStateService.saveState('unified_agi_state', { ...this.state, ...extra });
+      const stateToSave = { ...this.state, ...extra };
+      await SupabaseAGIStateService.saveState('unified_agi_state', stateToSave);
     } catch (e) {
       console.error("[AGIStateManagement] Supabase persistState error:", e);
     }
     // Also persist locally for resilience
-    await this.memory.set("unified_agi_state", { ...this.state, ...extra });
+    const stateToSave = { ...this.state, ...extra };
+    await this.memory.set("unified_agi_state", stateToSave);
   }
 
   async restoreState() {

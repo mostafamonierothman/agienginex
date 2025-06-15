@@ -7,14 +7,14 @@ import LiveBackendData from './multi-agent/LiveBackendData';
 import LovableAGIStatus from './LovableAGIStatus';
 import AGIPhase1Dashboard from './AGIPhase1Dashboard';
 import OptimizationDashboard from './OptimizationDashboard';
-import SelfModifyingDashboard from './SelfModifyingDashboard';
+import SelfModifyingMasterDashboard from './SelfModifyingMasterDashboard';
 import { useBackendPolling } from '@/hooks/useBackendPolling';
 import { pollBackendAGIState } from '@/services/AGIengineXService';
 import { SystemExecutionPanel } from './SystemExecutionPanel';
 
 const AGIDashboard = () => {
   const { backendData, isConnected, isPolling, refreshData } = useBackendPolling(true, 2000);
-  const [activeTab, setActiveTab] = useState<'main' | 'optimization' | 'self-modify'>('main');
+  const [activeTab, setActiveTab] = useState<'main' | 'self-modify' | 'optimization'>('self-modify');
 
   // Real-Time AGI polling (backend)
   const [backendAGIState, setBackendAGIState] = useState<any>(null);
@@ -39,6 +39,15 @@ const AGIDashboard = () => {
         {/* Tab Navigation */}
         <div className="flex justify-center gap-4 mt-4">
           <button
+            onClick={() => setActiveTab('self-modify')}
+            className={`px-4 py-2 rounded ${activeTab === 'self-modify' 
+              ? 'bg-purple-600 text-white' 
+              : 'bg-slate-800 text-gray-300 hover:bg-slate-700'
+            }`}
+          >
+            🧬 Self-Modifying AGI (All 5 Phases)
+          </button>
+          <button
             onClick={() => setActiveTab('main')}
             className={`px-4 py-2 rounded ${activeTab === 'main' 
               ? 'bg-purple-600 text-white' 
@@ -46,15 +55,6 @@ const AGIDashboard = () => {
             }`}
           >
             Main Dashboard
-          </button>
-          <button
-            onClick={() => setActiveTab('self-modify')}
-            className={`px-4 py-2 rounded ${activeTab === 'self-modify' 
-              ? 'bg-purple-600 text-white' 
-              : 'bg-slate-800 text-gray-300 hover:bg-slate-700'
-            }`}
-          >
-            🧬 Self-Modifying AGI
           </button>
           <button
             onClick={() => setActiveTab('optimization')}
@@ -67,6 +67,8 @@ const AGIDashboard = () => {
           </button>
         </div>
       </div>
+
+      {activeTab === 'self-modify' && <SelfModifyingMasterDashboard />}
 
       {activeTab === 'main' && (
         <>
@@ -105,8 +107,6 @@ const AGIDashboard = () => {
           )}
         </>
       )}
-
-      {activeTab === 'self-modify' && <SelfModifyingDashboard />}
       
       {activeTab === 'optimization' && <OptimizationDashboard />}
     </div>
