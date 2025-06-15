@@ -6,7 +6,7 @@ export async function CoordinationAgent(context: AgentContext): Promise<AgentRes
   try {
     // Get recent agent activities to coordinate
     const { data: recentActivity, error } = await supabase
-      .from('supervisor_queue')
+      .from('api.supervisor_queue' as any)
       .select('*')
       .order('timestamp', { ascending: false })
       .limit(20);
@@ -20,11 +20,13 @@ export async function CoordinationAgent(context: AgentContext): Promise<AgentRes
     }
 
     // Analyze agent coordination patterns
-    const agentActivities = recentActivity?.reduce((acc, activity) => {
-      const agentName = activity.agent_name || 'unknown';
-      acc[agentName] = (acc[agentName] || 0) + 1;
+    const agentActivities = (recentActivity || []).reduce((acc: any, activity: any) => {
+      if (activity && typeof activity === 'object' && 'agent_name' in activity) {
+        const agentName = (activity.agent_name as string) || 'unknown';
+        acc[agentName] = (acc[agentName] || 0) + 1;
+      }
       return acc;
-    }, {} as Record<string, number>) || {};
+    }, {} as Record<string, number>);
 
     const totalActivities = Object.values(agentActivities).reduce((sum, count) => sum + count, 0);
     const activeAgentCount = Object.keys(agentActivities).length;
@@ -34,7 +36,7 @@ export async function CoordinationAgent(context: AgentContext): Promise<AgentRes
 
     // Store coordination insights
     await supabase
-      .from('agent_memory')
+      .from('api.agent_memory' as any)
       .insert({
         user_id: context.user_id || 'demo_user',
         agent_name: 'coordination_agent',
@@ -45,7 +47,7 @@ export async function CoordinationAgent(context: AgentContext): Promise<AgentRes
 
     // Log coordination activity
     await supabase
-      .from('supervisor_queue')
+      .from('api.supervisor_queue' as any)
       .insert({
         user_id: context.user_id || 'demo_user',
         agent_name: 'coordination_agent',

@@ -1,11 +1,12 @@
+
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
-import { Page } from 'puppeteer';
-import { chromium } from 'playwright';
+// Removed: import { Page } from 'puppeteer';
+import { chromium } from 'playwright';  // Only need 'playwright', not 'puppeteer'
 import { supabase } from '@/integrations/supabase/client';
 
 export class BrowserAgent {
   private browser: any;
-  private page: Page | null = null;
+  private page: any = null;
 
   constructor() {
     this.initialize();
