@@ -15,6 +15,8 @@ import { AGILessonsPanel } from "@/components/agi/AGILessonsPanel";
 import { AGISelfReflectionManager } from "@/agi/AGISelfReflectionManager";
 import { AGISystemAssessment } from "@/agi/AGISystemAssessment";
 import { AGISystemAssessmentPanel } from "@/components/agi/AGISystemAssessmentPanel";
+import { VectorMemoryPanel } from "@/components/agi/VectorMemoryPanel";
+import { AGIAssessmentSummary } from "@/components/agi/AGIAssessmentSummary";
 
 const selfReflection = new AGISelfReflectionManager();
 
@@ -221,16 +223,13 @@ const FunctionalAGIPage: React.FC = () => {
           </div>
         </CardContent>
       </Card>
-      {/* Show Vector Memory Stats with required shape */}
-      <VectorMemoryStats stats={{ shortTerm: 0, episodic: 0, longTerm: vectorStats.total ?? 0 }} />
-      {/* Optionally, display total vector memory stat for extra clarity */}
-      <div className="text-xs text-blue-200 mb-2">
-        Vector Memories Stored: <b>{vectorStats.total}</b>
-      </div>
-      {/* Show full system assessment again for clarity (summary) */}
-      <div className="mt-4">
-        <AGISystemAssessmentPanel assessment={systemAssessment} />
-      </div>
+      {/* VECTOR MEMORY PANEL */}
+      <VectorMemoryPanel
+        stats={{ shortTerm: 0, episodic: 0, longTerm: vectorStats.total ?? 0 }}
+        total={vectorStats.total ?? 0}
+      />
+      {/* AGI SYSTEM ASSESSMENT SUMMARY */}
+      <AGIAssessmentSummary assessment={systemAssessment} />
     </div>
   );
 };
