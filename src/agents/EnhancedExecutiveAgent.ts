@@ -214,8 +214,13 @@ Focus on IMMEDIATE actions that can generate leads and revenue TODAY using the a
       let totalRevenue = 0;
       if (Array.isArray(data)) {
         data.forEach((item) => {
-          if (!item || typeof item !== 'object' || item === null || !('output' in item)) return;
-          if (typeof (item as any).output === 'string') {
+          if (
+            item &&
+            typeof item === 'object' &&
+            item !== null &&
+            'output' in item &&
+            typeof (item as any).output === 'string'
+          ) {
             try {
               const outputStr = (item as any).output ?? '';
               if (outputStr) {
@@ -223,13 +228,22 @@ Focus on IMMEDIATE actions that can generate leads and revenue TODAY using the a
                 try {
                   output = JSON.parse(outputStr);
                 } catch {
+                  // ignore malformed JSON
                   return;
                 }
-                if (output && typeof output === 'object' && 'actual_revenue' in output) {
-                  totalRevenue += (output as any).actual_revenue || 0;
+                if (
+                  output &&
+                  typeof output === 'object' &&
+                  'actual_revenue' in output &&
+                  output.actual_revenue != null
+                ) {
+                  totalRevenue += output.actual_revenue || 0;
                 }
               }
-            } catch {}
+            } catch {
+              // ignore errors
+              return;
+            }
           }
         });
       }

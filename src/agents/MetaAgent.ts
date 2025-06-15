@@ -13,7 +13,7 @@ export class MetaAgent {
   async analyzeSystem(): Promise<any> {
     const systemStatus = this.supervisor.getSystemStatus();
     
-    // Get recent activity data (force type cast to any)
+    // Get recent activity data
     const { data: recentActivity } = await supabase
       .from('api.supervisor_queue' as any)
       .select('agent_name, status')

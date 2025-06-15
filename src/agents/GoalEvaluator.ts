@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export class GoalEvaluator {
@@ -19,7 +18,12 @@ export class GoalEvaluator {
 
     // Only keep rows with a status property (skip nulls/errors)
     const activity = Array.isArray(activityRaw)
-      ? activityRaw.filter(a => a && typeof a === 'object' && a !== null && 'status' in a)
+      ? activityRaw.filter(
+        (a) =>
+          a !== null &&
+          typeof a === 'object' &&
+          'status' in a
+      )
       : [];
 
     const evaluation = {
@@ -34,7 +38,7 @@ export class GoalEvaluator {
     // Simulate goal evaluation
     if (goalMemory.goal.includes('trillion') || goalMemory.goal.includes('revenue')) {
       const leadsCount = Array.isArray(leads)
-        ? leads.filter(l => l && l !== null).length
+        ? leads.filter(l => l !== null).length
         : 0;
       const estimatedRevenue = leadsCount * 2500;
       evaluation.updatedMetrics = {
@@ -51,10 +55,21 @@ export class GoalEvaluator {
       }
     } else if (goalMemory.goal.includes('system')) {
       const totalActivities = Array.isArray(activity)
-        ? activity.filter(a => a && typeof a === 'object' && a !== null && 'status' in a).length
+        ? activity.filter(
+          (a) =>
+            a !== null &&
+            typeof a === 'object' &&
+            'status' in a
+        ).length
         : 0;
       const successfulActivities = Array.isArray(activity)
-        ? activity.filter(a => a && typeof a === 'object' && a !== null && 'status' in a && (a as any)?.status === 'completed').length
+        ? activity.filter(
+          (a) =>
+            a !== null &&
+            typeof a === 'object' &&
+            'status' in a &&
+            (a as any)?.status === 'completed'
+        ).length
         : 0;
       const successRate = totalActivities > 0 ? (successfulActivities / totalActivities) * 100 : 0;
       evaluation.updatedMetrics = {
