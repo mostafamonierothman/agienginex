@@ -26,11 +26,10 @@ serve(async (req) => {
     if (req.method !== "POST") {
       return new Response(JSON.stringify({ error: "Invalid method" }), { status: 405, headers: corsHeaders });
     }
-    const { path, payload, command, goal, message } = await req.json();
+    const { path, payload, command, goal, message, code_request, code_instruction, endpoint } = await req.json();
 
     // --- AGI CHAT ENDPOINT ---
     if (path === "agi-chat" || (!path && message)) {
-      // Run OpenAI chat and log in agent_memory
       try {
         const prompt = message || "";
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -72,9 +71,71 @@ serve(async (req) => {
       }
     }
 
+    // --- REAL CODE GENERATION ---
+    // Accepts { path: "code-generation" } or { endpoint: "code-generation" } or "generate code" in message
+    if (path === "code-generation" || endpoint === "code-generation" || message?.toLowerCase().includes("generate code") || code_request || code_instruction) {
+      try {
+        // Build code prompt
+        const codePrompt =
+          code_instruction ||
+          code_request ||
+          goal ||
+          message ||
+          (payload && payload.code_instruction) ||
+          "Write a TypeScript function that returns Hello World.";
+
+        // Build messages for OpenAI
+        const openAIMessages = [
+          { role: "system", content: "You are an expert AI programming assistant. Output ONLY code, no explanation, no markdown wrapping." },
+          { role: "user", content: codePrompt }
+        ];
+
+        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${openAIApiKey}`,
+          },
+          body: JSON.stringify({
+            model: "gpt-4o",
+            messages: openAIMessages,
+            max_tokens: 900,
+            temperature: 0.2,
+          }),
+        });
+
+        const data = await response.json();
+        const code = data.choices?.[0]?.message?.content || "No code generated!";
+
+        // Log code generation event
+        await supabase.from("agent_memory").insert({
+          user_id: "chat_user",
+          agent_name: "agi_engine_x",
+          memory_key: "code_gen_prompt",
+          memory_value: codePrompt,
+          timestamp: new Date().toISOString(),
+        });
+        await supabase.from("agent_memory").insert({
+          user_id: "agi_engine_x",
+          agent_name: "agi_engine_x",
+          memory_key: "code_generated",
+          memory_value: code,
+          timestamp: new Date().toISOString(),
+        });
+
+        return new Response(JSON.stringify({
+          success: true,
+          response: code,
+          code: code,
+          prompt: codePrompt,
+        }), { headers: corsHeaders });
+      } catch (err) {
+        return new Response(JSON.stringify({ success: false, error: "Code generation error", detail: err?.message || String(err) }), { status: 500, headers: corsHeaders });
+      }
+    }
+
     // --- AGI GOALS CRUD ---
     if (path === "agi-goals" || (goal && typeof goal === "string")) {
-      // Add a new goal (basic create example)
       try {
         const { goal_text, priority, status } = payload || {};
         const result = await supabase.from("agi_goals").insert({
@@ -104,7 +165,7 @@ serve(async (req) => {
 
     // --- DEFAULT: Unknown path, health check ---
     return new Response(
-      JSON.stringify({ status: "ok", endpoints: ["agi-chat", "agi-goals", "get-agi-goals"] }),
+      JSON.stringify({ status: "ok", endpoints: ["agi-chat", "agi-goals", "get-agi-goals", "code-generation"] }),
       { headers: corsHeaders }
     );
   } catch (error) {
