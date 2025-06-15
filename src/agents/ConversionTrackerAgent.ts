@@ -13,27 +13,33 @@ export class ConversionTrackerAgent {
         .from('api.leads' as any)
         .select('*');
 
-      // Guard: leadsRaw may contain error objects; only process objects with string 'email'
-      const leads = Array.isArray(leadsRaw) ? leadsRaw.filter(
-        (lead): lead is { email: string } => 
-          !!lead && typeof lead === 'object' && typeof (lead as any).email === 'string'
-      ) : [];
+      // leadsRaw may be array with error/undefined so filter by presence of string email property
+      const leads = Array.isArray(leadsRaw)
+        ? leadsRaw.filter(lead =>
+            !!lead &&
+            typeof lead === 'object' &&
+            typeof (lead as any).email === 'string'
+          )
+        : [];
 
-      // Extract emails from leads
-      const leadEmails = leads.map(lead => lead.email);
+      // Extract emails from leads (assert cast)
+      const leadEmails = leads.map(lead => (lead as any).email);
 
       // Get all email logs
       const { data: emailLogsRaw } = await supabase
         .from('api.email_log' as any)
         .select('*');
 
-      const emailLogs = Array.isArray(emailLogsRaw) ? emailLogsRaw.filter(
-        (log): log is { email: string } => 
-          !!log && typeof log === 'object' && typeof (log as any).email === 'string'
-      ) : [];
+      const emailLogs = Array.isArray(emailLogsRaw)
+        ? emailLogsRaw.filter(log =>
+            !!log &&
+            typeof log === 'object' &&
+            typeof (log as any).email === 'string'
+          )
+        : [];
 
       // Filter email logs for those sent to leads
-      const convertedEmails = emailLogs.filter(log => leadEmails.includes(log.email));
+      const convertedEmails = emailLogs.filter(log => leadEmails.includes((log as any).email));
 
       // Calculate conversion metrics
       const totalLeads = leads.length;
