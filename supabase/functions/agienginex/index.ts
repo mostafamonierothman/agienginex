@@ -20,9 +20,7 @@ import {
   createGoal, 
   getGoals 
 } from "./handlers/goalManagement.ts";
-
-// --- ⬇️ ADD: Import SupervisorAgent logic here (define handler inline if not available) ---
-// (For Deno/edge context, re-implement the SupervisorAgent main logic inline or import if available)
+import { SupervisorAgentRunner } from "../../../src/agents/SupervisorAgent";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -62,24 +60,22 @@ serve(async (req) => {
     ) {
       const prompt = message || "";
 
-      // REMOVE: This block used to call out to an external /api/supervisor-agent endpoint!
-      // Instead, call native SupervisorAgent logic here.
-      // Example: If your handlers contain SupervisorAgent logic, invoke it here.
       try {
-        // If processAGIChat is your SupervisorAgent logic (native, not fetch!), use it:
-        const supervisorResponse = await processAGIChat({
-          path: "agi-chat",
-          goal: prompt,
-          message: prompt,
-          // Pass relevant data for your agent/context if needed
-        }, supabase, openAIApiKey);
+        // DIRECTLY CALL the SupervisorAgentRunner (not via HTTP)
+        const supervisorResponse = await SupervisorAgentRunner({
+          input: {
+            // matches AgentContext type
+            goal: prompt,
+            message: prompt,
+          },
+          user_id: request.user_id || "edge_supervisor_user"
+        });
 
         return new Response(JSON.stringify({
           success: supervisorResponse.success,
           supervisor_agent: true,
           supervisor_message: supervisorResponse.message,
           supervisor_data: supervisorResponse.data,
-          // ... keep proof_of_execution and timestamp
           proof_of_execution: {
             total_leads_in_db: supervisorResponse.data?.total_leads_db,
             total_supervisor_actions: supervisorResponse.data?.total_supervisor_actions,
@@ -88,7 +84,6 @@ serve(async (req) => {
           timestamp: new Date().toISOString()
         }), { headers: corsHeaders });
       } catch (e) {
-        // If any error in SupervisorAgent, show what failed
         return new Response(JSON.stringify({
           success: false,
           response: "SupervisorAgent Internal Error: " + (e?.message || String(e))
