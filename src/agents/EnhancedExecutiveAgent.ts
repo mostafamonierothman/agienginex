@@ -212,32 +212,28 @@ Focus on IMMEDIATE actions that can generate leads and revenue TODAY using the a
       if (Array.isArray(data)) {
         data.forEach((item) => {
           if (
-            item != null && // fixed: checks for null or undefined
-            typeof item === 'object' &&
-            'output' in item &&
-            typeof (item as any).output === 'string'
+            item === null ||
+            typeof item !== 'object' ||
+            !('output' in item) ||
+            typeof item.output !== 'string'
           ) {
-            try {
-              const outputStr = (item as any).output ?? '';
-              if (outputStr) {
-                let output = null;
-                try {
-                  output = JSON.parse(outputStr);
-                } catch {
-                  return;
-                }
-                if (
-                  output &&
-                  typeof output === 'object' &&
-                  'actual_revenue' in output &&
-                  output.actual_revenue != null
-                ) {
-                  totalRevenue += output.actual_revenue || 0;
-                }
-              }
-            } catch {
-              // error in revenue parsing logic (ignore, continue)
-            }
+            return; // early return if item is null or not valid
+          }
+          const outputStr = item.output ?? '';
+          if (!outputStr) return;
+          let output;
+          try {
+            output = JSON.parse(outputStr);
+          } catch {
+            return;
+          }
+          if (
+            output &&
+            typeof output === 'object' &&
+            'actual_revenue' in output &&
+            output.actual_revenue != null
+          ) {
+            totalRevenue += output.actual_revenue || 0;
           }
         });
       }
