@@ -54,11 +54,12 @@ serve(async (req) => {
     // --- 1. AGI CHAT (with agent control) ---
     if (path === "agi-chat" || (!path && message)) {
       const prompt = message || "";
-      // Detect deploy/agent-related commands in chat
+      // Added: add "scale" detection
       const deployRegex = /(deploy|create|launch) (new )?(agent|ai|bot) (?:named )?["']?([\w\- ]{3,100})["']?/i;
       const startRegex = /(start|run)\s+agent\s+["']?([\w\- ]{3,100})["']?/i;
       const stopRegex = /(stop|terminate|pause)\s+agent\s+["']?([\w\- ]{3,100})["']?/i;
       const listRegex = /(list|show)\s+(live|running)?\s?agents/i;
+      const scaleRegex = /(scale|increase|expand)\s+agents?\s*(?:to|by)?\s*(\d+)?/i;
 
       // 1. Deploy new agent via chat
       if (deployRegex.test(prompt)) {
@@ -162,8 +163,9 @@ Respond with pure code implementing the class, no extra text. The class should h
         }).eq("id", agent.id);
         return new Response(JSON.stringify({
           success: true,
-          response: `▶️ Agent "${name}" started`,
+          response: `▶️ Agent "${name}" started (Performance: ${agent.performance_score ?? 0}%)`,
           agent_name: name,
+          performance_score: agent.performance_score ?? 0
         }), { headers: corsHeaders });
       }
 
@@ -179,21 +181,44 @@ Respond with pure code implementing the class, no extra text. The class should h
         }).eq("id", agent.id);
         return new Response(JSON.stringify({
           success: true,
-          response: `⏹️ Agent "${name}" stopped`,
+          response: `⏹️ Agent "${name}" stopped (Performance: ${agent.performance_score ?? 0}%)`,
           agent_name: name,
+          performance_score: agent.performance_score ?? 0
         }), { headers: corsHeaders });
       }
 
-      // 4. List agents via chat
+      // 4. List agents via chat - now includes performance score and live status
       if (listRegex.test(prompt)) {
         const { data: agents, error } = await supabase.from("agent_registry").select("*").order("created_at", { ascending: false });
         if (error) return new Response(JSON.stringify({ success: false, error: error.message }), { status: 500, headers: corsHeaders });
+        const lines = (agents || []).map((a: any) =>
+          `- ${a.agent_name} (${a.status}, Performance: ${a.performance_score ?? 0}%)`
+        );
         return new Response(JSON.stringify({
           success: true,
           agents: agents || [],
-          response: `Live Agents:\n${(agents || []).map((a: any) => `- ${a.agent_name} (${a.status})`).join("\n")}`
+          response: `Live Agents:\n${lines.join("\n")}`
         }), { headers: corsHeaders });
       }
+
+      // 5. Scale agents via chat (simulated, UI/infra scaling not yet implemented)
+      if (scaleRegex.test(prompt)) {
+        const match = prompt.match(scaleRegex);
+        const scaleTo = parseInt(match?.[2] || "0");
+        if (scaleTo > 0) {
+          // In a real system, this would trigger agent replica scaling & registry
+          return new Response(JSON.stringify({
+            success: true,
+            response: `🪄 Scaling agents to target ${scaleTo} instances. (This is a simulated response. Real scaling requires infra changes.)`
+          }), { headers: corsHeaders });
+        } else {
+          return new Response(JSON.stringify({
+            success: false,
+            response: `Provide a number, e.g. "scale agents to 10". (Scaling is not yet implemented.)`
+          }), { headers: corsHeaders });
+        }
+      }
+
       // Default AGI chat if no command matched
       try {
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -306,7 +331,8 @@ Respond with code only for the agent class, no extra comments or preamble. Run, 
       return new Response(JSON.stringify({
         success: true,
         response: `Agent "${sname}" started.`,
-        agent_id: agent.id
+        agent_id: agent.id,
+        performance_score: agent.performance_score ?? 0
       }), { headers: corsHeaders });
     }
 
@@ -323,17 +349,21 @@ Respond with code only for the agent class, no extra comments or preamble. Run, 
       return new Response(JSON.stringify({
         success: true,
         response: `Agent "${sname}" stopped.`,
-        agent_id: agent.id
+        agent_id: agent.id,
+        performance_score: agent.performance_score ?? 0
       }), { headers: corsHeaders });
     }
 
     if (path === "agents-list") {
       const { data: agents, error } = await supabase.from("agent_registry").select("*").order("created_at", { ascending: false });
       if (error) return new Response(JSON.stringify({ success: false, error: error.message }), { status: 500, headers: corsHeaders });
+      const lines = (agents || []).map((a: any) =>
+        `- ${a.agent_name} (${a.status}, Performance: ${a.performance_score ?? 0}%)`
+      );
       return new Response(JSON.stringify({
         success: true,
         agents: agents || [],
-        response: `Agents:\n${(agents || []).map((a: any) => `- ${a.agent_name} (${a.status})`).join("\n")}`,
+        response: `Agents:\n${lines.join("\n")}`,
       }), { headers: corsHeaders });
     }
 
