@@ -6,13 +6,13 @@ export async function EvolutionAgent(context: AgentContext): Promise<AgentRespon
   try {
     // Analyze system evolution patterns
     const { data: recentMemory, error: memoryError } = await supabase
-      .from('agent_memory')
+      .from('api.agent_memory' as any)
       .select('*')
       .order('timestamp', { ascending: false })
       .limit(20);
 
     const { data: agentActivity, error: activityError } = await supabase
-      .from('supervisor_queue')
+      .from('api.supervisor_queue' as any)
       .select('*')
       .order('timestamp', { ascending: false })
       .limit(100);
@@ -42,7 +42,7 @@ export async function EvolutionAgent(context: AgentContext): Promise<AgentRespon
 
     // Store evolution insight
     await supabase
-      .from('agent_memory')
+      .from('api.agent_memory' as any)
       .insert({
         user_id: context.user_id || 'demo_user',
         agent_name: 'evolution_agent',
@@ -53,7 +53,7 @@ export async function EvolutionAgent(context: AgentContext): Promise<AgentRespon
 
     // Log evolution activity
     await supabase
-      .from('supervisor_queue')
+      .from('api.supervisor_queue' as any)
       .insert({
         user_id: context.user_id || 'demo_user',
         agent_name: 'evolution_agent',

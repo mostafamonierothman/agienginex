@@ -212,13 +212,16 @@ Focus on IMMEDIATE actions that can generate leads and revenue TODAY using the a
         .eq('agent_name', 'RealBusinessExecutor');
       
       let totalRevenue = 0;
-      data?.forEach(item => {
-        try {
-          const output = item.output ? JSON.parse(item.output) : {};
-          totalRevenue += output.actual_revenue || 0;
-        } catch {}
-      });
-      
+      if (Array.isArray(data)) {
+        data.forEach(item => {
+          try {
+            if (item && typeof item === 'object' && 'output' in item && typeof item.output === 'string') {
+              const output = item.output ? JSON.parse(item.output) : {};
+              totalRevenue += output.actual_revenue || 0;
+            }
+          } catch {}
+        });
+      }
       return totalRevenue;
     } catch {
       return 0;

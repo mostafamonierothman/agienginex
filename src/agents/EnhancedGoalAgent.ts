@@ -1,4 +1,3 @@
-
 import { AgentContext, AgentResponse } from '@/types/AgentTypes';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -36,7 +35,7 @@ export class EnhancedGoalAgent {
         // Store in Supabase
         try {
             await supabase
-                .from('agent_memory')
+                .from('api.agent_memory' as any)
                 .insert({
                     user_id: 'enhanced_goal_agent',
                     agent_name: 'enhanced_goal_agent',
@@ -118,8 +117,20 @@ export class EnhancedGoalAgent {
             const status = this.getGoalStatus();
             
             // Log to supervisor queue
+            const { data: recentMemories, error: memError } = await supabase
+                .from('api.agent_memory' as any)
+                .select('*')
+                .order('timestamp', { ascending: false })
+                .limit(20);
+
+            const { data: recentActivity, error: actError } = await supabase
+                .from('api.supervisor_queue' as any)
+                .select('*')
+                .order('timestamp', { ascending: false })
+                .limit(100);
+
             await supabase
-                .from('supervisor_queue')
+                .from('api.supervisor_queue' as any)
                 .insert({
                     user_id: context.user_id || 'enhanced_goal_agent',
                     agent_name: 'enhanced_goal_agent',

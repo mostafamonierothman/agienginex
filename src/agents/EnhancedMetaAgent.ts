@@ -18,7 +18,7 @@ export class EnhancedMetaAgent {
         try {
             // Get recent system activity
             const { data: recentActivity } = await supabase
-                .from('supervisor_queue')
+                .from('api.supervisor_queue' as any)
                 .select('*')
                 .order('timestamp', { ascending: false })
                 .limit(100);
@@ -118,7 +118,7 @@ export class EnhancedMetaAgent {
             const analysis = await this.analyzeSystemPerformance();
             
             await supabase
-                .from('supervisor_queue')
+                .from('api.supervisor_queue' as any)
                 .insert({
                     user_id: context.user_id || 'enhanced_meta_agent',
                     agent_name: 'enhanced_meta_agent',
