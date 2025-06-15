@@ -43,12 +43,14 @@ export class AGIStateManagement {
   async restoreState() {
     // Try to load from Supabase first
     const remote = await SupabaseAGIStateService.loadState('unified_agi_state');
-    if (remote) {
+    if (remote && typeof remote === 'object' && remote !== null) {
       this.state = { ...this.state, ...remote };
     } else {
       // fallback local
       const prev = await this.memory.get("unified_agi_state", null);
-      if (prev) this.state = { ...this.state, ...prev, logs: [], running: false };
+      if (prev && typeof prev === 'object' && prev !== null) {
+        this.state = { ...this.state, ...prev, logs: [], running: false };
+      }
     }
   }
 
