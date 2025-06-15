@@ -1,4 +1,3 @@
-
 // Orchestrate AGI Chat through Supabase Edge Function.
 // This endpoint is public and does not require Authorization headers.
 
@@ -14,8 +13,8 @@ export async function sendAGIChatCommand(command: string, options: any = {}) {
         // No auth header needed for public edge function
       },
       body: JSON.stringify({
-        // Use endpoint argument for backend
-        endpoint: options.endpoint || 'chat',
+        // Standardize on 'path' for backend routing consistency.
+        path: options.path || 'agi-chat',
         message: command,
         ...options
       }),
@@ -39,4 +38,3 @@ export async function fetchLiveAGIState() {
     return { success: false, error: e?.message || "Network error" };
   }
 }
-
