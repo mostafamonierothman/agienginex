@@ -1,5 +1,5 @@
 
-import { SupabaseAGIStateService } from '@/services/AGIStateService';
+import { SupabaseAGIStateService } from '@/services/SupabaseAGIStateService';
 
 // State shape
 let defaultState = {
