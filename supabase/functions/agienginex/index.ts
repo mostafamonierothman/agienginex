@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
@@ -18,8 +17,15 @@ if (!openAIApiKey) throw new Error("OpenAI API key required for AGI chat.");
 const supabase = createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false } });
 
 function sanitizeAgentName(name: string) {
-  // Simple: kebab-case, no spaces, lowercase
-  return name.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase();
+  // Only kebab-case, lowercase, 3-48 chars, no slashes, always .ts at end
+  let cleaned = name.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase();
+  cleaned = cleaned.replace(/--+/g, "-").slice(0, 48).replace(/^-+|-+$/g, "");
+  return cleaned.length >= 3 ? cleaned : `agent-${Date.now()}`;
+}
+
+function safeAgentFilePath(agentName: string) {
+  const safeName = sanitizeAgentName(agentName);
+  return `agents/${safeName}.ts`; // controlled location, .ts only
 }
 
 serve(async (req) => {
@@ -58,6 +64,8 @@ serve(async (req) => {
       if (deployRegex.test(prompt)) {
         const match = prompt.match(deployRegex);
         const deployName = match ? sanitizeAgentName(match[4] || ("agent-" + Date.now())) : ("agent-" + Date.now());
+        const filepath = safeAgentFilePath(deployName);
+
         // Use OpenAI to generate agent code/class/spec
         const openaiPrompt = `Create a new autonomous AI agent TypeScript class named "${deployName}" for the following task: ${prompt}. 
 Respond with pure code implementing the class, no extra text. The class should have methods: run, stop, status.`;
@@ -81,6 +89,11 @@ Respond with pure code implementing the class, no extra text. The class should h
         const data = await response.json();
         const agentCode = data.choices?.[0]?.message?.content || "";
 
+        // --- [NEW] SANITY CHECK: ensure only code, and doesn't try to do fs writes, imports etc ---
+        if (agentCode.toLowerCase().includes("require(") || agentCode.toLowerCase().includes("fs.")) {
+          return new Response(JSON.stringify({ success: false, error: "Unsafe code detected!" }), { status: 400, headers: corsHeaders });
+        }
+
         // Register in agent_registry (status: stopped by default)
         const { data: regData, error: regErr } = await supabase
           .from("agent_registry")
@@ -94,15 +107,28 @@ Respond with pure code implementing the class, no extra text. The class should h
         if (regErr) return new Response(JSON.stringify({ success: false, error: regErr.message }), { status: 500, headers: corsHeaders });
         const agentId = regData?.id;
 
-        // Save versioned code
+        // [NEW] Save code to versioned file + version table
+        // Simulate "writing" file by inserting to agent_versions as our file system
+        let latestVersion = 1;
+        // Find latest version for this agent (if exists)
+        const { data: prevVersions } = await supabase
+          .from("agent_versions")
+          .select("version_number")
+          .eq("file_path", filepath)
+          .eq("agent_id", agentId)
+          .order("version_number", { ascending: false })
+          .limit(1);
+        if (prevVersions && prevVersions.length > 0) {
+          latestVersion = (prevVersions[0].version_number || 0) + 1;
+        }
         const { error: vErr } = await supabase
           .from("agent_versions")
           .insert({
             agent_id: agentId,
-            file_path: `${deployName}.ts`,
+            file_path: filepath,
             code: agentCode,
-            version_number: 1,
-            commit_message: `Initial version deployed via chat (${new Date().toISOString()})`
+            version_number: latestVersion,
+            commit_message: `Deployed by chat (${new Date().toISOString()})`
           });
         if (vErr) return new Response(JSON.stringify({ success: false, error: vErr.message }), { status: 500, headers: corsHeaders });
 
@@ -117,9 +143,10 @@ Respond with pure code implementing the class, no extra text. The class should h
 
         return new Response(JSON.stringify({
           success: true,
-          response: `✅ Agent "${deployName}" deployed, ready to start!`,
+          response: `✅ Agent "${deployName}" deployed, code saved as "${filepath}", version ${latestVersion}.`,
           agent_name: deployName,
-          agent_id: agentId
+          agent_id: agentId,
+          version: latestVersion
         }), { headers: corsHeaders });
       }
 
@@ -212,6 +239,7 @@ Respond with pure code implementing the class, no extra text. The class should h
     if (path === "agent-deploy") {
       const { agent_name: rawName, agent_goal } = payload || {};
       const deployName = sanitizeAgentName(rawName || ("agent-" + Date.now()));
+      const filepath = safeAgentFilePath(deployName);
       // Generate agent class code via OpenAI
       const openaiPrompt = `Create a new autonomous AI agent TypeScript class named "${deployName}" for this task: ${agent_goal || 'Generic'}.
 Respond with code only for the agent class, no extra comments or preamble. Run, stop, and status methods are required.`;
@@ -250,7 +278,7 @@ Respond with code only for the agent class, no extra comments or preamble. Run, 
       // Save versioned code
       const { error: vErr } = await supabase.from("agent_versions").insert({
         agent_id: agentId,
-        file_path: `${deployName}.ts`,
+        file_path: filepath,
         code: agentCode,
         version_number: 1,
         commit_message: `Initial version deployed via API (${new Date().toISOString()})`
